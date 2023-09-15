@@ -3,22 +3,22 @@ package com.kopchak.worldoftoys.model.token;
 import com.kopchak.worldoftoys.model.user.AppUser;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor
 @Entity
 public class AuthenticationToken {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    public Integer id;
+    private Integer id;
 
     @Column(unique = true)
     @NotNull
-    public String token;
+    private String token;
 
     @Enumerated(EnumType.STRING)
     @NotNull
@@ -26,10 +26,11 @@ public class AuthenticationToken {
 
     private boolean revoked;
 
+
     private boolean expired;
 
     @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.ALL, CascadeType.MERGE})
     @JoinColumn(name = "user_id")
     @NotNull
-    public AppUser user;
+    private AppUser user;
 }

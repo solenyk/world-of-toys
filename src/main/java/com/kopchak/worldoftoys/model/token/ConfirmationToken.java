@@ -3,24 +3,24 @@ package com.kopchak.worldoftoys.model.token;
 import com.kopchak.worldoftoys.model.user.AppUser;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Getter
 @Setter
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor
 @Entity
 public class ConfirmationToken {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    public Integer id;
+    private Integer id;
 
     @Column(unique = true)
     @NotNull
-    public String token;
+    private String token;
 
     @Enumerated(EnumType.STRING)
     @NotNull
@@ -39,5 +39,5 @@ public class ConfirmationToken {
     @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.ALL, CascadeType.MERGE})
     @JoinColumn(name = "user_id")
     @NotNull
-    public AppUser user;
+    private AppUser user;
 }

@@ -53,6 +53,15 @@ public class AppUser implements UserDetails {
 
     private Boolean enabled = false;
 
+    @OneToMany(fetch = FetchType.EAGER, cascade = {CascadeType.ALL, CascadeType.MERGE})
+    @JoinColumn(name = "user_id")
+    private List<AuthenticationToken> authenticationTokens;
+
+
+    @OneToMany(fetch = FetchType.EAGER, cascade = {CascadeType.ALL, CascadeType.MERGE})
+    @JoinColumn(name = "user_id")
+    private List<ConfirmationToken> confirmationTokens;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority(role.name()));
