@@ -7,6 +7,7 @@ This is a backend API for a toy store web application built using Spring Boot 3,
 - [Introduction](#introduction)
 - [Technologies](#technologies)
 - [Features](#features)
+- [API Documentation](#api-documentation)
 - [Installation and Usage](#installation-and-usage)
 - [Contributing](#contributing)
 - [License](#license)
@@ -31,6 +32,12 @@ The following features are currently available in the application:
 ## Endpoints
 The following endpoints are currently available in the API:
 
+## API Documentation
+
+To view the API documentation, you can use Swagger. Swagger provides a user-friendly interface for exploring and testing the API endpoints.
+
+[Swagger API Documentation](http://localhost:8080/swagger-ui/index.html)
+
 ## Installation and Usage
 
 To run this application, please follow the steps below:
@@ -39,7 +46,7 @@ To run this application, please follow the steps below:
 2. Import the project into your IDE
 3. Set up a MySQL database and update the application.yml file with your database details
 4. Run the application using the command `mvn spring-boot:run` or by running the main method in the `WorldOfToysApplication` class
-5. Use a tool such as Postman to make requests to the API endpoints.
+5.  Use a tool such as Postman or Swagger to make requests to the API endpoints.
 
 ## Contributing
 
