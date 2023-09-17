@@ -38,6 +38,18 @@ public class AuthenticationController {
     private final ConfirmationTokenService confirmationTokenService;
     private final EmailSenderService emailSenderService;
 
+    @Operation(summary = "User registration")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "User has been successfully registered",
+                    content = @Content(schema = @Schema(hidden = true))),
+            @ApiResponse(responseCode = "400",
+                    description = "Username already exist",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = UsernameAlreadyExistException.class)))
+    })
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody UserRegistrationDto userRegistrationDto) {
         if (userService.isUserRegistered(userRegistrationDto.getEmail())) {
