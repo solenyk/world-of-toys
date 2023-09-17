@@ -1,6 +1,6 @@
 package com.kopchak.worldoftoys.service.impl;
 
-import com.kopchak.worldoftoys.model.token.ConfirmTokenType;
+import com.kopchak.worldoftoys.model.token.ConfirmationTokenType;
 import com.kopchak.worldoftoys.service.EmailSenderService;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -17,7 +17,7 @@ import org.thymeleaf.context.Context;
 
 @Service
 @AllArgsConstructor
-public class EmailSenderServiceImpl implements EmailSenderService{
+public class EmailSenderServiceImpl implements EmailSenderService {
     private final static Logger LOGGER = LoggerFactory.getLogger(EmailSenderServiceImpl.class);
     private final static String SENDER_EMAIL = "worldoftoys@gmail.com";
     private final static String ACCOUNT_ACTIVATION_TITLE = "Account activation";
@@ -54,9 +54,9 @@ public class EmailSenderServiceImpl implements EmailSenderService{
     }
 
     @Override
-    public void sendEmail(String userEmail, String userFirstname, String confirmToken, ConfirmTokenType tokenType) {
+    public void sendEmail(String userEmail, String userFirstname, String confirmToken, ConfirmationTokenType tokenType) {
         String email;
-        if (tokenType == ConfirmTokenType.ACTIVATION) {
+        if (tokenType == ConfirmationTokenType.ACTIVATION) {
             email = buildEmail(ACCOUNT_ACTIVATION_TITLE, userFirstname, ACCOUNT_ACTIVATION_MSG,
                     getBaseUrl() + ACCOUNT_ACTIVATION_LINK + confirmToken, ACCOUNT_ACTIVATION_LINK_NAME);
             send(userEmail, email, ACCOUNT_ACTIVATION_SUBJECT);
@@ -66,6 +66,7 @@ public class EmailSenderServiceImpl implements EmailSenderService{
             send(userEmail, email, PASSWORD_RESET_SUBJECT);
         }
     }
+
     private String buildEmail(String title, String name, String message, String link, String linkName) {
         Context context = new Context();
         context.setVariable("title", title);
