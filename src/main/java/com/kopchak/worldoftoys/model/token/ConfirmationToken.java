@@ -2,6 +2,7 @@ package com.kopchak.worldoftoys.model.token;
 
 import com.kopchak.worldoftoys.model.user.AppUser;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
@@ -19,25 +20,26 @@ public class ConfirmationToken {
     private Integer id;
 
     @Column(unique = true)
-    @NotNull
+    @NotBlank(message = "Invalid token: token is empty")
+    @NotNull(message = "Invalid token: token is NULL")
     private String token;
 
     @Enumerated(EnumType.STRING)
-    @NotNull
-    private ConfirmTokenType tokenType;
+    @NotNull(message = "Invalid token type: token type is NULL")
+    private ConfirmationTokenType tokenType;
 
     @Column(nullable = false)
-    @NotNull
+    @NotNull(message = "Invalid creation date: creation date is NULL")
     private LocalDateTime createdAt;
 
     @Column(nullable = false)
-    @NotNull
+    @NotNull(message = "Invalid expiration date: expiration date is NULL")
     private LocalDateTime expiresAt;
 
     private LocalDateTime confirmedAt;
 
-    @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.ALL, CascadeType.MERGE})
+    @NotNull(message = "Invalid user id: user is NULL")
+    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.MERGE)
     @JoinColumn(name = "user_id")
-    @NotNull
     private AppUser user;
 }

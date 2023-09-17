@@ -13,7 +13,6 @@ import lombok.*;
 @NoArgsConstructor
 @Schema(description = "User data for registration")
 public class UserRegistrationDto {
-
     @Schema(example = "Iryna", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank(message = "Invalid firstname: firstname is empty")
     @NotNull(message = "Invalid firstname: firstname is NULL")

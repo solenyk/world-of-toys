@@ -2,6 +2,8 @@ package com.kopchak.worldoftoys.model.token;
 
 import com.kopchak.worldoftoys.model.user.AppUser;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.AssertFalse;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
@@ -17,20 +19,22 @@ public class AuthenticationToken {
     private Integer id;
 
     @Column(unique = true)
-    @NotNull
+    @NotBlank(message = "Invalid token: token is empty")
+    @NotNull(message = "Invalid token: token is NULL")
     private String token;
 
     @Enumerated(EnumType.STRING)
-    @NotNull
+    @NotNull(message = "Invalid token type: token type is NULL")
     private AuthTokenType tokenType;
 
+    @AssertFalse
     private boolean revoked;
 
-
+    @AssertFalse
     private boolean expired;
 
+    @NotNull(message = "Invalid user id: user is NULL")
     @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.ALL, CascadeType.MERGE})
     @JoinColumn(name = "user_id")
-    @NotNull
     private AppUser user;
 }

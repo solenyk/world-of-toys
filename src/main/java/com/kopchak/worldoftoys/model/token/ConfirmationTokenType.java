@@ -1,6 +1,6 @@
 package com.kopchak.worldoftoys.model.token;
 
-public enum ConfirmTokenType {
+public enum ConfirmationTokenType {
     ACTIVATION,
     RESET_PASSWORD
 }
