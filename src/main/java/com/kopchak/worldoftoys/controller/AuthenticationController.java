@@ -109,10 +109,38 @@ public class AuthenticationController {
         if (userService.isUserActivated(email)) {
             throw new AccountIsAlreadyActivatedException(HttpStatus.CONFLICT, "Account is already activated!");
         }
-        if (confirmationTokenService.isNoActiveActivationToken(email)) {
+        if (confirmationTokenService.isNoActiveConfirmationToken(email, ConfirmationTokenType.ACTIVATION)) {
             var confirmationToken = confirmationTokenService.createConfirmationToken(email,
                     ConfirmationTokenType.ACTIVATION);
             emailSenderService.sendEmail(email, confirmationToken.getToken(), ConfirmationTokenType.ACTIVATION);
+        }
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @Operation(summary = "Send an email with a link to reset user password")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "204",
+                    description = "Reset password email has been successfully sent",
+                    content = @Content(schema = @Schema(hidden = true))),
+            @ApiResponse(responseCode = "404",
+                    description = "User not found",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = UserNotFoundException.class)))
+    })
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> sendResetPasswordEmail(@Schema(
+            description = "Username to reset the password",
+            implementation = UsernameDto.class)@Valid @RequestBody UsernameDto username) {
+        String email = username.getEmail();
+        if (!userService.isUserRegistered(email)) {
+            throw new UserNotFoundException(HttpStatus.NOT_FOUND, "User with this username does not exist!");
+        }
+        if (confirmationTokenService.isNoActiveConfirmationToken(email, ConfirmationTokenType.RESET_PASSWORD)) {
+            var confirmationToken = confirmationTokenService.createConfirmationToken(email,
+                    ConfirmationTokenType.RESET_PASSWORD);
+            emailSenderService.sendEmail(email, confirmationToken.getToken(), ConfirmationTokenType.RESET_PASSWORD);
         }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
