@@ -7,6 +7,7 @@ import com.kopchak.worldoftoys.model.user.AppUser;
 import com.kopchak.worldoftoys.repository.token.ConfirmationTokenRepository;
 import com.kopchak.worldoftoys.repository.user.UserRepository;
 import com.kopchak.worldoftoys.service.ConfirmationTokenService;
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -42,5 +43,16 @@ public class ConfirmationTokenServiceImpl implements ConfirmationTokenService {
                     confirmToken.getConfirmedAt() == null && confirmToken.getExpiresAt().isAfter(LocalDateTime.now());
         }
         return false;
+    }
+
+    @Override
+    @Transactional
+    public void activateAccountUsingActivationToken(String token) {
+        ConfirmationToken confirmationToken = confirmationTokenRepository.findByToken(token).get();
+        confirmationToken.setConfirmedAt(LocalDateTime.now());
+        AppUser user = confirmationToken.getUser();
+        user.setEnabled(true);
+        userRepository.save(user);
+        confirmationTokenRepository.save(confirmationToken);
     }
 }

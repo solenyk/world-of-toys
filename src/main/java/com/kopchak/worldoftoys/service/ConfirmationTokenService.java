@@ -7,4 +7,5 @@ import com.kopchak.worldoftoys.model.token.ConfirmationTokenType;
 public interface ConfirmationTokenService {
     ConfirmTokenDto createConfirmationToken(String username, ConfirmationTokenType tokenType);
     boolean isConfirmationTokenValid(String token);
+    void activateAccountUsingActivationToken(String token);
 }
