@@ -3,9 +3,7 @@ package com.kopchak.worldoftoys.service.impl;
 import com.kopchak.worldoftoys.dto.user.UserRegistrationDto;
 import com.kopchak.worldoftoys.model.user.AppUser;
 import com.kopchak.worldoftoys.model.user.Role;
-import com.kopchak.worldoftoys.repository.token.AuthTokenRepository;
 import com.kopchak.worldoftoys.repository.user.UserRepository;
-import com.kopchak.worldoftoys.service.JwtTokenService;
 import com.kopchak.worldoftoys.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -31,5 +29,10 @@ public class UserServiceImpl implements UserService {
 
     public boolean isUserRegistered(String email) {
         return userRepository.findByEmail(email).isPresent();
+    }
+
+    public boolean isUserActivated(String email) {
+        AppUser user = userRepository.findByEmail(email).get();
+        return user.getEnabled();
     }
 }
