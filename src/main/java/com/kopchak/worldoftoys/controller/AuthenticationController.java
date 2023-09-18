@@ -81,6 +81,23 @@ public class AuthenticationController {
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
+    @Operation(summary = "Resend verification email for account activation")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "204",
+                    description = "Verification email has been successfully sent",
+                    content = @Content(schema = @Schema(hidden = true))),
+            @ApiResponse(responseCode = "404",
+                    description = "User not found",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = UserNotFoundException.class))),
+            @ApiResponse(responseCode = "409",
+                    description = "Account is already activated",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = AccountIsAlreadyActivatedException.class)))
+    })
     @PostMapping("/resend-verification-email")
     public ResponseEntity<?> resendVerificationEmail(@Schema(
             description = "Username to activate the account",
