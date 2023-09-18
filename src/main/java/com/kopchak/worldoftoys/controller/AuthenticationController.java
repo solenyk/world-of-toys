@@ -142,7 +142,19 @@ public class AuthenticationController {
         }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
-
+    @Operation(summary = "Reset password")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "204",
+                    description = "Password changed successfully",
+                    content = @Content(schema = @Schema(implementation = String.class))),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Confirmation token is invalid or new password matches old password",
+                    content = @Content(schema = @Schema(oneOf = {
+                            UserNotFoundException.class, InvalidPasswordException.class
+                    })))
+    })
     @PostMapping(path = "/reset-password")
     public ResponseEntity<?> changePassword(@Parameter(description = "Token to change the user's password",
             required = true) @RequestParam("token") String token, @Valid @RequestBody ResetPasswordDto newPassword) {
@@ -155,4 +167,6 @@ public class AuthenticationController {
         confirmationTokenService.changePasswordUsingResetToken(token, newPassword);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
+
+
 }
