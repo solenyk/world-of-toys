@@ -12,7 +12,7 @@ import lombok.*;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(description = "Username to reset the user's password")
+@Schema(description = "Username to reset the user's password and resend account activation link")
 public class UsernameDto {
     @Schema(example = "test@test.com", requiredMode = Schema.RequiredMode.REQUIRED)
     @Email(message = "Invalid email")

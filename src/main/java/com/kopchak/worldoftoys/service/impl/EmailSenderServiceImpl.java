@@ -27,7 +27,7 @@ public class EmailSenderServiceImpl implements EmailSenderService {
     private final static String ACCOUNT_ACTIVATION_SUBJECT = "Confirm your email";
     private final static String PASSWORD_RESET_SUBJECT = "Reset your password";
     private final static String ACCOUNT_ACTIVATION_LINK = "/api/v1/auth/confirm?token=";
-    private final static String PASSWORD_RESET_LINK = "/api/v1/auth/forgot-password?token=";
+    private final static String PASSWORD_RESET_LINK = "/api/v1/auth/reset-password?token=";
     private final static String ACCOUNT_ACTIVATION_LINK_NAME = "Activate Now";
     private final static String PASSWORD_RESET_LINK_NAME = "Reset password";
     private final static String ACCOUNT_ACTIVATION_MSG =
