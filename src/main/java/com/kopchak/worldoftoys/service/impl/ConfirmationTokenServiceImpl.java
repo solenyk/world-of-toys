@@ -7,11 +7,11 @@ import com.kopchak.worldoftoys.model.user.AppUser;
 import com.kopchak.worldoftoys.repository.token.ConfirmationTokenRepository;
 import com.kopchak.worldoftoys.repository.user.UserRepository;
 import com.kopchak.worldoftoys.service.ConfirmationTokenService;
-import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -36,8 +36,8 @@ public class ConfirmationTokenServiceImpl implements ConfirmationTokenService {
         return new ConfirmTokenDto(confirmationToken);
     }
 
-    public boolean isConfirmationTokenValid(String token){
-        if(confirmationTokenRepository.findByToken(token).isPresent()){
+    public boolean isConfirmationTokenValid(String token) {
+        if (confirmationTokenRepository.findByToken(token).isPresent()) {
             ConfirmationToken confirmToken = confirmationTokenRepository.findByToken(token).get();
             return confirmToken.getTokenType().equals(ConfirmationTokenType.ACTIVATION) &&
                     confirmToken.getConfirmedAt() == null && confirmToken.getExpiresAt().isAfter(LocalDateTime.now());
@@ -46,7 +46,6 @@ public class ConfirmationTokenServiceImpl implements ConfirmationTokenService {
     }
 
     @Override
-    @Transactional
     public void activateAccountUsingActivationToken(String token) {
         ConfirmationToken confirmationToken = confirmationTokenRepository.findByToken(token).get();
         confirmationToken.setConfirmedAt(LocalDateTime.now());
@@ -54,5 +53,15 @@ public class ConfirmationTokenServiceImpl implements ConfirmationTokenService {
         user.setEnabled(true);
         userRepository.save(user);
         confirmationTokenRepository.save(confirmationToken);
+    }
+
+    public boolean isNoActiveActivationToken(String email) {
+        AppUser user = userRepository.findByEmail(email).get();
+        List<ConfirmationToken> confirmTokensList = confirmationTokenRepository
+                .findAllByUserAndTokenType(user, ConfirmationTokenType.ACTIVATION)
+                .stream()
+                .filter(confirmationToken -> confirmationToken.getExpiresAt().isAfter(LocalDateTime.now()))
+                .toList();
+        return confirmTokensList.isEmpty();
     }
 }

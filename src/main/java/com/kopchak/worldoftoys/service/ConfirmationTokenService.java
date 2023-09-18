@@ -8,4 +8,5 @@ public interface ConfirmationTokenService {
     ConfirmTokenDto createConfirmationToken(String username, ConfirmationTokenType tokenType);
     boolean isConfirmationTokenValid(String token);
     void activateAccountUsingActivationToken(String token);
+    boolean isNoActiveActivationToken(String email);
 }
