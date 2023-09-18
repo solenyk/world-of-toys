@@ -39,7 +39,7 @@ public class ConfirmationToken {
     private LocalDateTime confirmedAt;
 
     @NotNull(message = "Invalid user id: user is NULL")
-    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.MERGE)
+    @ManyToOne
     @JoinColumn(name = "user_id")
     private AppUser user;
 }

@@ -27,14 +27,12 @@ public class AuthenticationToken {
     @NotNull(message = "Invalid token type: token type is NULL")
     private AuthTokenType tokenType;
 
-    @AssertFalse
     private boolean revoked;
 
-    @AssertFalse
     private boolean expired;
 
     @NotNull(message = "Invalid user id: user is NULL")
-    @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.ALL, CascadeType.MERGE})
+    @ManyToOne
     @JoinColumn(name = "user_id")
     private AppUser user;
 }

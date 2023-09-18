@@ -59,13 +59,10 @@ public class AppUser implements UserDetails {
     @NotNull(message = "Invalid enabled value: enabled value is NULL")
     private Boolean enabled = false;
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = {CascadeType.ALL, CascadeType.MERGE})
-    @JoinColumn(name = "user_id")
+    @OneToMany(mappedBy = "user", cascade = {CascadeType.MERGE, CascadeType.REMOVE})
     private List<AuthenticationToken> authenticationTokens;
 
-
-    @OneToMany(fetch = FetchType.EAGER, cascade = {CascadeType.ALL, CascadeType.MERGE})
-    @JoinColumn(name = "user_id")
+    @OneToMany(mappedBy = "user", cascade = {CascadeType.MERGE, CascadeType.REMOVE})
     private List<ConfirmationToken> confirmationTokens;
 
     @Override
