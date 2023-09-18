@@ -1,12 +1,10 @@
 package com.kopchak.worldoftoys.controller;
 
 import com.kopchak.worldoftoys.dto.token.ConfirmTokenDto;
+import com.kopchak.worldoftoys.dto.user.ResetPasswordDto;
 import com.kopchak.worldoftoys.dto.user.UserRegistrationDto;
 import com.kopchak.worldoftoys.dto.user.UsernameDto;
-import com.kopchak.worldoftoys.exception.AccountIsAlreadyActivatedException;
-import com.kopchak.worldoftoys.exception.InvalidConfirmationTokenException;
-import com.kopchak.worldoftoys.exception.UserNotFoundException;
-import com.kopchak.worldoftoys.exception.UsernameAlreadyExistException;
+import com.kopchak.worldoftoys.exception.*;
 import com.kopchak.worldoftoys.model.token.ConfirmationTokenType;
 import com.kopchak.worldoftoys.service.ConfirmationTokenService;
 import com.kopchak.worldoftoys.service.EmailSenderService;
@@ -74,7 +72,7 @@ public class AuthenticationController {
     @GetMapping(path = "/confirm")
     public ResponseEntity<?> activateAccount(@Parameter(description = "User account activation token",
             required = true) @RequestParam("token") String token) {
-        if (!confirmationTokenService.isConfirmationTokenValid(token)) {
+        if (!confirmationTokenService.isConfirmationTokenValid(token, ConfirmationTokenType.ACTIVATION)) {
             throw new InvalidConfirmationTokenException(HttpStatus.BAD_REQUEST, "This confirmation token is invalid!");
         }
         confirmationTokenService.activateAccountUsingActivationToken(token);
@@ -129,10 +127,10 @@ public class AuthenticationController {
                             mediaType = "application/json",
                             schema = @Schema(implementation = UserNotFoundException.class)))
     })
-    @PostMapping("/reset-password")
+    @PostMapping("/forgot-password")
     public ResponseEntity<?> sendResetPasswordEmail(@Schema(
             description = "Username to reset the password",
-            implementation = UsernameDto.class)@Valid @RequestBody UsernameDto username) {
+            implementation = UsernameDto.class) @Valid @RequestBody UsernameDto username) {
         String email = username.getEmail();
         if (!userService.isUserRegistered(email)) {
             throw new UserNotFoundException(HttpStatus.NOT_FOUND, "User with this username does not exist!");
@@ -142,6 +140,19 @@ public class AuthenticationController {
                     ConfirmationTokenType.RESET_PASSWORD);
             emailSenderService.sendEmail(email, confirmationToken.getToken(), ConfirmationTokenType.RESET_PASSWORD);
         }
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @PostMapping(path = "/reset-password")
+    public ResponseEntity<?> changePassword(@Parameter(description = "Token to change the user's password",
+            required = true) @RequestParam("token") String token, @Valid @RequestBody ResetPasswordDto newPassword) {
+        if (!confirmationTokenService.isConfirmationTokenValid(token, ConfirmationTokenType.RESET_PASSWORD)) {
+            throw new InvalidConfirmationTokenException(HttpStatus.BAD_REQUEST, "This confirmation token is invalid!");
+        }
+        if(userService.isNewPasswordMatchOldPassword(token, newPassword.getPassword())){
+            throw new InvalidPasswordException(HttpStatus.BAD_REQUEST, "New password matches old password!");
+        }
+        confirmationTokenService.changePasswordUsingResetToken(token, newPassword);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }
