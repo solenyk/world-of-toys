@@ -1,17 +1,10 @@
 package com.kopchak.worldoftoys.controller;
 
 import com.kopchak.worldoftoys.dto.token.ConfirmTokenDto;
-import com.kopchak.worldoftoys.dto.token.TokenAuthDto;
-import com.kopchak.worldoftoys.dto.user.ResetPasswordDto;
-import com.kopchak.worldoftoys.dto.user.UserAuthDto;
 import com.kopchak.worldoftoys.dto.user.UserRegistrationDto;
-import com.kopchak.worldoftoys.dto.user.UsernameDto;
-import com.kopchak.worldoftoys.exception.AccountIsAlreadyActivatedException;
-import com.kopchak.worldoftoys.exception.IncorrectPasswordException;
-import com.kopchak.worldoftoys.exception.UserNotFoundException;
+import com.kopchak.worldoftoys.exception.InvalidConfirmationTokenException;
 import com.kopchak.worldoftoys.exception.UsernameAlreadyExistException;
 import com.kopchak.worldoftoys.model.token.ConfirmationTokenType;
-import com.kopchak.worldoftoys.service.AuthenticationService;
 import com.kopchak.worldoftoys.service.ConfirmationTokenService;
 import com.kopchak.worldoftoys.service.EmailSenderService;
 import com.kopchak.worldoftoys.service.UserService;
@@ -62,5 +55,27 @@ public class AuthenticationController {
         emailSenderService.sendEmail(username, userRegistrationDto.getFirstname(),
                 confirmationToken.getToken(), ConfirmationTokenType.ACTIVATION);
         return new ResponseEntity<>(HttpStatus.CREATED);
+    }
+
+    @Operation(summary = "Account activation")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Account activated!",
+                    content = @Content(schema = @Schema(implementation = String.class))),
+            @ApiResponse(responseCode = "404",
+                    description = "Confirmation token is invalid",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = InvalidConfirmationTokenException.class)))
+    })
+    @GetMapping(path = "/confirm")
+    public ResponseEntity<?> activateAccount(@Parameter(description = "User account activation token",
+            required = true) @RequestParam("token") String token) {
+        if (!confirmationTokenService.isConfirmationTokenValid(token)) {
+            throw new InvalidConfirmationTokenException(HttpStatus.BAD_REQUEST, "This confirmation token is invalid!");
+        }
+        confirmationTokenService.activateAccountUsingActivationToken(token);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }
