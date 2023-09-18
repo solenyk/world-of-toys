@@ -1,7 +1,9 @@
 package com.kopchak.worldoftoys.controller;
 
 import com.kopchak.worldoftoys.dto.token.ConfirmTokenDto;
+import com.kopchak.worldoftoys.dto.token.AuthTokenDto;
 import com.kopchak.worldoftoys.dto.user.ResetPasswordDto;
+import com.kopchak.worldoftoys.dto.user.UserAuthDto;
 import com.kopchak.worldoftoys.dto.user.UserRegistrationDto;
 import com.kopchak.worldoftoys.dto.user.UsernameDto;
 import com.kopchak.worldoftoys.exception.*;
@@ -142,6 +144,7 @@ public class AuthenticationController {
         }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
+
     @Operation(summary = "Reset password")
     @ApiResponses(value = {
             @ApiResponse(
@@ -168,5 +171,30 @@ public class AuthenticationController {
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
-
+    @Operation(summary = "User login to the account")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "User is successfully authenticated",
+                    content = @Content(schema = @Schema(implementation = AuthTokenDto.class))),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Bad user credentials",
+                    content = @Content(schema = @Schema(implementation = UserNotFoundException.class))),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Account is not activated",
+                    content = @Content(schema = @Schema(implementation = UserNotFoundException.class))),
+    })
+    @PostMapping("/login")
+    public ResponseEntity<AuthTokenDto> authenticate(@Valid @RequestBody UserAuthDto userAuthDto) {
+        String username = userAuthDto.getEmail();
+        if (!userService.isUserRegistered(username) || !userService.isPasswordsMatch(username, userAuthDto.getPassword())) {
+            throw new UserNotFoundException(HttpStatus.UNAUTHORIZED, "Bad user credentials!");
+        }
+        if (!userService.isUserActivated(username)) {
+            throw new UserNotFoundException(HttpStatus.FORBIDDEN, "Account is not activated!");
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(userService.authenticateUser(userAuthDto));
+    }
 }

@@ -10,5 +10,5 @@ public interface UserService {
     boolean isUserActivated(String email);
     boolean isNewPasswordMatchOldPassword(String resetPasswordToken, String newPassword);
     boolean isPasswordsMatch(String username, String password);
-    AuthTokenDto authenticate(UserAuthDto userAuthDto);
+    AuthTokenDto authenticateUser(UserAuthDto userAuthDto);
 }

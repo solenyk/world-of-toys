@@ -71,7 +71,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public AuthTokenDto authenticate(UserAuthDto userAuthDto) {
+    public AuthTokenDto authenticateUser(UserAuthDto userAuthDto) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         userAuthDto.getEmail(),

@@ -22,7 +22,7 @@ import org.springframework.context.annotation.Configuration;
                         email = "iryna.kopchak39@gmail.com"
                 ),
                 license = @License(name = "Apache 2.0",
-                        url = "http://www.apache.org/licenses/LICENSE-2.0.html"
+                        url = "https://www.apache.org/licenses/LICENSE-2.0.html"
                 )
         ),
         externalDocs = @ExternalDocumentation(description = "Instructions for how to run and use this project",
