@@ -1,6 +1,8 @@
 package com.kopchak.worldoftoys.service.impl;
 
 import com.kopchak.worldoftoys.model.token.ConfirmationTokenType;
+import com.kopchak.worldoftoys.model.user.AppUser;
+import com.kopchak.worldoftoys.repository.user.UserRepository;
 import com.kopchak.worldoftoys.service.EmailSenderService;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -33,6 +35,7 @@ public class EmailSenderServiceImpl implements EmailSenderService {
     private final static String PASSWORD_RESET_MSG =
             "Thank you for using our website. Please click on the below link to reset your password:";
     private final JavaMailSender mailSender;
+    private final UserRepository userRepository;
     private TemplateEngine templateEngine;
     private final HttpServletRequest request;
 
@@ -54,16 +57,18 @@ public class EmailSenderServiceImpl implements EmailSenderService {
     }
 
     @Override
-    public void sendEmail(String userEmail, String userFirstname, String confirmToken, ConfirmationTokenType tokenType) {
-        String email;
+    public void sendEmail(String userEmail, String confirmToken, ConfirmationTokenType tokenType) {
+        String emailContent;
+        AppUser user = userRepository.findByEmail(userEmail).get();
+        String fullName = user.getFirstname() + " " + user.getLastname();
         if (tokenType == ConfirmationTokenType.ACTIVATION) {
-            email = buildEmail(ACCOUNT_ACTIVATION_TITLE, userFirstname, ACCOUNT_ACTIVATION_MSG,
+            emailContent = buildEmail(ACCOUNT_ACTIVATION_TITLE, fullName, ACCOUNT_ACTIVATION_MSG,
                     getBaseUrl() + ACCOUNT_ACTIVATION_LINK + confirmToken, ACCOUNT_ACTIVATION_LINK_NAME);
-            send(userEmail, email, ACCOUNT_ACTIVATION_SUBJECT);
+            send(userEmail, emailContent, ACCOUNT_ACTIVATION_SUBJECT);
         } else {
-            email = buildEmail(PASSWORD_RESET_TITLE, userFirstname, PASSWORD_RESET_MSG,
+            emailContent = buildEmail(PASSWORD_RESET_TITLE, fullName, PASSWORD_RESET_MSG,
                     getBaseUrl() + PASSWORD_RESET_LINK + confirmToken, PASSWORD_RESET_LINK_NAME);
-            send(userEmail, email, PASSWORD_RESET_SUBJECT);
+            send(userEmail, emailContent, PASSWORD_RESET_SUBJECT);
         }
     }
 

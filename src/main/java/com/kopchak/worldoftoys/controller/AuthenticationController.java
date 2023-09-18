@@ -52,18 +52,17 @@ public class AuthenticationController {
         userService.registerUser(userRegistrationDto);
         ConfirmTokenDto confirmationToken = confirmationTokenService.createConfirmationToken(username,
                 ConfirmationTokenType.ACTIVATION);
-        emailSenderService.sendEmail(username, userRegistrationDto.getFirstname(),
-                confirmationToken.getToken(), ConfirmationTokenType.ACTIVATION);
+        emailSenderService.sendEmail(username, confirmationToken.getToken(), ConfirmationTokenType.ACTIVATION);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
     @Operation(summary = "Account activation")
     @ApiResponses(value = {
             @ApiResponse(
-                    responseCode = "200",
-                    description = "Account activated!",
+                    responseCode = "204",
+                    description = "Account activated",
                     content = @Content(schema = @Schema(implementation = String.class))),
-            @ApiResponse(responseCode = "404",
+            @ApiResponse(responseCode = "400",
                     description = "Confirmation token is invalid",
                     content = @Content(
                             mediaType = "application/json",
