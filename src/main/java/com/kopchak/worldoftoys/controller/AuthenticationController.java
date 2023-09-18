@@ -2,7 +2,10 @@ package com.kopchak.worldoftoys.controller;
 
 import com.kopchak.worldoftoys.dto.token.ConfirmTokenDto;
 import com.kopchak.worldoftoys.dto.user.UserRegistrationDto;
+import com.kopchak.worldoftoys.dto.user.UsernameDto;
+import com.kopchak.worldoftoys.exception.AccountIsAlreadyActivatedException;
 import com.kopchak.worldoftoys.exception.InvalidConfirmationTokenException;
+import com.kopchak.worldoftoys.exception.UserNotFoundException;
 import com.kopchak.worldoftoys.exception.UsernameAlreadyExistException;
 import com.kopchak.worldoftoys.model.token.ConfirmationTokenType;
 import com.kopchak.worldoftoys.service.ConfirmationTokenService;
@@ -75,6 +78,25 @@ public class AuthenticationController {
             throw new InvalidConfirmationTokenException(HttpStatus.BAD_REQUEST, "This confirmation token is invalid!");
         }
         confirmationTokenService.activateAccountUsingActivationToken(token);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @PostMapping("/resend-verification-email")
+    public ResponseEntity<?> resendVerificationEmail(@Schema(
+            description = "Username to activate the account",
+            implementation = UsernameDto.class) @Valid @RequestBody UsernameDto username) {
+        String email = username.getEmail();
+        if (!userService.isUserRegistered(email)) {
+            throw new UserNotFoundException(HttpStatus.NOT_FOUND, "User with this username does not exist!");
+        }
+        if (userService.isUserActivated(email)) {
+            throw new AccountIsAlreadyActivatedException(HttpStatus.CONFLICT, "Account is already activated!");
+        }
+        if (confirmationTokenService.isNoActiveActivationToken(email)) {
+            var confirmationToken = confirmationTokenService.createConfirmationToken(email,
+                    ConfirmationTokenType.ACTIVATION);
+            emailSenderService.sendEmail(email, confirmationToken.getToken(), ConfirmationTokenType.ACTIVATION);
+        }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }
