@@ -167,7 +167,7 @@ public class AuthenticationController {
         if (!confirmationTokenService.isConfirmationTokenValid(token, ConfirmationTokenType.RESET_PASSWORD)) {
             throw new InvalidConfirmationTokenException(HttpStatus.BAD_REQUEST, "This confirmation token is invalid!");
         }
-        if(userService.isNewPasswordMatchOldPassword(token, newPassword.getPassword())){
+        if (userService.isNewPasswordMatchOldPassword(token, newPassword.getPassword())) {
             throw new InvalidPasswordException(HttpStatus.BAD_REQUEST, "New password matches old password!");
         }
         confirmationTokenService.changePasswordUsingResetToken(token, newPassword);
@@ -201,15 +201,28 @@ public class AuthenticationController {
         return ResponseEntity.status(HttpStatus.OK).body(userService.authenticateUser(userAuthDto));
     }
 
+    @Operation(summary = "Get new access token using refresh token")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "Access token is successfully generated",
+                    content = @Content(schema = @Schema(implementation = AccessAndRefreshTokensDto.class))),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Refresh token is invalid or valid access token already exists",
+                    content = @Content(schema = @Schema(oneOf = {
+                            InvalidRefreshTokenException.class, AccessTokenAlreadyExistsException.class
+                    })))
+    })
     @PostMapping("/refresh-token")
     public ResponseEntity<AuthTokenDto> refreshToken(@Valid @RequestBody AuthTokenDto refreshTokenDto) {
         String refreshToken = refreshTokenDto.getToken();
-        if(!jwtTokenService.isRefreshTokenValid(refreshToken)){
+        if (!jwtTokenService.isRefreshTokenValid(refreshToken)) {
             throw new InvalidRefreshTokenException(HttpStatus.BAD_REQUEST, "This refresh token is invalid!");
         }
-        if (jwtTokenService.isActiveAccessTokenExists(refreshToken)){
+        if (jwtTokenService.isActiveAccessTokenExists(refreshToken)) {
             throw new AccessTokenAlreadyExistsException(HttpStatus.BAD_REQUEST, "There is valid access token!");
         }
-        return ResponseEntity.status(HttpStatus.OK).body(jwtTokenService.refreshAccessToken(refreshTokenDto));
+        return ResponseEntity.status(HttpStatus.CREATED).body(jwtTokenService.refreshAccessToken(refreshTokenDto));
     }
 }
