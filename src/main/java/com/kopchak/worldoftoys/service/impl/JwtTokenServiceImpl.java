@@ -1,28 +1,34 @@
 package com.kopchak.worldoftoys.service.impl;
 
+import com.kopchak.worldoftoys.dto.token.AuthTokenDto;
 import com.kopchak.worldoftoys.model.token.AuthTokenType;
+import com.kopchak.worldoftoys.model.token.AuthenticationToken;
+import com.kopchak.worldoftoys.model.user.AppUser;
+import com.kopchak.worldoftoys.repository.token.AuthTokenRepository;
+import com.kopchak.worldoftoys.repository.user.UserRepository;
 import com.kopchak.worldoftoys.service.JwtTokenService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 
 @Service
+@RequiredArgsConstructor
 public class JwtTokenServiceImpl implements JwtTokenService {
     @Value(value = "${security.jwt.secret}")
     private String SECRET_KEY;
     private static final int ACCESS_TOKEN_EXPIRATION_TIME_IN_MILLIS = 1000 * 60 * 24 * 14;
     private static final int REFRESH_TOKEN_EXPIRATION_TIME_IN_MILLIS = 1000 * 60 * 24 * 14;
+    private final UserRepository userRepository;
+    private final AuthTokenRepository authTokenRepository;
 
     @Override
     public String extractUsername(String token) {
@@ -53,6 +59,46 @@ public class JwtTokenServiceImpl implements JwtTokenService {
                                 : REFRESH_TOKEN_EXPIRATION_TIME_IN_MILLIS)))
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact();
+    }
+
+    @Override
+    public boolean isRefreshTokenValid(String token) {
+        Optional<AuthenticationToken> refreshToken = authTokenRepository.findByToken(token);
+        if(refreshToken.isPresent()){
+            String username = extractUsername(token);
+            return  userRepository.findByEmail(username).isPresent() && !isTokenExpired(token) &&
+                    refreshToken.get().getTokenType().equals(AuthTokenType.REFRESH);
+        }
+        return false;
+    }
+
+    @Override
+    public boolean isActiveAccessTokenExists(String refreshToken) {
+        String username = extractUsername(refreshToken);
+        AppUser user = userRepository.findByEmail(username).get();
+        List<AuthenticationToken> authTokens = authTokenRepository.findAllByUser(user)
+                .stream()
+                .filter(token -> !token.isExpired() && !token.isRevoked())
+                .toList();
+        return !authTokens.isEmpty();
+    }
+
+    @Override
+    public AuthTokenDto refreshAccessToken(AuthTokenDto refreshTokenDto){
+        String refreshToken = refreshTokenDto.getToken();
+        String username = extractUsername(refreshToken);
+        String accessToken = generateJwtToken(username, AuthTokenType.ACCESS);
+        AppUser user = userRepository.findByEmail(username).get();
+        AuthenticationToken authToken = AuthenticationToken
+                .builder()
+                .token(accessToken)
+                .user(user)
+                .tokenType(AuthTokenType.ACCESS)
+                .expired(false)
+                .revoked(false)
+                .build();
+        authTokenRepository.save(authToken);
+        return new AuthTokenDto(accessToken);
     }
 
     private boolean isTokenExpired(String token) {

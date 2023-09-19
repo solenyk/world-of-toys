@@ -1,5 +1,6 @@
 package com.kopchak.worldoftoys.service;
 
+import com.kopchak.worldoftoys.dto.token.AuthTokenDto;
 import com.kopchak.worldoftoys.model.token.AuthTokenType;
 import io.jsonwebtoken.Claims;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -15,4 +16,9 @@ public interface JwtTokenService {
     String generateJwtToken(String username, AuthTokenType tokenType);
 
     String generateJwtToken(Map<String, Object> extraClaims, String username, AuthTokenType tokenType);
+    boolean isRefreshTokenValid(String token);
+
+    boolean isActiveAccessTokenExists(String refreshToken);
+
+    AuthTokenDto refreshAccessToken(AuthTokenDto refreshTokenDto);
 }
