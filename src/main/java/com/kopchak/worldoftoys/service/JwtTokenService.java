@@ -15,5 +15,4 @@ public interface JwtTokenService {
     String generateJwtToken(String username, AuthTokenType tokenType);
 
     String generateJwtToken(Map<String, Object> extraClaims, String username, AuthTokenType tokenType);
-    boolean isTokenValid(String token, UserDetails userDetails);
 }

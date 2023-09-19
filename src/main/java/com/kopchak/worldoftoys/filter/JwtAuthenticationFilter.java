@@ -1,5 +1,6 @@
 package com.kopchak.worldoftoys.filter;
 
+import com.kopchak.worldoftoys.model.token.AuthTokenType;
 import com.kopchak.worldoftoys.repository.token.AuthTokenRepository;
 import com.kopchak.worldoftoys.service.JwtTokenService;
 import jakarta.servlet.FilterChain;
@@ -46,9 +47,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
             var isTokenValid = authTokenRepository.findByToken(jwt)
-                    .map(token -> token.isExpired() && !token.isRevoked())
+                    .map(token -> token.getTokenType().equals(AuthTokenType.ACCESS) &&
+                            !token.isExpired() && !token.isRevoked() && userEmail.equals(userDetails.getUsername()))
                     .orElse(false);
-            if (jwtTokenService.isTokenValid(jwt, userDetails) && isTokenValid) {
+            if (isTokenValid) {
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         userDetails,
                         null,
