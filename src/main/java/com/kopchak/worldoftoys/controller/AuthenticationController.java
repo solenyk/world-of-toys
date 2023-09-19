@@ -1,5 +1,6 @@
 package com.kopchak.worldoftoys.controller;
 
+import com.kopchak.worldoftoys.dto.token.AuthTokenDto;
 import com.kopchak.worldoftoys.dto.token.ConfirmTokenDto;
 import com.kopchak.worldoftoys.dto.token.AccessAndRefreshTokensDto;
 import com.kopchak.worldoftoys.dto.user.ResetPasswordDto;
@@ -10,6 +11,7 @@ import com.kopchak.worldoftoys.exception.*;
 import com.kopchak.worldoftoys.model.token.ConfirmationTokenType;
 import com.kopchak.worldoftoys.service.ConfirmationTokenService;
 import com.kopchak.worldoftoys.service.EmailSenderService;
+import com.kopchak.worldoftoys.service.JwtTokenService;
 import com.kopchak.worldoftoys.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -33,6 +35,7 @@ public class AuthenticationController {
     private final UserService userService;
     private final ConfirmationTokenService confirmationTokenService;
     private final EmailSenderService emailSenderService;
+    private final JwtTokenService jwtTokenService;
 
     @Operation(summary = "User registration")
     @ApiResponses(value = {
@@ -196,5 +199,17 @@ public class AuthenticationController {
             throw new UserNotFoundException(HttpStatus.FORBIDDEN, "Account is not activated!");
         }
         return ResponseEntity.status(HttpStatus.OK).body(userService.authenticateUser(userAuthDto));
+    }
+
+    @PostMapping("/refresh-token")
+    public ResponseEntity<AuthTokenDto> refreshToken(@Valid @RequestBody AuthTokenDto refreshTokenDto) {
+        String refreshToken = refreshTokenDto.getToken();
+        if(!jwtTokenService.isRefreshTokenValid(refreshToken)){
+            throw new InvalidRefreshTokenException(HttpStatus.BAD_REQUEST, "This refresh token is invalid!");
+        }
+        if (jwtTokenService.isActiveAccessTokenExists(refreshToken)){
+            throw new AccessTokenAlreadyExistsException(HttpStatus.BAD_REQUEST, "There is valid access token!");
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(jwtTokenService.refreshAccessToken(refreshTokenDto));
     }
 }
