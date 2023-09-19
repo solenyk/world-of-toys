@@ -1,5 +1,6 @@
 package com.kopchak.worldoftoys.service.impl;
 
+import com.kopchak.worldoftoys.model.token.AuthTokenType;
 import com.kopchak.worldoftoys.service.JwtTokenService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -21,6 +22,7 @@ public class JwtTokenServiceImpl implements JwtTokenService {
     @Value(value = "${security.jwt.secret}")
     private String SECRET_KEY;
     private static final int ACCESS_TOKEN_EXPIRATION_TIME_IN_MILLIS = 1000 * 60 * 24 * 14;
+    private static final int REFRESH_TOKEN_EXPIRATION_TIME_IN_MILLIS = 1000 * 60 * 24 * 14;
 
     @Override
     public String extractUsername(String token) {
@@ -34,18 +36,21 @@ public class JwtTokenServiceImpl implements JwtTokenService {
     }
 
     @Override
-    public String generateAccessToken(UserDetails userDetails) {
-        return generateAccessToken(new HashMap<>(), userDetails);
+    public String generateJwtToken(String username, AuthTokenType tokenType) {
+        return generateJwtToken(new HashMap<>(), username, tokenType);
     }
 
     @Override
-    public String generateAccessToken(Map<String, Object> extraClaims, UserDetails userDetails) {
+    public String generateJwtToken(Map<String, Object> extraClaims, String username,
+                                   AuthTokenType tokenType) {
         return Jwts
                 .builder()
                 .setClaims(extraClaims)
-                .setSubject(userDetails.getUsername())
+                .setSubject(username)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + ACCESS_TOKEN_EXPIRATION_TIME_IN_MILLIS))
+                .setExpiration(new Date(System.currentTimeMillis() +
+                        (tokenType.equals(AuthTokenType.ACCESS) ? ACCESS_TOKEN_EXPIRATION_TIME_IN_MILLIS
+                                : REFRESH_TOKEN_EXPIRATION_TIME_IN_MILLIS)))
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact();
     }

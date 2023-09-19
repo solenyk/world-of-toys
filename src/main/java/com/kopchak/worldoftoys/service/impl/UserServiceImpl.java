@@ -1,6 +1,6 @@
 package com.kopchak.worldoftoys.service.impl;
 
-import com.kopchak.worldoftoys.dto.token.AuthTokenDto;
+import com.kopchak.worldoftoys.dto.token.AccessAndRefreshTokensDto;
 import com.kopchak.worldoftoys.dto.user.UserAuthDto;
 import com.kopchak.worldoftoys.dto.user.UserRegistrationDto;
 import com.kopchak.worldoftoys.model.token.AuthTokenType;
@@ -71,19 +71,23 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public AuthTokenDto authenticateUser(UserAuthDto userAuthDto) {
+    public AccessAndRefreshTokensDto authenticateUser(UserAuthDto userAuthDto) {
+        String email = userAuthDto.getEmail();
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        userAuthDto.getEmail(),
+                        email,
                         userAuthDto.getPassword()
                 )
         );
-        AppUser user = userRepository.findByEmail(userAuthDto.getEmail()).get();
-        String jwtToken = jwtTokenService.generateAccessToken(user);
+        AppUser user = userRepository.findByEmail(email).get();
+        String accessToken = jwtTokenService.generateJwtToken(email, AuthTokenType.ACCESS);
+        String refreshToken = jwtTokenService.generateJwtToken(email, AuthTokenType.REFRESH);
         revokeAllUserTokens(user);
-        saveUserAuthToken(user, jwtToken);
-        return AuthTokenDto.builder()
-                .token(jwtToken)
+        saveUserAuthToken(user, accessToken, AuthTokenType.ACCESS);
+        saveUserAuthToken(user, refreshToken, AuthTokenType.REFRESH);
+        return AccessAndRefreshTokensDto.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
                 .build();
     }
 
@@ -98,12 +102,12 @@ public class UserServiceImpl implements UserService {
         authTokenRepository.saveAll(userAuthTokens);
     }
 
-    private void saveUserAuthToken(AppUser user, String jwtToken) {
+    private void saveUserAuthToken(AppUser user, String jwtToken, AuthTokenType tokenType) {
         var token = AuthenticationToken
                 .builder()
                 .token(jwtToken)
                 .user(user)
-                .tokenType(AuthTokenType.ACCESS)
+                .tokenType(tokenType)
                 .expired(false)
                 .revoked(false)
                 .build();

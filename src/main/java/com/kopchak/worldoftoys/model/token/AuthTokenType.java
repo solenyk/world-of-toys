@@ -1,5 +1,6 @@
 package com.kopchak.worldoftoys.model.token;
 
 public enum AuthTokenType {
-    ACCESS
+    ACCESS,
+    REFRESH
 }
