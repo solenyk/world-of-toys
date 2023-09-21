@@ -8,6 +8,7 @@ import com.kopchak.worldoftoys.dto.user.UserAuthDto;
 import com.kopchak.worldoftoys.dto.user.UserRegistrationDto;
 import com.kopchak.worldoftoys.dto.user.UsernameDto;
 import com.kopchak.worldoftoys.exception.*;
+import com.kopchak.worldoftoys.model.token.AuthTokenType;
 import com.kopchak.worldoftoys.model.token.ConfirmationTokenType;
 import com.kopchak.worldoftoys.service.ConfirmationTokenService;
 import com.kopchak.worldoftoys.service.EmailSenderService;
@@ -217,7 +218,7 @@ public class AuthenticationController {
     @PostMapping("/refresh-token")
     public ResponseEntity<AuthTokenDto> refreshToken(@Valid @RequestBody AuthTokenDto refreshTokenDto) {
         String refreshToken = refreshTokenDto.getToken();
-        if (!jwtTokenService.isRefreshTokenValid(refreshToken)) {
+        if (!jwtTokenService.isAuthTokenValid(refreshToken, AuthTokenType.REFRESH)) {
             throw new InvalidRefreshTokenException(HttpStatus.BAD_REQUEST, "This refresh token is invalid!");
         }
         if (jwtTokenService.isActiveAccessTokenExists(refreshToken)) {

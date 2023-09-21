@@ -62,16 +62,16 @@ public class JwtTokenServiceImpl implements JwtTokenService {
     }
 
     @Override
-    public boolean isRefreshTokenValid(String token) {
-        Optional<AuthenticationToken> refreshToken = authTokenRepository.findByToken(token);
-        if(refreshToken.isPresent()){
+    public boolean isAuthTokenValid(String token, AuthTokenType tokenType) {
+        Optional<AuthenticationToken> authToken = authTokenRepository.findByToken(token);
+        if (authToken.isPresent()) {
             String username = extractUsername(token);
-            return  userRepository.findByEmail(username).isPresent() && !isTokenExpired(token) &&
-                    refreshToken.get().getTokenType().equals(AuthTokenType.REFRESH);
+            userRepository.findByEmail(null);
+            return username != null && userRepository.findByEmail(username).isPresent() && !isTokenExpired(token) &&
+                    !authToken.get().isRevoked() && authToken.get().getTokenType().equals(tokenType);
         }
         return false;
     }
-
     @Override
     public boolean isActiveAccessTokenExists(String refreshToken) {
         String username = extractUsername(refreshToken);
@@ -84,7 +84,7 @@ public class JwtTokenServiceImpl implements JwtTokenService {
     }
 
     @Override
-    public AuthTokenDto refreshAccessToken(AuthTokenDto refreshTokenDto){
+    public AuthTokenDto refreshAccessToken(AuthTokenDto refreshTokenDto) {
         String refreshToken = refreshTokenDto.getToken();
         String username = extractUsername(refreshToken);
         String accessToken = generateJwtToken(username, AuthTokenType.ACCESS);

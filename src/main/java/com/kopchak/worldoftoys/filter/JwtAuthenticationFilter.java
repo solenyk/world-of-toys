@@ -1,7 +1,6 @@
 package com.kopchak.worldoftoys.filter;
 
 import com.kopchak.worldoftoys.model.token.AuthTokenType;
-import com.kopchak.worldoftoys.repository.token.AuthTokenRepository;
 import com.kopchak.worldoftoys.service.JwtTokenService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -25,8 +24,6 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtTokenService jwtTokenService;
     private final UserDetailsService userDetailsService;
-    private final AuthTokenRepository authTokenRepository;
-
     private static final String BEARER = "Bearer ";
 
     @Override
@@ -36,32 +33,29 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
         final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-        final String jwt;
-        final String userEmail;
-        if (authHeader == null || !authHeader.startsWith(BEARER)) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-        jwt = authHeader.substring(BEARER.length());
-        userEmail = jwtTokenService.extractUsername(jwt);
-        if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
-            var isTokenValid = authTokenRepository.findByToken(jwt)
-                    .map(token -> token.getTokenType().equals(AuthTokenType.ACCESS) &&
-                            !token.isExpired() && !token.isRevoked() && userEmail.equals(userDetails.getUsername()))
-                    .orElse(false);
-            if (isTokenValid) {
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        userDetails.getAuthorities()
-                );
-                authToken.setDetails(
-                        new WebAuthenticationDetailsSource().buildDetails(request)
-                );
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+        if (authHeader != null && authHeader.startsWith(BEARER)) {
+            final String jwt = authHeader.substring(BEARER.length());
+
+            if (jwtTokenService.isAuthTokenValid(jwt, AuthTokenType.ACCESS)) {
+                final String userEmail = jwtTokenService.extractUsername(jwt);
+
+                if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                    UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
+
+                    if (userEmail.equals(userDetails.getUsername())) {
+                        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                                userDetails,
+                                null,
+                                userDetails.getAuthorities()
+                        );
+
+                        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        SecurityContextHolder.getContext().setAuthentication(authToken);
+                    }
+                }
             }
         }
+
         filterChain.doFilter(request, response);
     }
 }
