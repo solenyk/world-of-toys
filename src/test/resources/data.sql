@@ -9,3 +9,9 @@ VALUES (1, 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsImlhdCI
         'ACCESS', false, false, 1),
        (2, 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsImlhdCI6MTY5NTM3NjA3NiwiZXhwIjoxNzk1Mzk2MjM2fQ.7DMHH20DBuaonWaeua9JpY6UUL5KtiRjeP7ZpoZrQ-U',
         'REFRESH', false, false, 1);
+
+INSERT INTO confirmation_token(id, token, token_type, created_at, expires_at, confirmed_at, user_id)
+VALUES (1, '8e5648d7-9b4e-4724-83a1-be7e64603e48', 'ACTIVATION', '2023-09-22 15:47:15.593933',
+        '2023-09-22 16:02:15.593933', null, 1),
+       (2, '8e5648d7-9b4e-4724-83a1-be7e64603e47', 'RESET_PASSWORD', '2023-09-22 15:47:15.593933',
+        '2023-09-22 16:02:15.593933', null, 1);
