@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import java.security.Key;
 import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -100,6 +101,20 @@ public class JwtTokenServiceImpl implements JwtTokenService {
         authTokenRepository.save(authToken);
         return new AuthTokenDto(accessToken);
     }
+
+    @Override
+    public void revokeAllUserAuthTokens(String username) {
+        AppUser user = userRepository.findByEmail(username).get();
+        List<AuthenticationToken> userAuthTokens =
+                authTokenRepository.findAllByUser(user)
+                        .stream()
+                        .peek(token -> {
+                            token.setExpired(true);
+                            token.setRevoked(true);
+                        }).collect(Collectors.toList());
+        authTokenRepository.saveAll(userAuthTokens);
+    }
+
 
     private boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());

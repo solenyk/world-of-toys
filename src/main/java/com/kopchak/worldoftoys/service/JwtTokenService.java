@@ -20,4 +20,5 @@ public interface JwtTokenService {
     boolean isActiveAccessTokenExists(String refreshToken);
 
     AuthTokenDto refreshAccessToken(AuthTokenDto refreshTokenDto);
+    void revokeAllUserAuthTokens(String username);
 }

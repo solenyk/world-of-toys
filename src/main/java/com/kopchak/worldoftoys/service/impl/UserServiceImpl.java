@@ -19,9 +19,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
@@ -82,24 +79,13 @@ public class UserServiceImpl implements UserService {
         AppUser user = userRepository.findByEmail(email).get();
         String accessToken = jwtTokenService.generateJwtToken(email, AuthTokenType.ACCESS);
         String refreshToken = jwtTokenService.generateJwtToken(email, AuthTokenType.REFRESH);
-        revokeAllUserTokens(user);
+        jwtTokenService.revokeAllUserAuthTokens(email);
         saveUserAuthToken(user, accessToken, AuthTokenType.ACCESS);
         saveUserAuthToken(user, refreshToken, AuthTokenType.REFRESH);
         return AccessAndRefreshTokensDto.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .build();
-    }
-
-    private void revokeAllUserTokens(AppUser user) {
-        List<AuthenticationToken> userAuthTokens =
-                authTokenRepository.findAllByUser(user)
-                        .stream()
-                        .peek(token -> {
-                            token.setExpired(true);
-                            token.setRevoked(true);
-                        }).collect(Collectors.toList());
-        authTokenRepository.saveAll(userAuthTokens);
     }
 
     private void saveUserAuthToken(AppUser user, String jwtToken, AuthTokenType tokenType) {

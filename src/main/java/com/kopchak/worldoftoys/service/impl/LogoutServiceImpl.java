@@ -24,8 +24,7 @@ public class LogoutServiceImpl implements LogoutService {
             return;
         }
         jwt = authHeader.substring(BEARER.length());
-        var storedToken = authTokenRepository.findByToken(jwt)
-                .orElse(null);
+        var storedToken = authTokenRepository.findByToken(jwt).orElse(null);
         if (storedToken != null) {
             storedToken.setExpired(true);
             storedToken.setRevoked(true);

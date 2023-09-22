@@ -8,6 +8,7 @@ import com.kopchak.worldoftoys.model.user.AppUser;
 import com.kopchak.worldoftoys.repository.token.ConfirmTokenRepository;
 import com.kopchak.worldoftoys.repository.user.UserRepository;
 import com.kopchak.worldoftoys.service.ConfirmationTokenService;
+import com.kopchak.worldoftoys.service.JwtTokenService;
 import lombok.AllArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,7 @@ import java.util.UUID;
 @AllArgsConstructor
 public class ConfirmationTokenServiceImpl implements ConfirmationTokenService {
     private final ConfirmTokenRepository confirmationTokenRepository;
+    private final JwtTokenService jwtTokenService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private static final int TOKEN_EXPIRATION_TIME_IN_MINUTES = 15;
@@ -79,5 +81,6 @@ public class ConfirmationTokenServiceImpl implements ConfirmationTokenService {
         user.setPassword(passwordEncoder.encode(newPassword.getPassword()));
         confirmationTokenRepository.save(confirmationToken);
         userRepository.save(user);
+        jwtTokenService.revokeAllUserAuthTokens(user.getUsername());
     }
 }
