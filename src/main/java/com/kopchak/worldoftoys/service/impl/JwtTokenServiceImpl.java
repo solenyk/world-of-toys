@@ -15,11 +15,14 @@ import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.security.Key;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -34,12 +37,6 @@ public class JwtTokenServiceImpl implements JwtTokenService {
     @Override
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
-    }
-
-    @Override
-    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
-        final Claims claims = extractAllClaims(token);
-        return claimsResolver.apply(claims);
     }
 
     @Override
@@ -76,12 +73,7 @@ public class JwtTokenServiceImpl implements JwtTokenService {
     @Override
     public boolean isActiveAccessTokenExists(String refreshToken) {
         String username = extractUsername(refreshToken);
-        AppUser user = userRepository.findByEmail(username).get();
-        List<AuthenticationToken> authTokens = authTokenRepository.findAllByUser(user)
-                .stream()
-                .filter(token -> !token.isExpired() && !token.isRevoked())
-                .toList();
-        return !authTokens.isEmpty();
+        return authTokenRepository.isActiveAccessTokenExists(username);
     }
 
     @Override
@@ -103,18 +95,16 @@ public class JwtTokenServiceImpl implements JwtTokenService {
     }
 
     @Override
+    @Transactional
     public void revokeAllUserAuthTokens(String username) {
         AppUser user = userRepository.findByEmail(username).get();
-        List<AuthenticationToken> userAuthTokens =
-                authTokenRepository.findAllByUser(user)
-                        .stream()
-                        .peek(token -> {
-                            token.setExpired(true);
-                            token.setRevoked(true);
-                        }).collect(Collectors.toList());
-        authTokenRepository.saveAll(userAuthTokens);
+        authTokenRepository.revokeActiveUserAuthTokens(user);
     }
 
+    private  <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+        final Claims claims = extractAllClaims(token);
+        return claimsResolver.apply(claims);
+    }
 
     private boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());

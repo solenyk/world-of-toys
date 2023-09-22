@@ -10,8 +10,6 @@ import java.util.function.Function;
 public interface JwtTokenService {
     String extractUsername(String token);
 
-    <T> T extractClaim(String token, Function<Claims, T> claimsResolver);
-
     String generateJwtToken(String username, AuthTokenType tokenType);
 
     String generateJwtToken(Map<String, Object> extraClaims, String username, AuthTokenType tokenType);
