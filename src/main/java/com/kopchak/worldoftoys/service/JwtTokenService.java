@@ -2,10 +2,8 @@ package com.kopchak.worldoftoys.service;
 
 import com.kopchak.worldoftoys.dto.token.AuthTokenDto;
 import com.kopchak.worldoftoys.model.token.AuthTokenType;
-import io.jsonwebtoken.Claims;
 
 import java.util.Map;
-import java.util.function.Function;
 
 public interface JwtTokenService {
     String extractUsername(String token);
@@ -15,7 +13,7 @@ public interface JwtTokenService {
     String generateJwtToken(Map<String, Object> extraClaims, String username, AuthTokenType tokenType);
     boolean isAuthTokenValid(String token, AuthTokenType tokenType);
 
-    boolean isActiveAccessTokenExists(String refreshToken);
+    boolean isActiveAuthTokenExists(String refreshToken, AuthTokenType tokenType);
 
     AuthTokenDto refreshAccessToken(AuthTokenDto refreshTokenDto);
     void revokeAllUserAuthTokens(String username);

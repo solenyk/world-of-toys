@@ -71,9 +71,9 @@ public class JwtTokenServiceImpl implements JwtTokenService {
         return false;
     }
     @Override
-    public boolean isActiveAccessTokenExists(String refreshToken) {
-        String username = extractUsername(refreshToken);
-        return authTokenRepository.isActiveAccessTokenExists(username);
+    public boolean isActiveAuthTokenExists(String authToken, AuthTokenType tokenType) {
+        String username = extractUsername(authToken);
+        return authTokenRepository.isActiveAuthTokenExists(username, tokenType);
     }
 
     @Override

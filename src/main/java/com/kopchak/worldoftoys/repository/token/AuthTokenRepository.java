@@ -1,5 +1,6 @@
 package com.kopchak.worldoftoys.repository.token;
 
+import com.kopchak.worldoftoys.model.token.AuthTokenType;
 import com.kopchak.worldoftoys.model.token.AuthenticationToken;
 import com.kopchak.worldoftoys.model.user.AppUser;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,8 +16,8 @@ public interface AuthTokenRepository extends JpaRepository<AuthenticationToken, 
     Optional<AuthenticationToken> findByToken(String authToken);
 
     @Query("SELECT CASE WHEN COUNT(t) > 0 THEN true ELSE false END FROM AuthenticationToken t " +
-            "WHERE t.user.email = :email AND t.expired = false AND t.revoked = false")
-    boolean isActiveAccessTokenExists(@Param("email") String email);
+            "WHERE t.user.email = :email AND t.tokenType = :tokenType AND t.expired = false AND t.revoked = false")
+    boolean isActiveAuthTokenExists(@Param("email") String email, @Param("tokenType") AuthTokenType tokenType);
 
     @Modifying
     @Query("UPDATE AuthenticationToken t SET t.expired = true, t.revoked = true WHERE t.user = :user AND " +

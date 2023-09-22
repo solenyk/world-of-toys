@@ -221,7 +221,7 @@ public class AuthenticationController {
         if (!jwtTokenService.isAuthTokenValid(refreshToken, AuthTokenType.REFRESH)) {
             throw new InvalidRefreshTokenException(HttpStatus.BAD_REQUEST, "This refresh token is invalid!");
         }
-        if (jwtTokenService.isActiveAccessTokenExists(refreshToken)) {
+        if (jwtTokenService.isActiveAuthTokenExists(refreshToken, AuthTokenType.ACCESS)) {
             throw new AccessTokenAlreadyExistsException(HttpStatus.BAD_REQUEST, "There is valid access token!");
         }
         return ResponseEntity.status(HttpStatus.CREATED).body(jwtTokenService.refreshAccessToken(refreshTokenDto));
