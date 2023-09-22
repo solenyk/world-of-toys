@@ -19,11 +19,10 @@ public class LogoutServiceImpl implements LogoutService {
     @Override
     public void logout(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
         final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-        final String jwt;
         if (authHeader == null || !authHeader.startsWith(BEARER)) {
             return;
         }
-        jwt = authHeader.substring(BEARER.length());
+        final String jwt = authHeader.substring(BEARER.length());
         var storedToken = authTokenRepository.findByToken(jwt).orElse(null);
         if (storedToken != null) {
             storedToken.setExpired(true);
