@@ -78,7 +78,7 @@ public class AuthenticationController {
     @GetMapping(path = "/confirm")
     public ResponseEntity<?> activateAccount(@Parameter(description = "User account activation token",
             required = true) @RequestParam("token") String token) {
-        if (!confirmationTokenService.isConfirmationTokenValid(token, ConfirmationTokenType.ACTIVATION)) {
+        if (confirmationTokenService.isConfirmationTokenInvalid(token, ConfirmationTokenType.ACTIVATION)) {
             throw new InvalidConfirmationTokenException(HttpStatus.BAD_REQUEST, "This confirmation token is invalid!");
         }
         confirmationTokenService.activateAccountUsingActivationToken(token);
@@ -165,7 +165,7 @@ public class AuthenticationController {
     @PostMapping(path = "/reset-password")
     public ResponseEntity<?> changePassword(@Parameter(description = "Token to change the user's password",
             required = true) @RequestParam("token") String token, @Valid @RequestBody ResetPasswordDto newPassword) {
-        if (!confirmationTokenService.isConfirmationTokenValid(token, ConfirmationTokenType.RESET_PASSWORD)) {
+        if (confirmationTokenService.isConfirmationTokenInvalid(token, ConfirmationTokenType.RESET_PASSWORD)) {
             throw new InvalidConfirmationTokenException(HttpStatus.BAD_REQUEST, "This confirmation token is invalid!");
         }
         if (userService.isNewPasswordMatchOldPassword(token, newPassword.getPassword())) {

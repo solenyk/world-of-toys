@@ -9,7 +9,7 @@ import com.kopchak.worldoftoys.model.token.ConfirmationToken;
 import com.kopchak.worldoftoys.model.user.AppUser;
 import com.kopchak.worldoftoys.model.user.Role;
 import com.kopchak.worldoftoys.repository.token.AuthTokenRepository;
-import com.kopchak.worldoftoys.repository.token.ConfirmationTokenRepository;
+import com.kopchak.worldoftoys.repository.token.ConfirmTokenRepository;
 import com.kopchak.worldoftoys.repository.user.UserRepository;
 import com.kopchak.worldoftoys.service.JwtTokenService;
 import com.kopchak.worldoftoys.service.UserService;
@@ -29,7 +29,7 @@ public class UserServiceImpl implements UserService {
     private final AuthTokenRepository authTokenRepository;
     private final JwtTokenService jwtTokenService;
     private final PasswordEncoder passwordEncoder;
-    private final ConfirmationTokenRepository confirmationTokenRepository;
+    private final ConfirmTokenRepository confirmationTokenRepository;
     private final AuthenticationManager authenticationManager;
 
     @Override

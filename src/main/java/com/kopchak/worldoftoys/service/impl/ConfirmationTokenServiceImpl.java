@@ -5,7 +5,7 @@ import com.kopchak.worldoftoys.dto.user.ResetPasswordDto;
 import com.kopchak.worldoftoys.model.token.ConfirmationToken;
 import com.kopchak.worldoftoys.model.token.ConfirmationTokenType;
 import com.kopchak.worldoftoys.model.user.AppUser;
-import com.kopchak.worldoftoys.repository.token.ConfirmationTokenRepository;
+import com.kopchak.worldoftoys.repository.token.ConfirmTokenRepository;
 import com.kopchak.worldoftoys.repository.user.UserRepository;
 import com.kopchak.worldoftoys.service.ConfirmationTokenService;
 import lombok.AllArgsConstructor;
@@ -19,7 +19,7 @@ import java.util.UUID;
 @Service
 @AllArgsConstructor
 public class ConfirmationTokenServiceImpl implements ConfirmationTokenService {
-    private final ConfirmationTokenRepository confirmationTokenRepository;
+    private final ConfirmTokenRepository confirmationTokenRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private static final int TOKEN_EXPIRATION_TIME_IN_MINUTES = 15;
@@ -41,13 +41,13 @@ public class ConfirmationTokenServiceImpl implements ConfirmationTokenService {
     }
 
     @Override
-    public boolean isConfirmationTokenValid(String token, ConfirmationTokenType tokenType) {
+    public boolean isConfirmationTokenInvalid(String token, ConfirmationTokenType tokenType) {
         if (confirmationTokenRepository.findByToken(token).isPresent()) {
             ConfirmationToken confirmToken = confirmationTokenRepository.findByToken(token).get();
-            return confirmToken.getTokenType().equals(tokenType) &&
-                    confirmToken.getConfirmedAt() == null && confirmToken.getExpiresAt().isAfter(LocalDateTime.now());
+            return !confirmToken.getTokenType().equals(tokenType) ||
+                    confirmToken.getConfirmedAt() != null || !confirmToken.getExpiresAt().isAfter(LocalDateTime.now());
         }
-        return false;
+        return true;
     }
 
     @Override
