@@ -64,13 +64,7 @@ public class ConfirmationTokenServiceImpl implements ConfirmationTokenService {
 
     @Override
     public boolean isNoActiveConfirmationToken(String email, ConfirmationTokenType confirmTokenType) {
-        AppUser user = userRepository.findByEmail(email).get();
-        List<ConfirmationToken> confirmTokensList = confirmationTokenRepository
-                .findAllByUserAndTokenType(user, confirmTokenType)
-                .stream()
-                .filter(confirmationToken -> confirmationToken.getExpiresAt().isAfter(LocalDateTime.now()))
-                .toList();
-        return confirmTokensList.isEmpty();
+        return confirmationTokenRepository.isNoActiveConfirmationToken(email, confirmTokenType, LocalDateTime.now());
     }
 
     @Override
