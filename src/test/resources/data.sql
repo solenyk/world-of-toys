@@ -6,6 +6,6 @@ VALUES (1, 'John', 'Doe', 'john.doe@example.com', '$2a$10$8Cq9HDEsVwbd4zaHEJiKse
 
 INSERT INTO authentication_token(id, token, token_type, revoked, expired, user_id)
 VALUES (1, 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsImlhdCI6MTY5NTM3NjA3NiwiZXhwIjoxNzk1Mzc3NTE2fQ.7z-SJjVtAamFjOo0qLd0ehtO59ODHw2B7j1dm4nynE4',
-        ACCESS, false, false, 1),
+        'ACCESS', false, false, 1),
        (2, 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsImlhdCI6MTY5NTM3NjA3NiwiZXhwIjoxNzk1Mzk2MjM2fQ.7DMHH20DBuaonWaeua9JpY6UUL5KtiRjeP7ZpoZrQ-U',
-        REFRESH, false, false, 1);
+        'REFRESH', false, false, 1);
