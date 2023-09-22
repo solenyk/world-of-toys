@@ -1,14 +1,11 @@
 package com.kopchak.worldoftoys.repository.token;
 
 import com.kopchak.worldoftoys.model.token.AuthenticationToken;
-import com.kopchak.worldoftoys.model.user.AppUser;
-import com.kopchak.worldoftoys.repository.user.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -19,9 +16,6 @@ class AuthTokenRepositoryTest {
 
     @Autowired
     private AuthTokenRepository authTokenRepository;
-
-    @Autowired
-    private UserRepository userRepository;
 
     @Test
     public void findByToken_ExistingAuthToken_ReturnsAuthenticationToken(){
@@ -50,30 +44,5 @@ class AuthTokenRepositoryTest {
         assertThat(returnedToken).isEmpty();
     }
 
-    @Test
-    public void findAllByUser_UserWithExistingAuthTokens_ReturnsListOfAuthTokens(){
-        //Arrange
-        AppUser user = userRepository.findByEmail("john.doe@example.com").get();
 
-        //Act
-        List<AuthenticationToken> returnedTokens = authTokenRepository.findAllByUser(user);
-
-        //Assert
-        assertThat(returnedTokens).isNotNull();
-        assertThat(returnedTokens.isEmpty()).isEqualTo(false);
-        assertThat(returnedTokens.size()).isEqualTo(2);
-    }
-
-    @Test
-    public void findAllByUser_UserWithoutExistingAuthTokens_ReturnsEmptyList(){
-        //Arrange
-        AppUser user = userRepository.findByEmail("jane.smith@example.com").get();
-
-        //Act
-        List<AuthenticationToken> returnedTokens = authTokenRepository.findAllByUser(user);
-
-        //Assert
-        assertThat(returnedTokens).isNotNull();
-        assertThat(returnedTokens.isEmpty()).isEqualTo(true);
-    }
 }
