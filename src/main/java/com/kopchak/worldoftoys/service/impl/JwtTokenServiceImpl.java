@@ -36,31 +36,11 @@ public class JwtTokenServiceImpl implements JwtTokenService {
     private final UserRepository userRepository;
     private final AuthTokenRepository authTokenRepository;
 
-    private static final Logger LOG =   LoggerFactory.getLogger(JwtTokenServiceImpl.class);
+    private static final Logger LOG = LoggerFactory.getLogger(JwtTokenServiceImpl.class);
 
     @Override
     public String extractUsername(String token) {
         return extractAllClaims(token).getSubject();
-    }
-
-    @Override
-    public String generateJwtToken(String username, AuthTokenType tokenType) {
-        return generateJwtToken(new HashMap<>(), username, tokenType);
-    }
-
-    @Override
-    public String generateJwtToken(Map<String, Object> extraClaims, String username,
-                                   AuthTokenType tokenType) {
-        return Jwts
-                .builder()
-                .setClaims(extraClaims)
-                .setSubject(username)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() +
-                        (tokenType.equals(AuthTokenType.ACCESS) ? ACCESS_TOKEN_EXPIRATION_TIME_IN_MILLIS
-                                : REFRESH_TOKEN_EXPIRATION_TIME_IN_MILLIS)))
-                .signWith(getSignInKey(), SignatureAlgorithm.HS256)
-                .compact();
     }
 
     @Override
@@ -73,6 +53,7 @@ public class JwtTokenServiceImpl implements JwtTokenService {
         }
         return false;
     }
+
     @Override
     public boolean isActiveAuthTokenExists(String authToken, AuthTokenType tokenType) {
         String username = extractUsername(authToken);
@@ -97,7 +78,7 @@ public class JwtTokenServiceImpl implements JwtTokenService {
     }
 
     @Override
-    public AccessAndRefreshTokensDto authenticateUser(String email) {
+    public AccessAndRefreshTokensDto generateAuthTokens(String email) {
         AppUser user = userRepository.findByEmail(email).get();
         String accessToken = generateJwtToken(email, AuthTokenType.ACCESS);
         String refreshToken = generateJwtToken(email, AuthTokenType.REFRESH);
@@ -108,6 +89,25 @@ public class JwtTokenServiceImpl implements JwtTokenService {
                 .refreshToken(refreshToken)
                 .build();
     }
+
+    private String generateJwtToken(String username, AuthTokenType tokenType) {
+        return generateJwtToken(new HashMap<>(), username, tokenType);
+    }
+
+    private String generateJwtToken(Map<String, Object> extraClaims, String username,
+                                    AuthTokenType tokenType) {
+        return Jwts
+                .builder()
+                .setClaims(extraClaims)
+                .setSubject(username)
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() +
+                        (tokenType.equals(AuthTokenType.ACCESS) ? ACCESS_TOKEN_EXPIRATION_TIME_IN_MILLIS
+                                : REFRESH_TOKEN_EXPIRATION_TIME_IN_MILLIS)))
+                .signWith(getSignInKey(), SignatureAlgorithm.HS256)
+                .compact();
+    }
+
     private boolean isTokenExpired(String token) {
         return extractAllClaims(token).getExpiration().before(new Date());
     }

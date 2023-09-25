@@ -205,7 +205,7 @@ public class AuthenticationController {
         String email = userAuthDto.getEmail();
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, userAuthDto.getPassword()));
         jwtTokenService.revokeAllUserAuthTokens(email);
-        return ResponseEntity.status(HttpStatus.OK).body(jwtTokenService.authenticateUser(email));
+        return ResponseEntity.status(HttpStatus.OK).body(jwtTokenService.generateAuthTokens(email));
     }
 
     @Operation(summary = "Get new access token using refresh token")
