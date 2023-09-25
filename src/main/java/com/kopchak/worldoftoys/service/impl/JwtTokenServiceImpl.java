@@ -1,5 +1,6 @@
 package com.kopchak.worldoftoys.service.impl;
 
+import com.kopchak.worldoftoys.dto.token.AccessAndRefreshTokensDto;
 import com.kopchak.worldoftoys.dto.token.AuthTokenDto;
 import com.kopchak.worldoftoys.model.token.AuthTokenType;
 import com.kopchak.worldoftoys.model.token.AuthenticationToken;
@@ -13,6 +14,8 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,7 +25,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Function;
 
 @Service
 @RequiredArgsConstructor
@@ -34,9 +36,11 @@ public class JwtTokenServiceImpl implements JwtTokenService {
     private final UserRepository userRepository;
     private final AuthTokenRepository authTokenRepository;
 
+    private static final Logger LOG =   LoggerFactory.getLogger(JwtTokenServiceImpl.class);
+
     @Override
     public String extractUsername(String token) {
-        return extractClaim(token, Claims::getSubject);
+        return extractAllClaims(token).getSubject();
     }
 
     @Override
@@ -64,7 +68,6 @@ public class JwtTokenServiceImpl implements JwtTokenService {
         Optional<AuthenticationToken> authToken = authTokenRepository.findByToken(token);
         if (authToken.isPresent()) {
             String username = extractUsername(token);
-            userRepository.findByEmail(null);
             return username != null && userRepository.findByEmail(username).isPresent() && !isTokenExpired(token) &&
                     !authToken.get().isRevoked() && authToken.get().getTokenType().equals(tokenType);
         }
@@ -82,15 +85,7 @@ public class JwtTokenServiceImpl implements JwtTokenService {
         String username = extractUsername(refreshToken);
         String accessToken = generateJwtToken(username, AuthTokenType.ACCESS);
         AppUser user = userRepository.findByEmail(username).get();
-        AuthenticationToken authToken = AuthenticationToken
-                .builder()
-                .token(accessToken)
-                .user(user)
-                .tokenType(AuthTokenType.ACCESS)
-                .expired(false)
-                .revoked(false)
-                .build();
-        authTokenRepository.save(authToken);
+        saveUserAuthToken(user, accessToken, AuthTokenType.ACCESS);
         return new AuthTokenDto(accessToken);
     }
 
@@ -101,17 +96,20 @@ public class JwtTokenServiceImpl implements JwtTokenService {
         authTokenRepository.revokeActiveUserAuthTokens(user);
     }
 
-    private  <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
-        final Claims claims = extractAllClaims(token);
-        return claimsResolver.apply(claims);
+    @Override
+    public AccessAndRefreshTokensDto authenticateUser(String email) {
+        AppUser user = userRepository.findByEmail(email).get();
+        String accessToken = generateJwtToken(email, AuthTokenType.ACCESS);
+        String refreshToken = generateJwtToken(email, AuthTokenType.REFRESH);
+        saveUserAuthToken(user, accessToken, AuthTokenType.ACCESS);
+        saveUserAuthToken(user, refreshToken, AuthTokenType.REFRESH);
+        return AccessAndRefreshTokensDto.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .build();
     }
-
     private boolean isTokenExpired(String token) {
-        return extractExpiration(token).before(new Date());
-    }
-
-    private Date extractExpiration(String token) {
-        return extractClaim(token, Claims::getExpiration);
+        return extractAllClaims(token).getExpiration().before(new Date());
     }
 
     private Claims extractAllClaims(String token) {
@@ -126,5 +124,17 @@ public class JwtTokenServiceImpl implements JwtTokenService {
     private Key getSignInKey() {
         byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
         return Keys.hmacShaKeyFor(keyBytes);
+    }
+
+    private void saveUserAuthToken(AppUser user, String jwtToken, AuthTokenType tokenType) {
+        var token = AuthenticationToken
+                .builder()
+                .token(jwtToken)
+                .user(user)
+                .tokenType(tokenType)
+                .expired(false)
+                .revoked(false)
+                .build();
+        authTokenRepository.save(token);
     }
 }

@@ -1,8 +1,8 @@
 package com.kopchak.worldoftoys.controller;
 
+import com.kopchak.worldoftoys.dto.token.AccessAndRefreshTokensDto;
 import com.kopchak.worldoftoys.dto.token.AuthTokenDto;
 import com.kopchak.worldoftoys.dto.token.ConfirmTokenDto;
-import com.kopchak.worldoftoys.dto.token.AccessAndRefreshTokensDto;
 import com.kopchak.worldoftoys.dto.user.ResetPasswordDto;
 import com.kopchak.worldoftoys.dto.user.UserAuthDto;
 import com.kopchak.worldoftoys.dto.user.UserRegistrationDto;
@@ -25,6 +25,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -37,6 +39,7 @@ public class AuthenticationController {
     private final ConfirmationTokenService confirmationTokenService;
     private final EmailSenderService emailSenderService;
     private final JwtTokenService jwtTokenService;
+    private final AuthenticationManager authenticationManager;
 
     @Operation(summary = "User registration")
     @ApiResponses(value = {
@@ -199,7 +202,10 @@ public class AuthenticationController {
         if (!userService.isUserActivated(username)) {
             throw new UserNotFoundException(HttpStatus.FORBIDDEN, "Account is not activated!");
         }
-        return ResponseEntity.status(HttpStatus.OK).body(userService.authenticateUser(userAuthDto));
+        String email = userAuthDto.getEmail();
+        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, userAuthDto.getPassword()));
+        jwtTokenService.revokeAllUserAuthTokens(email);
+        return ResponseEntity.status(HttpStatus.OK).body(jwtTokenService.authenticateUser(email));
     }
 
     @Operation(summary = "Get new access token using refresh token")
