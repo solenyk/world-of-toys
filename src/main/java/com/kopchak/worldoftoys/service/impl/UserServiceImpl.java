@@ -1,6 +1,8 @@
 package com.kopchak.worldoftoys.service.impl;
 
 import com.kopchak.worldoftoys.dto.user.UserRegistrationDto;
+import com.kopchak.worldoftoys.exception.InvalidConfirmationTokenException;
+import com.kopchak.worldoftoys.exception.UserNotFoundException;
 import com.kopchak.worldoftoys.model.token.ConfirmationToken;
 import com.kopchak.worldoftoys.model.user.AppUser;
 import com.kopchak.worldoftoys.model.user.Role;
@@ -8,11 +10,14 @@ import com.kopchak.worldoftoys.repository.token.ConfirmTokenRepository;
 import com.kopchak.worldoftoys.repository.user.UserRepository;
 import com.kopchak.worldoftoys.service.UserService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -30,6 +35,7 @@ public class UserServiceImpl implements UserService {
                 .locked(false)
                 .build();
         userRepository.save(user);
+        log.info("User: {} has been successfully saved", user.getUsername());
     }
 
     @Override
@@ -39,20 +45,23 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public boolean isUserActivated(String email) {
-        AppUser user = userRepository.findByEmail(email).get();
+        AppUser user = userRepository.findByEmail(email).orElseThrow(() ->
+                new UserNotFoundException(HttpStatus.NOT_FOUND, "User with this username does not exist!"));
         return user.getEnabled();
     }
 
     @Override
     public boolean isNewPasswordMatchOldPassword(String resetPasswordToken, String newPassword) {
-        ConfirmationToken confirmationToken = confirmationTokenRepository.findByToken(resetPasswordToken).get();
+        ConfirmationToken confirmationToken = confirmationTokenRepository.findByToken(resetPasswordToken).orElseThrow(
+                () -> new InvalidConfirmationTokenException(HttpStatus.BAD_REQUEST, "This confirmation token is invalid!"));
         AppUser user = confirmationToken.getUser();
         return passwordEncoder.matches(newPassword, user.getPassword());
     }
 
     @Override
     public boolean isPasswordsMatch(String email, String password) {
-        AppUser user = userRepository.findByEmail(email).get();
+        AppUser user = userRepository.findByEmail(email).orElseThrow(() ->
+                new UserNotFoundException(HttpStatus.NOT_FOUND, "User with this username does not exist!"));
         return passwordEncoder.matches(password, user.getPassword());
     }
 }

@@ -1,5 +1,6 @@
 package com.kopchak.worldoftoys.service.impl;
 
+import com.kopchak.worldoftoys.exception.UserNotFoundException;
 import com.kopchak.worldoftoys.model.token.ConfirmationTokenType;
 import com.kopchak.worldoftoys.model.user.AppUser;
 import com.kopchak.worldoftoys.repository.user.UserRepository;
@@ -8,8 +9,8 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
@@ -19,8 +20,8 @@ import org.thymeleaf.context.Context;
 
 @Service
 @AllArgsConstructor
+@Slf4j
 public class EmailSenderServiceImpl implements EmailSenderService {
-    private final static Logger LOGGER = LoggerFactory.getLogger(EmailSenderServiceImpl.class);
     private final static String SENDER_EMAIL = "worldoftoys@gmail.com";
     private final static String ACCOUNT_ACTIVATION_TITLE = "Account activation";
     private final static String PASSWORD_RESET_TITLE = "Password reset";
@@ -50,8 +51,9 @@ public class EmailSenderServiceImpl implements EmailSenderService {
             helper.setSubject(msgSubject);
             helper.setFrom(SENDER_EMAIL);
             mailSender.send(mimeMessage);
+            log.info("Email sent to: {}", recipientEmail);
         } catch (MessagingException e) {
-            LOGGER.error("Failed to send email", e);
+            log.error("Failed to send email to: {} with subject: {}", recipientEmail, msgSubject, e);
             throw new IllegalStateException("Failed to send email");
         }
     }
@@ -59,7 +61,8 @@ public class EmailSenderServiceImpl implements EmailSenderService {
     @Override
     public void sendEmail(String userEmail, String confirmToken, ConfirmationTokenType tokenType) {
         String emailContent;
-        AppUser user = userRepository.findByEmail(userEmail).get();
+        AppUser user = userRepository.findByEmail(userEmail).orElseThrow(() ->
+                new UserNotFoundException(HttpStatus.NOT_FOUND, "User with this username does not exist!"));
         String fullName = user.getFirstname() + " " + user.getLastname();
         if (tokenType == ConfirmationTokenType.ACTIVATION) {
             emailContent = buildEmail(ACCOUNT_ACTIVATION_TITLE, fullName, ACCOUNT_ACTIVATION_MSG,

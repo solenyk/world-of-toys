@@ -2,6 +2,7 @@ package com.kopchak.worldoftoys.service.impl;
 
 import com.kopchak.worldoftoys.dto.token.AccessAndRefreshTokensDto;
 import com.kopchak.worldoftoys.dto.token.AuthTokenDto;
+import com.kopchak.worldoftoys.exception.UserNotFoundException;
 import com.kopchak.worldoftoys.model.token.AuthTokenType;
 import com.kopchak.worldoftoys.model.token.AuthenticationToken;
 import com.kopchak.worldoftoys.model.user.AppUser;
@@ -14,9 +15,9 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +29,7 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class JwtTokenServiceImpl implements JwtTokenService {
     @Value(value = "${security.jwt.secret}")
     private String SECRET_KEY;
@@ -35,8 +37,6 @@ public class JwtTokenServiceImpl implements JwtTokenService {
     private static final int REFRESH_TOKEN_EXPIRATION_TIME_IN_MILLIS = 1000 * 60 * 24 * 14;
     private final UserRepository userRepository;
     private final AuthTokenRepository authTokenRepository;
-
-    private static final Logger LOG = LoggerFactory.getLogger(JwtTokenServiceImpl.class);
 
     @Override
     public String extractUsername(String token) {
@@ -55,6 +55,20 @@ public class JwtTokenServiceImpl implements JwtTokenService {
     }
 
     @Override
+    public AccessAndRefreshTokensDto generateAuthTokens(String email) {
+        AppUser user = userRepository.findByEmail(email).orElseThrow(() ->
+                new UserNotFoundException(HttpStatus.NOT_FOUND, "User with this username does not exist!"));
+        String accessToken = generateJwtToken(email, AuthTokenType.ACCESS);
+        String refreshToken = generateJwtToken(email, AuthTokenType.REFRESH);
+        saveUserAuthToken(user, accessToken, AuthTokenType.ACCESS);
+        saveUserAuthToken(user, refreshToken, AuthTokenType.REFRESH);
+        log.info("Authentication tokens have been successfully generated and saved for the user: {}", email);
+        return AccessAndRefreshTokensDto.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .build();
+    }
+    @Override
     public boolean isActiveAuthTokenExists(String authToken, AuthTokenType tokenType) {
         String username = extractUsername(authToken);
         return authTokenRepository.isActiveAuthTokenExists(username, tokenType);
@@ -65,29 +79,20 @@ public class JwtTokenServiceImpl implements JwtTokenService {
         String refreshToken = refreshTokenDto.getToken();
         String username = extractUsername(refreshToken);
         String accessToken = generateJwtToken(username, AuthTokenType.ACCESS);
-        AppUser user = userRepository.findByEmail(username).get();
+        AppUser user = userRepository.findByEmail(username).orElseThrow(() ->
+                new UserNotFoundException(HttpStatus.NOT_FOUND, "User with this username does not exist!"));
         saveUserAuthToken(user, accessToken, AuthTokenType.ACCESS);
+        log.info("Authentication token have been successfully saved for the user: {}", username);
         return new AuthTokenDto(accessToken);
     }
 
     @Override
     @Transactional
     public void revokeAllUserAuthTokens(String username) {
-        AppUser user = userRepository.findByEmail(username).get();
+        AppUser user = userRepository.findByEmail(username).orElseThrow(() ->
+                new UserNotFoundException(HttpStatus.NOT_FOUND, "User with this username does not exist!"));
         authTokenRepository.revokeActiveUserAuthTokens(user);
-    }
-
-    @Override
-    public AccessAndRefreshTokensDto generateAuthTokens(String email) {
-        AppUser user = userRepository.findByEmail(email).get();
-        String accessToken = generateJwtToken(email, AuthTokenType.ACCESS);
-        String refreshToken = generateJwtToken(email, AuthTokenType.REFRESH);
-        saveUserAuthToken(user, accessToken, AuthTokenType.ACCESS);
-        saveUserAuthToken(user, refreshToken, AuthTokenType.REFRESH);
-        return AccessAndRefreshTokensDto.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .build();
+        log.info("Authentication tokens have been successfully revoked for the user: {}", username);
     }
 
     private String generateJwtToken(String username, AuthTokenType tokenType) {
