@@ -33,8 +33,8 @@ import java.util.Optional;
 public class JwtTokenServiceImpl implements JwtTokenService {
     @Value(value = "${security.jwt.secret}")
     private String SECRET_KEY;
-    private static final int ACCESS_TOKEN_EXPIRATION_TIME_IN_MILLIS = 1000 * 60 * 24;
-    private static final int REFRESH_TOKEN_EXPIRATION_TIME_IN_MILLIS = 1000 * 60 * 24 * 14;
+    private static final long ACCESS_TOKEN_EXPIRATION_TIME_IN_MILLIS = 1000L * 60 * 60 * 24;
+    private static final int REFRESH_TOKEN_EXPIRATION_TIME_IN_MILLIS = 1000 * 60 * 60 * 24 * 14;
     private final UserRepository userRepository;
     private final AuthTokenRepository authTokenRepository;
 
