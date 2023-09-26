@@ -1,11 +1,13 @@
 package com.kopchak.worldoftoys.repository.token;
 
 import com.kopchak.worldoftoys.model.token.ConfirmationToken;
+import com.kopchak.worldoftoys.model.token.ConfirmationTokenType;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -42,5 +44,31 @@ class ConfirmTokenRepositoryTest {
         //Assert
         assertThat(returnedToken).isNotNull();
         assertThat(returnedToken).isEmpty();
+    }
+
+    @Test
+    public void isNoActiveConfirmationToken_UsernameOfUserWithActiveConfirmTokens_ReturnsFalse(){
+        //Arrange
+        String username = "john.doe@example.com";
+
+        //Act
+        boolean isNoActiveConfirmationToken = confirmTokenRepository.isNoActiveConfirmationToken(username,
+                ConfirmationTokenType.ACTIVATION, LocalDateTime.now());
+
+        //Assert
+        assertThat(isNoActiveConfirmationToken).isEqualTo(false);
+    }
+
+    @Test
+    public void isNoActiveConfirmationToken_UsernameOfUserWithoutActiveConfirmTokens_ReturnsTrue(){
+        //Arrange
+        String username = "jane.smith@example.com";
+
+        //Act
+        boolean isNoActiveConfirmationToken = confirmTokenRepository.isNoActiveConfirmationToken(username,
+                ConfirmationTokenType.ACTIVATION, LocalDateTime.now());
+
+        //Assert
+        assertThat(isNoActiveConfirmationToken).isEqualTo(true);
     }
 }

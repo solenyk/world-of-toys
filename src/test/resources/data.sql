@@ -12,6 +12,6 @@ VALUES (1, 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsImlhdCI
 
 INSERT INTO confirmation_token(id, token, token_type, created_at, expires_at, confirmed_at, user_id)
 VALUES (1, '8e5648d7-9b4e-4724-83a1-be7e64603e48', 'ACTIVATION', '2023-09-22 15:47:15.593933',
-        '2023-09-22 16:02:15.593933', null, 1),
+        '2226-09-22 16:02:15.593933', null, 1),
        (2, '8e5648d7-9b4e-4724-83a1-be7e64603e47', 'RESET_PASSWORD', '2023-09-22 15:47:15.593933',
-        '2023-09-22 16:02:15.593933', null, 1);
+        '2226-09-22 16:02:15.593933', null, 1);
