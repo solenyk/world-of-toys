@@ -18,11 +18,11 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Date;
 import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 
@@ -40,40 +40,61 @@ class JwtTokenServiceImplTest {
     @Spy
     private JwtTokenServiceImpl jwtTokenService;
 
+    private String username;
+    private String validToken;
+    private long expTokenTimeInSeconds;
+    private String invalidToken;
+    private AuthTokenType accessTokenType;
+    private AppUser user;
+    private AuthenticationToken validAuthToken;
+    private AuthenticationToken invalidAuthToken;
+
     @BeforeEach
     void setUp() {
         ReflectionTestUtils.setField(jwtTokenService, "SECRET_KEY", "testsecretkey".repeat(20));
+        username = "user@example.com";
+        validToken = "eyJhbGciOiJIUzI1NiJ9" +
+                ".eyJzdWIiOiJ1c2VyQGV4YW1wbGUuY29tIiwiaWF0IjoxNjk1NzM4MzMwLCJleHAiOjk1Nzk3MzgzMzB9" +
+                ".EFuKx_EUPx8pEpVGk0wIIck1nxXB8prHj7noH8Nb3QI";
+        expTokenTimeInSeconds = 9579738330L;
+        invalidToken = "invalid-token";
+        accessTokenType = AuthTokenType.ACCESS;
+        user = AppUser.builder().email(username).build();
+        validAuthToken = AuthenticationToken
+                .builder()
+                .token(validToken)
+                .tokenType(accessTokenType)
+                .revoked(false)
+                .expired(false)
+                .user(user)
+                .build();
+        invalidAuthToken = AuthenticationToken
+                .builder()
+                .token(invalidToken)
+                .tokenType(accessTokenType)
+                .revoked(false)
+                .expired(false)
+                .user(user)
+                .build();
     }
 
     @Test
     void extractUsername_ValidToken_ReturnsOptionalString() {
         // Arrange
-        String expectedUsername = "user@example.com";
-        String token = "eyJhbGciOiJIUzI1NiJ9" +
-                ".eyJzdWIiOiJ1c2VyQGV4YW1wbGUuY29tIiwiaWF0IjoxNjk1NzM4MzMwLCJleHAiOjk1Nzk3MzgzMzB9" +
-                ".EFuKx_EUPx8pEpVGk0wIIck1nxXB8prHj7noH8Nb3QI";
-
-        long expTokenTimeInSeconds = 9579738330L;
-        Instant instant = Instant.ofEpochSecond(expTokenTimeInSeconds);
-        LocalDateTime localDateTime = instant.atZone(ZoneId.systemDefault()).toLocalDateTime();
-        log.warn("Token expiration date is {}", localDateTime);
-
+        String validToken = getValidToken();
 
         //Act
-        Optional<String> actualUsername = jwtTokenService.extractUsername(token);
+        Optional<String> actualUsername = jwtTokenService.extractUsername(validToken);
 
         //Assert
         assertThat(actualUsername).isPresent();
-        assertThat(actualUsername.get()).isEqualTo(expectedUsername);
+        assertThat(actualUsername.get()).isEqualTo(username);
     }
 
     @Test
     void extractUsername_InvalidToken_ReturnsEmptyOptional() {
-        // Arrange
-        String token = "invalid-token";
-
         //Act
-        Optional<String> actualUsername = jwtTokenService.extractUsername(token);
+        Optional<String> actualUsername = jwtTokenService.extractUsername(invalidToken);
 
         //Assert
         assertThat(actualUsername).isEmpty();
@@ -82,37 +103,14 @@ class JwtTokenServiceImplTest {
     @Test
     void isAuthTokenValid_ValidToken_ReturnsTrue() {
         // Arrange
-        String username = "user@example.com";
-        AuthTokenType tokenType = AuthTokenType.ACCESS;
-        String token = "eyJhbGciOiJIUzI1NiJ9" +
-                ".eyJzdWIiOiJ1c2VyQGV4YW1wbGUuY29tIiwiaWF0IjoxNjk1NzM4MzMwLCJleHAiOjk1Nzk3MzgzMzB9" +
-                ".EFuKx_EUPx8pEpVGk0wIIck1nxXB8prHj7noH8Nb3QI";
+        String validToken = getValidToken();
 
-        long expTokenTimeInSeconds = 9579738330L;
-        Instant instant = Instant.ofEpochSecond(expTokenTimeInSeconds);
-        LocalDateTime localDateTime = instant.atZone(ZoneId.systemDefault()).toLocalDateTime();
-        log.warn("Token expiration date is {}", localDateTime);
-
-        AppUser user = AppUser
-                .builder()
-                .email(username)
-                .build();
-
-        AuthenticationToken authToken = AuthenticationToken
-                .builder()
-                .token(token)
-                .tokenType(tokenType)
-                .revoked(false)
-                .expired(false)
-                .user(user)
-                .build();
-
-        when(authTokenRepository.findByToken(token)).thenReturn(Optional.of(authToken));
-        doReturn(Optional.of(username)).when(jwtTokenService).extractUsername(token);
+        when(authTokenRepository.findByToken(validToken)).thenReturn(Optional.of(validAuthToken));
+        doReturn(Optional.of(username)).when(jwtTokenService).extractUsername(validToken);
         when(userRepository.findByEmail(username)).thenReturn(Optional.of(user));
 
         //Act
-        boolean isValid = jwtTokenService.isAuthTokenValid(token, tokenType);
+        boolean isValid = jwtTokenService.isAuthTokenValid(validToken, accessTokenType);
 
         //Assert
         assertTrue(isValid);
@@ -134,32 +132,21 @@ class JwtTokenServiceImplTest {
     @Test
     void isAuthTokenValid_InvalidToken_ReturnsFalse() {
         // Arrange
-        String username = "user@example.com";
-        AuthTokenType tokenType = AuthTokenType.ACCESS;
-        String token = "invalid-token";
-
-        AppUser user = AppUser
-                .builder()
-                .email(username)
-                .build();
-
-        AuthenticationToken authToken = AuthenticationToken
-                .builder()
-                .token(token)
-                .tokenType(tokenType)
-                .revoked(false)
-                .expired(false)
-                .user(user)
-                .build();
-
-        when(authTokenRepository.findByToken(token)).thenReturn(Optional.of(authToken));
-        doReturn(Optional.of(username)).when(jwtTokenService).extractUsername(token);
+        when(authTokenRepository.findByToken(invalidToken)).thenReturn(Optional.of(invalidAuthToken));
+        doReturn(Optional.of(username)).when(jwtTokenService).extractUsername(invalidToken);
         when(userRepository.findByEmail(username)).thenReturn(Optional.of(user));
 
         //Act
-        boolean isValid = jwtTokenService.isAuthTokenValid(token, tokenType);
+        boolean isValid = jwtTokenService.isAuthTokenValid(invalidToken, accessTokenType);
 
         //Assert
         assertFalse(isValid);
+    }
+
+    private String getValidToken(){
+        Instant instant = Instant.ofEpochSecond(expTokenTimeInSeconds);
+        LocalDateTime localDateTime = instant.atZone(ZoneId.systemDefault()).toLocalDateTime();
+        log.warn("Token expiration date is {}", localDateTime);
+        return validToken;
     }
 }
