@@ -1,6 +1,8 @@
 package com.kopchak.worldoftoys.service.impl;
 
 import com.kopchak.worldoftoys.dto.token.AccessAndRefreshTokensDto;
+import com.kopchak.worldoftoys.dto.token.AuthTokenDto;
+import com.kopchak.worldoftoys.exception.InvalidRefreshTokenException;
 import com.kopchak.worldoftoys.exception.UserNotFoundException;
 import com.kopchak.worldoftoys.model.token.AuthTokenType;
 import com.kopchak.worldoftoys.model.token.AuthenticationToken;
@@ -161,7 +163,7 @@ class JwtTokenServiceImplTest {
     }
 
     @Test
-    void generateAuthTokens_UsernameOfNonExistingUser_ReturnsAccessAndRefreshTokensDto() {
+    void generateAuthTokens_UsernameOfNonExistingUser_ThrowsUserNotFoundException() {
         //Act
         ResponseStatusException exception = assertThrows(UserNotFoundException.class, () ->
             jwtTokenService.generateAuthTokens(username));
@@ -169,6 +171,79 @@ class JwtTokenServiceImplTest {
         String expectedMessage = "User with this username does not exist!";
         String actualMessage = exception.getReason();
         int expectedStatusCode = HttpStatus.NOT_FOUND.value();
+        int actualStatusCode = exception.getStatusCode().value();
+
+        //Assert
+        assertEquals(expectedMessage, actualMessage);
+        assertEquals(expectedStatusCode, actualStatusCode);
+    }
+
+    @Test
+    void isActiveAuthTokenExists_ValidTokenAndAuthTokenType_ReturnsTrue() {
+        // Arrange
+        when(authTokenRepository.isActiveAuthTokenExists(username, accessTokenType)).thenReturn(true);
+
+        //Act
+        boolean isActiveAuthTokenExists = jwtTokenService.isActiveAuthTokenExists(validToken, accessTokenType);
+
+        //Assert
+        assertTrue(isActiveAuthTokenExists);
+    }
+
+    @Test
+    void refreshAccessToken_ValidAuthTokenDtoWithExistingUser_ReturnsAuthTokenDto() {
+        // Arrange
+        AuthTokenDto refreshToken = AuthTokenDto
+                .builder()
+                .token(validToken)
+                .build();
+        when(userRepository.findByEmail(username)).thenReturn(Optional.of(user));
+
+        //Act
+       AuthTokenDto returnedAuthTokenDto = jwtTokenService.refreshAccessToken(refreshToken);
+
+        //Assert
+        assertThat(returnedAuthTokenDto).isNotNull();
+        assertThat(returnedAuthTokenDto.getToken()).isNotNull();
+    }
+
+    @Test
+    void refreshAccessToken_ValidAuthTokenDtoWithNonExistingUser_ThrowsUserNotFoundException() {
+        // Arrange
+        AuthTokenDto refreshToken = AuthTokenDto
+                .builder()
+                .token(validToken)
+                .build();
+
+        //Act
+        ResponseStatusException exception = assertThrows(UserNotFoundException.class, () ->
+                jwtTokenService.refreshAccessToken(refreshToken));
+
+        String expectedMessage = "User with this username does not exist!";
+        String actualMessage = exception.getReason();
+        int expectedStatusCode = HttpStatus.NOT_FOUND.value();
+        int actualStatusCode = exception.getStatusCode().value();
+
+        //Assert
+        assertEquals(expectedMessage, actualMessage);
+        assertEquals(expectedStatusCode, actualStatusCode);
+    }
+
+    @Test
+    void refreshAccessToken_InvalidAuthTokenDto_ThrowsInvalidRefreshTokenException() {
+        // Arrange
+        AuthTokenDto refreshToken = AuthTokenDto
+                .builder()
+                .token(invalidToken)
+                .build();
+
+        //Act
+        ResponseStatusException exception = assertThrows(InvalidRefreshTokenException.class, () ->
+                jwtTokenService.refreshAccessToken(refreshToken));
+
+        String expectedMessage = "This refresh token is invalid!";
+        String actualMessage = exception.getReason();
+        int expectedStatusCode = HttpStatus.BAD_REQUEST.value();
         int actualStatusCode = exception.getStatusCode().value();
 
         //Assert

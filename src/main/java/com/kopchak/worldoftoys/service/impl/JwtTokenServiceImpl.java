@@ -89,9 +89,9 @@ public class JwtTokenServiceImpl implements JwtTokenService {
         String refreshToken = refreshTokenDto.getToken();
         Optional<String> username = extractUsername(refreshToken);
         if(username.isPresent()){
-            String accessToken = generateJwtToken(username.get(), AuthTokenType.ACCESS);
             AppUser user = userRepository.findByEmail(username.get()).orElseThrow(() ->
                     new UserNotFoundException(HttpStatus.NOT_FOUND, "User with this username does not exist!"));
+            String accessToken = generateJwtToken(username.get(), AuthTokenType.ACCESS);
             saveUserAuthToken(user, accessToken, AuthTokenType.ACCESS);
             log.info("Authentication token have been successfully saved for the user: {}", username);
             return new AuthTokenDto(accessToken);
