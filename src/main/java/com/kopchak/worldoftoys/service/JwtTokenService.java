@@ -5,13 +5,11 @@ import com.kopchak.worldoftoys.dto.token.AuthTokenDto;
 import com.kopchak.worldoftoys.model.token.AuthTokenType;
 
 import java.util.Map;
+import java.util.Optional;
 
 public interface JwtTokenService {
-    String extractUsername(String token);
+    Optional<String> extractUsername(String token);
 
-//    String generateJwtToken(String username, AuthTokenType tokenType);
-
-//    String generateJwtToken(Map<String, Object> extraClaims, String username, AuthTokenType tokenType);
     boolean isAuthTokenValid(String token, AuthTokenType tokenType);
 
     boolean isActiveAuthTokenExists(String refreshToken, AuthTokenType tokenType);
