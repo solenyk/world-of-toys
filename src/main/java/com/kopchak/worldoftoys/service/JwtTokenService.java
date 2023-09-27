@@ -4,7 +4,6 @@ import com.kopchak.worldoftoys.dto.token.AccessAndRefreshTokensDto;
 import com.kopchak.worldoftoys.dto.token.AuthTokenDto;
 import com.kopchak.worldoftoys.model.token.AuthTokenType;
 
-import java.util.Map;
 import java.util.Optional;
 
 public interface JwtTokenService {
