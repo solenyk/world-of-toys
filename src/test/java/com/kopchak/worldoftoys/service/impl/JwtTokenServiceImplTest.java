@@ -28,8 +28,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @Slf4j
@@ -244,6 +243,35 @@ class JwtTokenServiceImplTest {
         String expectedMessage = "This refresh token is invalid!";
         String actualMessage = exception.getReason();
         int expectedStatusCode = HttpStatus.BAD_REQUEST.value();
+        int actualStatusCode = exception.getStatusCode().value();
+
+        //Assert
+        assertEquals(expectedMessage, actualMessage);
+        assertEquals(expectedStatusCode, actualStatusCode);
+    }
+
+    @Test
+    void revokeAllUserAuthTokens_UsernameOfExistingUser() {
+        // Arrange
+        when(userRepository.findByEmail(username)).thenReturn(Optional.of(user));
+        doNothing().when(authTokenRepository).revokeActiveUserAuthTokens(isA(AppUser.class));
+
+        //Act
+        jwtTokenService.revokeAllUserAuthTokens(username);
+
+        //Assert
+        verify(authTokenRepository, times(1)).revokeActiveUserAuthTokens(user);
+    }
+
+    @Test
+    void revokeAllUserAuthTokens_UsernameOfNonExistingUser_ThrowsUserNotFoundException() {
+        //Act
+        ResponseStatusException exception = assertThrows(UserNotFoundException.class, () ->
+                jwtTokenService.revokeAllUserAuthTokens(username));
+
+        String expectedMessage = "User with this username does not exist!";
+        String actualMessage = exception.getReason();
+        int expectedStatusCode = HttpStatus.NOT_FOUND.value();
         int actualStatusCode = exception.getStatusCode().value();
 
         //Assert
