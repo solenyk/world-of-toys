@@ -128,10 +128,16 @@ public class JwtTokenServiceImpl implements JwtTokenService {
     }
 
     private boolean isTokenExpired(String token) {
-        return extractAllClaims(token).getExpiration().before(new Date());
+        try {
+            Claims claims = extractAllClaims(token);
+            return claims.getExpiration().before(new Date());
+        } catch (JwtException e) {
+            log.error("Error extracting expiration date from token: {}", e.getMessage());
+            return true;
+        }
     }
 
-    private Claims extractAllClaims(String token) {
+    private Claims extractAllClaims(String token) throws JwtException{
         return Jwts
                 .parserBuilder()
                 .setSigningKey(getSignInKey())
