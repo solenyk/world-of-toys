@@ -1,5 +1,7 @@
 package com.kopchak.worldoftoys.service.impl;
 
+import com.kopchak.worldoftoys.dto.token.AccessAndRefreshTokensDto;
+import com.kopchak.worldoftoys.exception.UserNotFoundException;
 import com.kopchak.worldoftoys.model.token.AuthTokenType;
 import com.kopchak.worldoftoys.model.token.AuthenticationToken;
 import com.kopchak.worldoftoys.model.user.AppUser;
@@ -13,7 +15,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -21,8 +25,7 @@ import java.time.ZoneId;
 import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 
@@ -141,6 +144,36 @@ class JwtTokenServiceImplTest {
 
         //Assert
         assertFalse(isValid);
+    }
+
+    @Test
+    void generateAuthTokens_UsernameOfExistingUser_ReturnsAccessAndRefreshTokensDto() {
+        // Arrange
+        when(userRepository.findByEmail(username)).thenReturn(Optional.of(user));
+
+        //Act
+        AccessAndRefreshTokensDto accessAndRefreshTokensDto = jwtTokenService.generateAuthTokens(username);
+
+        //Assert
+        assertThat(accessAndRefreshTokensDto).isNotNull();
+        assertThat(accessAndRefreshTokensDto.getAccessToken()).isNotNull();
+        assertThat(accessAndRefreshTokensDto.getRefreshToken()).isNotNull();
+    }
+
+    @Test
+    void generateAuthTokens_UsernameOfNonExistingUser_ReturnsAccessAndRefreshTokensDto() {
+        //Act
+        ResponseStatusException exception = assertThrows(UserNotFoundException.class, () ->
+            jwtTokenService.generateAuthTokens(username));
+
+        String expectedMessage = "User with this username does not exist!";
+        String actualMessage = exception.getReason();
+        int expectedStatusCode = HttpStatus.NOT_FOUND.value();
+        int actualStatusCode = exception.getStatusCode().value();
+
+        //Assert
+        assertEquals(expectedMessage, actualMessage);
+        assertEquals(expectedStatusCode, actualStatusCode);
     }
 
     private String getValidToken(){
