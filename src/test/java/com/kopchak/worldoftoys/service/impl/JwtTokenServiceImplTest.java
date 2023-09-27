@@ -52,6 +52,8 @@ class JwtTokenServiceImplTest {
     private AppUser user;
     private AuthenticationToken validAuthToken;
     private AuthenticationToken invalidAuthToken;
+    private AuthTokenDto validAuthTokenDto;
+    private AuthTokenDto invalidAuthTokenDto;
 
     @BeforeEach
     void setUp() {
@@ -80,6 +82,8 @@ class JwtTokenServiceImplTest {
                 .expired(false)
                 .user(user)
                 .build();
+        validAuthTokenDto = AuthTokenDto.builder().token(validToken).build();
+        invalidAuthTokenDto = AuthTokenDto.builder().token(invalidToken).build();
     }
 
     @Test
@@ -122,12 +126,8 @@ class JwtTokenServiceImplTest {
 
     @Test
     void isAuthTokenValid_TokenThatIsNotPresent_ReturnsFalse() {
-        // Arrange
-        AuthTokenType tokenType = AuthTokenType.ACCESS;
-        String token = "not-present-token";
-
         //Act
-        boolean isValid = jwtTokenService.isAuthTokenValid(token, tokenType);
+        boolean isValid = jwtTokenService.isAuthTokenValid(invalidToken, accessTokenType);
 
         //Assert
         assertFalse(isValid);
@@ -165,7 +165,7 @@ class JwtTokenServiceImplTest {
     void generateAuthTokens_UsernameOfNonExistingUser_ThrowsUserNotFoundException() {
         //Act
         ResponseStatusException exception = assertThrows(UserNotFoundException.class, () ->
-            jwtTokenService.generateAuthTokens(username));
+                jwtTokenService.generateAuthTokens(username));
 
         String expectedMessage = "User with this username does not exist!";
         String actualMessage = exception.getReason();
@@ -192,14 +192,10 @@ class JwtTokenServiceImplTest {
     @Test
     void refreshAccessToken_ValidAuthTokenDtoWithExistingUser_ReturnsAuthTokenDto() {
         // Arrange
-        AuthTokenDto refreshToken = AuthTokenDto
-                .builder()
-                .token(validToken)
-                .build();
         when(userRepository.findByEmail(username)).thenReturn(Optional.of(user));
 
         //Act
-       AuthTokenDto returnedAuthTokenDto = jwtTokenService.refreshAccessToken(refreshToken);
+        AuthTokenDto returnedAuthTokenDto = jwtTokenService.refreshAccessToken(validAuthTokenDto);
 
         //Assert
         assertThat(returnedAuthTokenDto).isNotNull();
@@ -208,15 +204,9 @@ class JwtTokenServiceImplTest {
 
     @Test
     void refreshAccessToken_ValidAuthTokenDtoWithNonExistingUser_ThrowsUserNotFoundException() {
-        // Arrange
-        AuthTokenDto refreshToken = AuthTokenDto
-                .builder()
-                .token(validToken)
-                .build();
-
         //Act
         ResponseStatusException exception = assertThrows(UserNotFoundException.class, () ->
-                jwtTokenService.refreshAccessToken(refreshToken));
+                jwtTokenService.refreshAccessToken(validAuthTokenDto));
 
         String expectedMessage = "User with this username does not exist!";
         String actualMessage = exception.getReason();
@@ -230,15 +220,9 @@ class JwtTokenServiceImplTest {
 
     @Test
     void refreshAccessToken_InvalidAuthTokenDto_ThrowsInvalidRefreshTokenException() {
-        // Arrange
-        AuthTokenDto refreshToken = AuthTokenDto
-                .builder()
-                .token(invalidToken)
-                .build();
-
         //Act
         ResponseStatusException exception = assertThrows(InvalidRefreshTokenException.class, () ->
-                jwtTokenService.refreshAccessToken(refreshToken));
+                jwtTokenService.refreshAccessToken(invalidAuthTokenDto));
 
         String expectedMessage = "This refresh token is invalid!";
         String actualMessage = exception.getReason();
@@ -279,7 +263,7 @@ class JwtTokenServiceImplTest {
         assertEquals(expectedStatusCode, actualStatusCode);
     }
 
-    private String getValidToken(){
+    private String getValidToken() {
         Instant instant = Instant.ofEpochSecond(expTokenTimeInSeconds);
         LocalDateTime localDateTime = instant.atZone(ZoneId.systemDefault()).toLocalDateTime();
         log.warn("Token expiration date is {}", localDateTime);
