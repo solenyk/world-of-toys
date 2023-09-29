@@ -11,10 +11,10 @@ import com.kopchak.worldoftoys.repository.token.ConfirmTokenRepository;
 import com.kopchak.worldoftoys.repository.user.UserRepository;
 import com.kopchak.worldoftoys.service.ConfirmationTokenService;
 import com.kopchak.worldoftoys.service.JwtTokenService;
+import com.kopchak.worldoftoys.service.UserService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -27,7 +27,7 @@ public class ConfirmationTokenServiceImpl implements ConfirmationTokenService {
     private final ConfirmTokenRepository confirmationTokenRepository;
     private final JwtTokenService jwtTokenService;
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
+    private final UserService userService;
     private static final int TOKEN_EXPIRATION_TIME_IN_MINUTES = 15;
 
     @Override
@@ -64,8 +64,7 @@ public class ConfirmationTokenServiceImpl implements ConfirmationTokenService {
                 new InvalidConfirmationTokenException(HttpStatus.BAD_REQUEST, "This confirmation token is invalid!"));
         confirmationToken.setConfirmedAt(LocalDateTime.now());
         AppUser user = confirmationToken.getUser();
-        user.setEnabled(true);
-        userRepository.save(user);
+        userService.activateUserAccount(user);
         confirmationTokenRepository.save(confirmationToken);
         log.info("Activated account for user: {}", user.getUsername());
     }
@@ -81,9 +80,8 @@ public class ConfirmationTokenServiceImpl implements ConfirmationTokenService {
                 new InvalidConfirmationTokenException(HttpStatus.BAD_REQUEST, "This confirmation token is invalid!"));
         confirmationToken.setConfirmedAt(LocalDateTime.now());
         AppUser user = confirmationToken.getUser();
-        user.setPassword(passwordEncoder.encode(newPassword.getPassword()));
+        userService.changeUserPassword(user, newPassword.getPassword());
         confirmationTokenRepository.save(confirmationToken);
-        userRepository.save(user);
         jwtTokenService.revokeAllUserAuthTokens(user.getUsername());
         log.info("Changed password for user: {}", user.getUsername());
     }

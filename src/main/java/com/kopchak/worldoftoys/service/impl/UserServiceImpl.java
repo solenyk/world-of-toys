@@ -64,4 +64,16 @@ public class UserServiceImpl implements UserService {
                 new UserNotFoundException(HttpStatus.NOT_FOUND, "User with this username does not exist!"));
         return passwordEncoder.matches(password, user.getPassword());
     }
+
+    @Override
+    public void activateUserAccount(AppUser user){
+        user.setEnabled(true);
+        userRepository.save(user);
+    }
+
+    @Override
+    public void changeUserPassword(AppUser user, String newPassword){
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+    }
 }
