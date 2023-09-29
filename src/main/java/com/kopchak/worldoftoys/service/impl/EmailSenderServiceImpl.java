@@ -42,18 +42,18 @@ public class EmailSenderServiceImpl implements EmailSenderService {
 
     @Override
     @Async
-    public void send(String recipientEmail, String senderEmail, String msgSubject) {
+    public void send(String emailRecipient, String emailContent, String msgSubject) {
         try {
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "utf-8");
-            helper.setText(senderEmail, true);
-            helper.setTo(recipientEmail);
+            helper.setText(emailContent, true);
+            helper.setTo(emailRecipient);
             helper.setSubject(msgSubject);
             helper.setFrom(SENDER_EMAIL);
             mailSender.send(mimeMessage);
-            log.info("Email sent to: {}", recipientEmail);
+            log.info("Email sent to: {}", emailRecipient);
         } catch (MessagingException e) {
-            log.error("Failed to send email to: {} with subject: {}", recipientEmail, msgSubject, e);
+            log.error("Failed to send email to: {} with subject: {}", emailRecipient, msgSubject, e);
             throw new IllegalStateException("Failed to send email");
         }
     }
