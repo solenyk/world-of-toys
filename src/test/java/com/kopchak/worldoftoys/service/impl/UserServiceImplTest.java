@@ -10,6 +10,7 @@ import com.kopchak.worldoftoys.repository.user.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.function.Executable;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -39,6 +40,8 @@ class UserServiceImplTest {
     private ConfirmationToken confirmationToken;
     private String confirmToken;
     private String userPassword;
+    private String userNotFoundExceptionMsg;
+    private String invalidConfirmationTokenExceptionMsg;
 
     @BeforeEach
     void setUp() {
@@ -51,6 +54,8 @@ class UserServiceImplTest {
         confirmationToken = ConfirmationToken.builder().user(user).build();
         confirmToken = "confirm-token";
         userPassword = "new-password";
+        userNotFoundExceptionMsg = "User with this username does not exist!";
+        invalidConfirmationTokenExceptionMsg = "This confirmation token is invalid!";
     }
 
     @Test
@@ -88,16 +93,8 @@ class UserServiceImplTest {
 
     @Test
     public void isUserActivated_NonExistingUser_ThrowsUserNotFoundException() {
-        ResponseStatusException exception = assertThrows(UserNotFoundException.class, () ->
+        assertResponseStatusException(UserNotFoundException.class, userNotFoundExceptionMsg, HttpStatus.NOT_FOUND, () ->
                 userService.isUserActivated(userEmail));
-
-        String expectedMessage = "User with this username does not exist!";
-        String actualMessage = exception.getReason();
-        int expectedStatusCode = HttpStatus.NOT_FOUND.value();
-        int actualStatusCode = exception.getStatusCode().value();
-
-        assertEquals(expectedMessage, actualMessage);
-        assertEquals(expectedStatusCode, actualStatusCode);
     }
 
     @Test
@@ -112,16 +109,8 @@ class UserServiceImplTest {
 
     @Test
     public void isNewPasswordMatchOldPassword_NonExistingConfirmToken_ThrowsInvalidConfirmationTokenException() {
-        ResponseStatusException exception = assertThrows(InvalidConfirmationTokenException.class, () ->
-                userService.isNewPasswordMatchOldPassword(confirmToken, userPassword));
-
-        String expectedMessage = "This confirmation token is invalid!";
-        String actualMessage = exception.getReason();
-        int expectedStatusCode = HttpStatus.BAD_REQUEST.value();
-        int actualStatusCode = exception.getStatusCode().value();
-
-        assertEquals(expectedMessage, actualMessage);
-        assertEquals(expectedStatusCode, actualStatusCode);
+        assertResponseStatusException(InvalidConfirmationTokenException.class, invalidConfirmationTokenExceptionMsg,
+                HttpStatus.BAD_REQUEST, () -> userService.isNewPasswordMatchOldPassword(confirmToken, userPassword));
     }
 
     @Test
@@ -136,16 +125,8 @@ class UserServiceImplTest {
 
     @Test
     public void isPasswordsMatch_NonExistingUser_ThrowsUserNotFoundException() {
-        ResponseStatusException exception = assertThrows(UserNotFoundException.class, () ->
+        assertResponseStatusException(UserNotFoundException.class, userNotFoundExceptionMsg, HttpStatus.NOT_FOUND, () ->
                 userService.isPasswordsMatch(userEmail, userPassword));
-
-        String expectedMessage = "User with this username does not exist!";
-        String actualMessage = exception.getReason();
-        int expectedStatusCode = HttpStatus.NOT_FOUND.value();
-        int actualStatusCode = exception.getStatusCode().value();
-
-        assertEquals(expectedMessage, actualMessage);
-        assertEquals(expectedStatusCode, actualStatusCode);
     }
 
     @Test
@@ -166,5 +147,18 @@ class UserServiceImplTest {
 
         verify(userRepository).save(user);
         assertEquals(user.getPassword(), userPassword);
+    }
+
+    private void assertResponseStatusException(Class<? extends ResponseStatusException> expectedExceptionType,
+                                               String expectedMessage, HttpStatus expectedHttpStatus,
+                                               Executable executable) {
+        ResponseStatusException exception = assertThrows(expectedExceptionType, executable);
+
+        String actualMessage = exception.getReason();
+        int expectedStatusCode = expectedHttpStatus.value();
+        int actualStatusCode = exception.getStatusCode().value();
+
+        assertEquals(expectedMessage, actualMessage);
+        assertEquals(expectedStatusCode, actualStatusCode);
     }
 }

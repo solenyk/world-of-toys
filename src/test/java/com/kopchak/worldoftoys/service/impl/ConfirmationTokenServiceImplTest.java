@@ -14,6 +14,7 @@ import com.kopchak.worldoftoys.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.function.Executable;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -49,6 +50,8 @@ class ConfirmationTokenServiceImplTest {
     private String token;
     private ConfirmationToken confirmToken;
     private ResetPasswordDto newPassword;
+    private String userNotFoundExceptionMsg;
+    private String invalidConfirmationTokenExceptionMsg;
 
     @BeforeEach
     void setUp() {
@@ -65,68 +68,49 @@ class ConfirmationTokenServiceImplTest {
                 .user(user)
                 .build();
         newPassword = ResetPasswordDto.builder().password("new-password").build();
+        userNotFoundExceptionMsg = "User with this username does not exist!";
+        invalidConfirmationTokenExceptionMsg = "This confirmation token is invalid!";
     }
 
     @Test
     void createConfirmationToken_UsernameOfExistingUserAndTokenType_ReturnsConfirmTokenDto() {
-        // Arrange
         when(userRepository.findByEmail(username)).thenReturn(Optional.of(user));
 
-        //Act
         ConfirmTokenDto returnedConfirmTokenDto = confirmationTokenService.createConfirmationToken(username,
                 activationTokenType);
 
-        //Assert
         assertThat(returnedConfirmTokenDto).isNotNull();
         assertThat(returnedConfirmTokenDto.getToken()).isNotNull();
     }
 
     @Test
     void createConfirmationToken_UsernameOfNonExistingUserAndTokenType_ThrowsUserNotFoundException() {
-        //Act
-        ResponseStatusException exception = assertThrows(UserNotFoundException.class, () ->
+        assertResponseStatusException(UserNotFoundException.class, userNotFoundExceptionMsg, HttpStatus.NOT_FOUND, () ->
                 confirmationTokenService.createConfirmationToken(username, activationTokenType));
-
-        String expectedMessage = "User with this username does not exist!";
-        String actualMessage = exception.getReason();
-        int expectedStatusCode = HttpStatus.NOT_FOUND.value();
-        int actualStatusCode = exception.getStatusCode().value();
-
-        //Assert
-        assertEquals(expectedMessage, actualMessage);
-        assertEquals(expectedStatusCode, actualStatusCode);
     }
 
     @Test
     void isConfirmationTokenInvalid_UsernameOfNonExistingUserAndTokenType_ReturnsFalse() {
-        // Arrange
         when(confirmationTokenRepository.findByToken(token)).thenReturn(Optional.of(confirmToken));
 
-        //Act
         boolean confirmationTokenInvalid = confirmationTokenService.isConfirmationTokenInvalid(token, activationTokenType);
 
-        //Assert
         assertFalse(confirmationTokenInvalid);
     }
 
     @Test
     void isConfirmationTokenInvalid_UsernameOfNonExistingUserAndTokenType_ReturnsTrue() {
-        //Act
         boolean confirmationTokenInvalid = confirmationTokenService.isConfirmationTokenInvalid(token, activationTokenType);
 
-        //Assert
         assertTrue(confirmationTokenInvalid);
     }
 
     @Test
     void activateAccountUsingActivationToken_ExistingToken() {
-        // Arrange
         when(confirmationTokenRepository.findByToken(token)).thenReturn(Optional.of(confirmToken));
 
-        //Act
-       confirmationTokenService.activateAccountUsingActivationToken(token);
+        confirmationTokenService.activateAccountUsingActivationToken(token);
 
-        //Assert
         assertThat(confirmToken.getConfirmedAt()).isNotNull();
         verify(userService).activateUserAccount(user);
         verify(confirmationTokenRepository).save(confirmToken);
@@ -134,42 +118,26 @@ class ConfirmationTokenServiceImplTest {
 
     @Test
     void activateAccountUsingActivationToken_NonExistingToken_ThrowsInvalidConfirmationTokenException() {
-        //Act
-        ResponseStatusException exception = assertThrows(InvalidConfirmationTokenException.class, () ->
-                confirmationTokenService.activateAccountUsingActivationToken(token));
-
-        String expectedMessage = "This confirmation token is invalid!";
-        String actualMessage = exception.getReason();
-        int expectedStatusCode = HttpStatus.BAD_REQUEST.value();
-        int actualStatusCode = exception.getStatusCode().value();
-
-        //Assert
-        assertEquals(expectedMessage, actualMessage);
-        assertEquals(expectedStatusCode, actualStatusCode);
+        assertResponseStatusException(InvalidConfirmationTokenException.class, invalidConfirmationTokenExceptionMsg,
+                HttpStatus.BAD_REQUEST, () -> confirmationTokenService.activateAccountUsingActivationToken(token));
     }
 
     @Test
     void isNoActiveConfirmationToken_UsernameAndTokenType_ReturnsTrue() {
-        // Arrange
         when(confirmationTokenRepository.isNoActiveConfirmationToken(eq(username), eq(activationTokenType),
                 any(LocalDateTime.class))).thenReturn(true);
 
-        //Act
         boolean isNoActiveConfirmationToken = confirmationTokenService.isNoActiveConfirmationToken(username, activationTokenType);
 
-        //Assert
         assertTrue(isNoActiveConfirmationToken);
     }
 
     @Test
     void changePasswordUsingResetToken_ExistingToken() {
-        // Arrange
         when(confirmationTokenRepository.findByToken(token)).thenReturn(Optional.of(confirmToken));
 
-        //Act
         confirmationTokenService.changePasswordUsingResetToken(token, newPassword);
 
-        //Assert
         assertThat(confirmToken.getConfirmedAt()).isNotNull();
         verify(userService).changeUserPassword(user, newPassword.getPassword());
         verify(confirmationTokenRepository).save(confirmToken);
@@ -178,16 +146,19 @@ class ConfirmationTokenServiceImplTest {
 
     @Test
     void changePasswordUsingResetToken_NonExistingToken_ThrowsInvalidConfirmationTokenException() {
-        //Act
-        ResponseStatusException exception = assertThrows(InvalidConfirmationTokenException.class, () ->
-                confirmationTokenService.changePasswordUsingResetToken(token, newPassword));
+        assertResponseStatusException(InvalidConfirmationTokenException.class, invalidConfirmationTokenExceptionMsg,
+                HttpStatus.BAD_REQUEST, () -> confirmationTokenService.changePasswordUsingResetToken(token, newPassword));
+    }
 
-        String expectedMessage = "This confirmation token is invalid!";
+    private void assertResponseStatusException(Class<? extends ResponseStatusException> expectedExceptionType,
+                                               String expectedMessage, HttpStatus expectedHttpStatus,
+                                               Executable executable) {
+        ResponseStatusException exception = assertThrows(expectedExceptionType, executable);
+
         String actualMessage = exception.getReason();
-        int expectedStatusCode = HttpStatus.BAD_REQUEST.value();
+        int expectedStatusCode = expectedHttpStatus.value();
         int actualStatusCode = exception.getStatusCode().value();
 
-        //Assert
         assertEquals(expectedMessage, actualMessage);
         assertEquals(expectedStatusCode, actualStatusCode);
     }
