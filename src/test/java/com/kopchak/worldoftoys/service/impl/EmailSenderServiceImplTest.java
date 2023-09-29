@@ -42,6 +42,7 @@ class EmailSenderServiceImplTest {
 
     @InjectMocks
     private EmailSenderServiceImpl emailSenderService;
+
     private MimeMessage mimeMessage;
     private String emailRecipient;
     private String emailContent;
@@ -106,11 +107,7 @@ class EmailSenderServiceImplTest {
 
     @Test
     public void sendEmail_ActivationToken_SuccessfulSend(){
-        when(userRepository.findByEmail(userEmail)).thenReturn(java.util.Optional.of(user));
-        when(request.getRequestURL()).thenReturn(new StringBuffer(requestUrl));
-        when(request.getServletPath()).thenReturn(servletPath);
-        when(templateEngine.process(eq("email-template"), any(Context.class))).thenReturn(expectedEmailContent);
-        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        mockMethodsCallForSendEmail();
 
         emailSenderService.sendEmail(userEmail, confirmToken, activationTokenType);
 
@@ -120,11 +117,7 @@ class EmailSenderServiceImplTest {
 
     @Test
     public void sendEmail_ResetPasswordToken_SuccessfulSend(){
-        when(userRepository.findByEmail(userEmail)).thenReturn(java.util.Optional.of(user));
-        when(request.getRequestURL()).thenReturn(new StringBuffer(requestUrl));
-        when(request.getServletPath()).thenReturn(servletPath);
-        when(templateEngine.process(eq("email-template"), any(Context.class))).thenReturn(expectedEmailContent);
-        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        mockMethodsCallForSendEmail();
 
         emailSenderService.sendEmail(userEmail, confirmToken, resetPasswordTokenType);
 
@@ -133,7 +126,7 @@ class EmailSenderServiceImplTest {
     }
 
     @Test
-    public void sendEmail_ResetPasswordToken_Throws(){
+    public void sendEmail_ResetPasswordToken_ThrowsUserNotFoundException(){
         ResponseStatusException exception = assertThrows(UserNotFoundException.class, () ->
                 emailSenderService.sendEmail(userEmail, confirmToken, resetPasswordTokenType));
 
@@ -144,5 +137,13 @@ class EmailSenderServiceImplTest {
 
         assertEquals(expectedMessage, actualMessage);
         assertEquals(expectedStatusCode, actualStatusCode);
+    }
+
+    private void mockMethodsCallForSendEmail(){
+        when(userRepository.findByEmail(userEmail)).thenReturn(java.util.Optional.of(user));
+        when(request.getRequestURL()).thenReturn(new StringBuffer(requestUrl));
+        when(request.getServletPath()).thenReturn(servletPath);
+        when(templateEngine.process(eq("email-template"), any(Context.class))).thenReturn(expectedEmailContent);
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
     }
 }
