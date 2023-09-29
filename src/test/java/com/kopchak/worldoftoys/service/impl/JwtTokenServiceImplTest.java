@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.function.Executable;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
@@ -54,6 +55,8 @@ class JwtTokenServiceImplTest {
     private AuthenticationToken invalidAuthToken;
     private AuthTokenDto validAuthTokenDto;
     private AuthTokenDto invalidAuthTokenDto;
+    private String userNotFoundExceptionMsg;
+    private String invalidRefreshTokenExceptionMsg;
 
     @BeforeEach
     void setUp() {
@@ -84,78 +87,64 @@ class JwtTokenServiceImplTest {
                 .build();
         validAuthTokenDto = AuthTokenDto.builder().token(validToken).build();
         invalidAuthTokenDto = AuthTokenDto.builder().token(invalidToken).build();
+        userNotFoundExceptionMsg = "User with this username does not exist!";
+        invalidRefreshTokenExceptionMsg = "This refresh token is invalid!";
     }
 
     @Test
     void extractUsername_ValidToken_ReturnsOptionalString() {
-        // Arrange
         String validToken = getValidToken();
 
-        //Act
         Optional<String> actualUsername = jwtTokenService.extractUsername(validToken);
 
-        //Assert
         assertThat(actualUsername).isPresent();
         assertThat(actualUsername.get()).isEqualTo(username);
     }
 
     @Test
     void extractUsername_InvalidToken_ReturnsEmptyOptional() {
-        //Act
         Optional<String> actualUsername = jwtTokenService.extractUsername(invalidToken);
 
-        //Assert
         assertThat(actualUsername).isEmpty();
     }
 
     @Test
     void isAuthTokenValid_ValidToken_ReturnsTrue() {
-        // Arrange
         String validToken = getValidToken();
 
         when(authTokenRepository.findByToken(validToken)).thenReturn(Optional.of(validAuthToken));
         doReturn(Optional.of(username)).when(jwtTokenService).extractUsername(validToken);
         when(userRepository.findByEmail(username)).thenReturn(Optional.of(user));
 
-        //Act
         boolean isValid = jwtTokenService.isAuthTokenValid(validToken, accessTokenType);
 
-        //Assert
         assertTrue(isValid);
     }
 
     @Test
     void isAuthTokenValid_TokenThatIsNotPresent_ReturnsFalse() {
-        //Act
         boolean isValid = jwtTokenService.isAuthTokenValid(invalidToken, accessTokenType);
 
-        //Assert
         assertFalse(isValid);
     }
 
     @Test
     void isAuthTokenValid_InvalidToken_ReturnsFalse() {
-        // Arrange
         when(authTokenRepository.findByToken(invalidToken)).thenReturn(Optional.of(invalidAuthToken));
         doReturn(Optional.of(username)).when(jwtTokenService).extractUsername(invalidToken);
         when(userRepository.findByEmail(username)).thenReturn(Optional.of(user));
 
-        //Act
         boolean isValid = jwtTokenService.isAuthTokenValid(invalidToken, accessTokenType);
 
-        //Assert
         assertFalse(isValid);
     }
 
     @Test
     void generateAuthTokens_UsernameOfExistingUser_ReturnsAccessAndRefreshTokensDto() {
-        // Arrange
         when(userRepository.findByEmail(username)).thenReturn(Optional.of(user));
 
-        //Act
         AccessAndRefreshTokensDto accessAndRefreshTokensDto = jwtTokenService.generateAuthTokens(username);
 
-        //Assert
         assertThat(accessAndRefreshTokensDto).isNotNull();
         assertThat(accessAndRefreshTokensDto.getAccessToken()).isNotNull();
         assertThat(accessAndRefreshTokensDto.getRefreshToken()).isNotNull();
@@ -163,104 +152,55 @@ class JwtTokenServiceImplTest {
 
     @Test
     void generateAuthTokens_UsernameOfNonExistingUser_ThrowsUserNotFoundException() {
-        //Act
-        ResponseStatusException exception = assertThrows(UserNotFoundException.class, () ->
+        assertResponseStatusException(UserNotFoundException.class, userNotFoundExceptionMsg, HttpStatus.NOT_FOUND, () ->
                 jwtTokenService.generateAuthTokens(username));
-
-        String expectedMessage = "User with this username does not exist!";
-        String actualMessage = exception.getReason();
-        int expectedStatusCode = HttpStatus.NOT_FOUND.value();
-        int actualStatusCode = exception.getStatusCode().value();
-
-        //Assert
-        assertEquals(expectedMessage, actualMessage);
-        assertEquals(expectedStatusCode, actualStatusCode);
     }
 
     @Test
     void isActiveAuthTokenExists_ValidTokenAndAuthTokenType_ReturnsTrue() {
-        // Arrange
         when(authTokenRepository.isActiveAuthTokenExists(username, accessTokenType)).thenReturn(true);
 
-        //Act
         boolean isActiveAuthTokenExists = jwtTokenService.isActiveAuthTokenExists(validToken, accessTokenType);
 
-        //Assert
         assertTrue(isActiveAuthTokenExists);
     }
 
     @Test
     void refreshAccessToken_ValidAuthTokenDtoWithExistingUser_ReturnsAuthTokenDto() {
-        // Arrange
         when(userRepository.findByEmail(username)).thenReturn(Optional.of(user));
 
-        //Act
         AuthTokenDto returnedAuthTokenDto = jwtTokenService.refreshAccessToken(validAuthTokenDto);
 
-        //Assert
         assertThat(returnedAuthTokenDto).isNotNull();
         assertThat(returnedAuthTokenDto.getToken()).isNotNull();
     }
 
     @Test
     void refreshAccessToken_ValidAuthTokenDtoWithNonExistingUser_ThrowsUserNotFoundException() {
-        //Act
-        ResponseStatusException exception = assertThrows(UserNotFoundException.class, () ->
+        assertResponseStatusException(UserNotFoundException.class, userNotFoundExceptionMsg, HttpStatus.NOT_FOUND,() ->
                 jwtTokenService.refreshAccessToken(validAuthTokenDto));
-
-        String expectedMessage = "User with this username does not exist!";
-        String actualMessage = exception.getReason();
-        int expectedStatusCode = HttpStatus.NOT_FOUND.value();
-        int actualStatusCode = exception.getStatusCode().value();
-
-        //Assert
-        assertEquals(expectedMessage, actualMessage);
-        assertEquals(expectedStatusCode, actualStatusCode);
     }
 
     @Test
     void refreshAccessToken_InvalidAuthTokenDto_ThrowsInvalidRefreshTokenException() {
-        //Act
-        ResponseStatusException exception = assertThrows(InvalidRefreshTokenException.class, () ->
-                jwtTokenService.refreshAccessToken(invalidAuthTokenDto));
-
-        String expectedMessage = "This refresh token is invalid!";
-        String actualMessage = exception.getReason();
-        int expectedStatusCode = HttpStatus.BAD_REQUEST.value();
-        int actualStatusCode = exception.getStatusCode().value();
-
-        //Assert
-        assertEquals(expectedMessage, actualMessage);
-        assertEquals(expectedStatusCode, actualStatusCode);
+        assertResponseStatusException(InvalidRefreshTokenException.class, invalidRefreshTokenExceptionMsg,
+                HttpStatus.BAD_REQUEST, () -> jwtTokenService.refreshAccessToken(invalidAuthTokenDto));
     }
 
     @Test
     void revokeAllUserAuthTokens_UsernameOfExistingUser() {
-        // Arrange
         when(userRepository.findByEmail(username)).thenReturn(Optional.of(user));
         doNothing().when(authTokenRepository).revokeActiveUserAuthTokens(isA(AppUser.class));
 
-        //Act
         jwtTokenService.revokeAllUserAuthTokens(username);
 
-        //Assert
         verify(authTokenRepository, times(1)).revokeActiveUserAuthTokens(user);
     }
 
     @Test
     void revokeAllUserAuthTokens_UsernameOfNonExistingUser_ThrowsUserNotFoundException() {
-        //Act
-        ResponseStatusException exception = assertThrows(UserNotFoundException.class, () ->
+        assertResponseStatusException(UserNotFoundException.class, userNotFoundExceptionMsg, HttpStatus.NOT_FOUND, () ->
                 jwtTokenService.revokeAllUserAuthTokens(username));
-
-        String expectedMessage = "User with this username does not exist!";
-        String actualMessage = exception.getReason();
-        int expectedStatusCode = HttpStatus.NOT_FOUND.value();
-        int actualStatusCode = exception.getStatusCode().value();
-
-        //Assert
-        assertEquals(expectedMessage, actualMessage);
-        assertEquals(expectedStatusCode, actualStatusCode);
     }
 
     private String getValidToken() {
@@ -268,5 +208,18 @@ class JwtTokenServiceImplTest {
         LocalDateTime localDateTime = instant.atZone(ZoneId.systemDefault()).toLocalDateTime();
         log.warn("Token expiration date is {}", localDateTime);
         return validToken;
+    }
+
+    private void assertResponseStatusException(Class<? extends ResponseStatusException> expectedExceptionType,
+                                               String expectedMessage, HttpStatus expectedHttpStatus,
+                                               Executable executable) {
+        ResponseStatusException exception = assertThrows(expectedExceptionType, executable);
+
+        String actualMessage = exception.getReason();
+        int expectedStatusCode = expectedHttpStatus.value();
+        int actualStatusCode = exception.getStatusCode().value();
+
+        assertEquals(expectedMessage, actualMessage);
+        assertEquals(expectedStatusCode, actualStatusCode);
     }
 }
