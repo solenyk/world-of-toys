@@ -8,6 +8,7 @@ import com.kopchak.worldoftoys.service.EmailSenderService;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -15,6 +16,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.thymeleaf.ITemplateEngine;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
@@ -37,7 +39,7 @@ public class EmailSenderServiceImpl implements EmailSenderService {
             "Thank you for using our website. Please click on the below link to reset your password:";
     private final JavaMailSender mailSender;
     private final UserRepository userRepository;
-    private TemplateEngine templateEngine;
+    private ITemplateEngine templateEngine;
     private final HttpServletRequest request;
 
     @Override
@@ -85,7 +87,7 @@ public class EmailSenderServiceImpl implements EmailSenderService {
         return templateEngine.process("email-template", context);
     }
 
-    private String getBaseUrl() {
+    private @NotNull String getBaseUrl() {
         String requestUrl = request.getRequestURL().toString();
         String servletPath = request.getServletPath();
         return requestUrl.substring(0, requestUrl.length() - servletPath.length());
