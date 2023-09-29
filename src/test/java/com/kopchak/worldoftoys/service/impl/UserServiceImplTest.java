@@ -7,11 +7,9 @@ import com.kopchak.worldoftoys.model.token.ConfirmationToken;
 import com.kopchak.worldoftoys.model.user.AppUser;
 import com.kopchak.worldoftoys.repository.token.ConfirmTokenRepository;
 import com.kopchak.worldoftoys.repository.user.UserRepository;
-//import org.junit.jupiter.api.AssertThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.function.Executable;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -48,6 +46,7 @@ class UserServiceImplTest {
         user = AppUser
                 .builder()
                 .enabled(true)
+                .password("password")
                 .build();
         confirmationToken = ConfirmationToken.builder().user(user).build();
         confirmToken = "confirm-token";
@@ -147,5 +146,25 @@ class UserServiceImplTest {
 
         assertEquals(expectedMessage, actualMessage);
         assertEquals(expectedStatusCode, actualStatusCode);
+    }
+
+    @Test
+    public void activateUserAccount_UnactivatedAppUser() {
+        user.setEnabled(false);
+
+        userService.activateUserAccount(user);
+
+        verify(userRepository).save(user);
+        assertTrue(user.getEnabled());
+    }
+
+    @Test
+    public void changeUserPassword_AppUserAndNewPassword() {
+        when(passwordEncoder.encode(userPassword)).thenReturn(userPassword);
+
+        userService.changeUserPassword(user, userPassword);
+
+        verify(userRepository).save(user);
+        assertEquals(user.getPassword(), userPassword);
     }
 }
