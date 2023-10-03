@@ -3,12 +3,10 @@ package com.kopchak.worldoftoys.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kopchak.worldoftoys.dto.error.ErrorResponseDto;
 import com.kopchak.worldoftoys.dto.token.ConfirmTokenDto;
+import com.kopchak.worldoftoys.dto.user.ResetPasswordDto;
 import com.kopchak.worldoftoys.dto.user.UserRegistrationDto;
 import com.kopchak.worldoftoys.dto.user.UsernameDto;
-import com.kopchak.worldoftoys.exception.AccountIsAlreadyActivatedException;
-import com.kopchak.worldoftoys.exception.InvalidConfirmationTokenException;
-import com.kopchak.worldoftoys.exception.UserNotFoundException;
-import com.kopchak.worldoftoys.exception.UsernameAlreadyExistException;
+import com.kopchak.worldoftoys.exception.*;
 import com.kopchak.worldoftoys.model.token.ConfirmationTokenType;
 import com.kopchak.worldoftoys.service.ConfirmationTokenService;
 import com.kopchak.worldoftoys.service.EmailSenderService;
@@ -68,7 +66,9 @@ class AuthenticationControllerTest {
     private ResponseStatusException invalidConfirmationTokenException;
     private ResponseStatusException userNotFoundException;
     private ResponseStatusException accountIsAlreadyActivatedException;
+    private ResponseStatusException invalidPasswordException;
     private UsernameDto usernameDto;
+    private ResetPasswordDto resetPasswordDto;
 
     @BeforeEach
     public void setUp() {
@@ -88,10 +88,12 @@ class AuthenticationControllerTest {
                 .token(confirmToken)
                 .build();
         usernameDto = UsernameDto.builder().email(username).build();
+        resetPasswordDto = ResetPasswordDto.builder().password("new-password").build();
         usernameAlreadyExistException = new UsernameAlreadyExistException(HttpStatus.BAD_REQUEST, "This username already exist!");
         invalidConfirmationTokenException = new InvalidConfirmationTokenException(HttpStatus.BAD_REQUEST, "This confirmation token is invalid!");
         userNotFoundException = new UserNotFoundException(HttpStatus.NOT_FOUND, "User with this username does not exist!");
         accountIsAlreadyActivatedException = new AccountIsAlreadyActivatedException(HttpStatus.CONFLICT, "Account is already activated!");
+        invalidPasswordException = new InvalidPasswordException(HttpStatus.BAD_REQUEST, "New password matches old password!");
     }
 
     @Test
@@ -168,7 +170,7 @@ class AuthenticationControllerTest {
     public void resendVerificationEmail_RegisteredAndNotActivatedUser_ReturnsNoContentStatus() throws Exception {
         when(userService.isUserRegistered(username)).thenReturn(true);
         when(userService.isUserActivated(username)).thenReturn(false);
-        when(confirmationTokenService.isNoActiveConfirmationToken(username,activationTokenType)).thenReturn(true);
+        when(confirmationTokenService.isNoActiveConfirmationToken(username, activationTokenType)).thenReturn(true);
         when(confirmationTokenService.createConfirmationToken(username, activationTokenType)).thenReturn(confirmTokenDto);
         doNothing().when(emailSenderService).sendEmail(username, confirmToken, activationTokenType);
 
@@ -199,6 +201,7 @@ class AuthenticationControllerTest {
         response.andExpect(MockMvcResultMatchers.status().isNotFound())
                 .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)));
     }
+
     @Test
     public void resendVerificationEmail_RegisteredAndActivatedUser_ReturnsConflictStatus() throws Exception {
         when(userService.isUserRegistered(username)).thenReturn(true);
@@ -220,7 +223,7 @@ class AuthenticationControllerTest {
     @Test
     public void sendResetPasswordEmail_RegisteredUser_ReturnsNoContentStatus() throws Exception {
         when(userService.isUserRegistered(username)).thenReturn(true);
-        when(confirmationTokenService.isNoActiveConfirmationToken(username,resetPasswordTokenType)).thenReturn(true);
+        when(confirmationTokenService.isNoActiveConfirmationToken(username, resetPasswordTokenType)).thenReturn(true);
         when(confirmationTokenService.createConfirmationToken(username, resetPasswordTokenType)).thenReturn(confirmTokenDto);
         doNothing().when(emailSenderService).sendEmail(username, confirmToken, resetPasswordTokenType);
 
@@ -236,7 +239,7 @@ class AuthenticationControllerTest {
     }
 
     @Test
-    public void sendResetPasswordEmail_NotRegisteredUser_ReturnsNoContentStatus() throws Exception {
+    public void sendResetPasswordEmail_NotRegisteredUser_ReturnsNotFoundStatus() throws Exception {
         when(userService.isUserRegistered(username)).thenReturn(false);
 
         ResultActions response = mockMvc.perform(post("/api/v1/auth/forgot-password")
@@ -249,6 +252,58 @@ class AuthenticationControllerTest {
         ErrorResponseDto errorResponseDto = responseStatusExceptionToErrorResponseDto(userNotFoundException);
 
         response.andExpect(MockMvcResultMatchers.status().isNotFound())
+                .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)));
+    }
+
+    @Test
+    public void changePassword_ValidConfirmTokenAndNewPasswordNotMatchOldPassword_ReturnsNoContentStatus() throws Exception {
+        when(confirmationTokenService.isConfirmationTokenInvalid(confirmToken, resetPasswordTokenType)).thenReturn(false);
+        when(userService.isNewPasswordMatchOldPassword(confirmToken, resetPasswordDto.getPassword())).thenReturn(false);
+        doNothing().when(confirmationTokenService).changePasswordUsingResetToken(confirmToken, resetPasswordDto);
+
+        ResultActions response = mockMvc.perform(post("/api/v1/auth/reset-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .param("token", confirmToken)
+                .content(objectMapper.writeValueAsString(resetPasswordDto)));
+
+        verify(confirmationTokenService).changePasswordUsingResetToken(eq(confirmToken), any());
+
+        response.andExpect(MockMvcResultMatchers.status().isNoContent())
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    public void changePassword_ValidConfirmTokenAndNewPasswordMatchOldPassword_ReturnsBadRequestStatus() throws Exception {
+        when(confirmationTokenService.isConfirmationTokenInvalid(confirmToken, resetPasswordTokenType)).thenReturn(false);
+        when(userService.isNewPasswordMatchOldPassword(confirmToken, resetPasswordDto.getPassword())).thenReturn(true);
+
+        ResultActions response = mockMvc.perform(post("/api/v1/auth/reset-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .param("token", confirmToken)
+                .content(objectMapper.writeValueAsString(resetPasswordDto)));
+
+        verify(confirmationTokenService, never()).changePasswordUsingResetToken(any(), any());
+
+        ErrorResponseDto errorResponseDto = responseStatusExceptionToErrorResponseDto(invalidPasswordException);
+
+        response.andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)));
+    }
+
+    @Test
+    public void changePassword_InvalidConfirmToken_ReturnsBadRequestStatus() throws Exception {
+        when(confirmationTokenService.isConfirmationTokenInvalid(confirmToken, resetPasswordTokenType)).thenReturn(true);
+
+        ResultActions response = mockMvc.perform(post("/api/v1/auth/reset-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .param("token", confirmToken)
+                .content(objectMapper.writeValueAsString(resetPasswordDto)));
+
+        verify(confirmationTokenService, never()).changePasswordUsingResetToken(any(), any());
+
+        ErrorResponseDto errorResponseDto = responseStatusExceptionToErrorResponseDto(invalidConfirmationTokenException);
+
+        response.andExpect(MockMvcResultMatchers.status().isBadRequest())
                 .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)));
     }
 
