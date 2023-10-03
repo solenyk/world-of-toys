@@ -3,12 +3,14 @@ package com.kopchak.worldoftoys.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kopchak.worldoftoys.dto.error.ErrorResponseDto;
 import com.kopchak.worldoftoys.dto.token.AccessAndRefreshTokensDto;
+import com.kopchak.worldoftoys.dto.token.AuthTokenDto;
 import com.kopchak.worldoftoys.dto.token.ConfirmTokenDto;
 import com.kopchak.worldoftoys.dto.user.ResetPasswordDto;
 import com.kopchak.worldoftoys.dto.user.UserAuthDto;
 import com.kopchak.worldoftoys.dto.user.UserRegistrationDto;
 import com.kopchak.worldoftoys.dto.user.UsernameDto;
 import com.kopchak.worldoftoys.exception.*;
+import com.kopchak.worldoftoys.model.token.AuthTokenType;
 import com.kopchak.worldoftoys.model.token.ConfirmationTokenType;
 import com.kopchak.worldoftoys.service.ConfirmationTokenService;
 import com.kopchak.worldoftoys.service.EmailSenderService;
@@ -73,8 +75,11 @@ class AuthenticationControllerTest {
     private ResponseStatusException accountIsAlreadyActivatedException;
     private ResponseStatusException invalidPasswordException;
     private UsernameDto usernameDto;
+    private AuthTokenDto authTokenDto;
     private ResetPasswordDto resetPasswordDto;
     private AccessAndRefreshTokensDto accessAndRefreshTokensDto;
+    private ResponseStatusException accessTokenAlreadyExistsException;
+    private ResponseStatusException invalidRefreshTokenException;
 
     @BeforeEach
     public void setUp() {
@@ -105,6 +110,7 @@ class AuthenticationControllerTest {
                 .accessToken("access-token")
                 .refreshToken("refresh-token")
                 .build();
+        authTokenDto = AuthTokenDto.builder().token("token").build();
         usernameAlreadyExistException = new UsernameAlreadyExistException(HttpStatus.BAD_REQUEST, "This username already exist!");
         invalidConfirmationTokenException = new InvalidConfirmationTokenException(HttpStatus.BAD_REQUEST, "This confirmation token is invalid!");
         userNotFoundExceptionUserIsNotExist = new UserNotFoundException(HttpStatus.NOT_FOUND, "User with this username does not exist!");
@@ -112,6 +118,8 @@ class AuthenticationControllerTest {
         userNotFoundExceptionAccountIsNotActivated = new UserNotFoundException(HttpStatus.FORBIDDEN, "Account is not activated!");
         accountIsAlreadyActivatedException = new AccountIsAlreadyActivatedException(HttpStatus.CONFLICT, "Account is already activated!");
         invalidPasswordException = new InvalidPasswordException(HttpStatus.BAD_REQUEST, "New password matches old password!");
+        accessTokenAlreadyExistsException = new AccessTokenAlreadyExistsException(HttpStatus.BAD_REQUEST, "There is valid access token!");
+        invalidRefreshTokenException = new InvalidRefreshTokenException(HttpStatus.BAD_REQUEST, "This refresh token is invalid!");
     }
 
     @Test
@@ -305,7 +313,8 @@ class AuthenticationControllerTest {
         ErrorResponseDto errorResponseDto = responseStatusExceptionToErrorResponseDto(invalidPasswordException);
 
         response.andExpect(MockMvcResultMatchers.status().isBadRequest())
-                .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)));
+                .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)))
+                .andDo(MockMvcResultHandlers.print());
     }
 
     @Test
@@ -322,7 +331,8 @@ class AuthenticationControllerTest {
         ErrorResponseDto errorResponseDto = responseStatusExceptionToErrorResponseDto(invalidConfirmationTokenException);
 
         response.andExpect(MockMvcResultMatchers.status().isBadRequest())
-                .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)));
+                .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)))
+                .andDo(MockMvcResultHandlers.print());
     }
 
     @Test
@@ -343,7 +353,8 @@ class AuthenticationControllerTest {
         verify(jwtTokenService).generateAuthTokens(username);
 
         response.andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(content().json(objectMapper.writeValueAsString(accessAndRefreshTokensDto)));
+                .andExpect(content().json(objectMapper.writeValueAsString(accessAndRefreshTokensDto)))
+                .andDo(MockMvcResultHandlers.print());
     }
 
     @Test
@@ -384,6 +395,54 @@ class AuthenticationControllerTest {
                 .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)));
     }
 
+    @Test
+    public void refreshToken_ValidTokenAndActiveAuthTokenNotExists_ReturnsCreatedStatusAndAuthTokenDto() throws Exception {
+        when(jwtTokenService.isAuthTokenValid(authTokenDto.getToken(), AuthTokenType.REFRESH)).thenReturn(true);
+        when(jwtTokenService.isActiveAuthTokenExists(authTokenDto.getToken(), AuthTokenType.ACCESS)).thenReturn(false);
+        when(jwtTokenService.refreshAccessToken(authTokenDto)).thenReturn(authTokenDto);
+
+        ResultActions response = mockMvc.perform(post("/api/v1/auth/refresh-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(authTokenDto)));
+
+        verify(jwtTokenService).refreshAccessToken(any());
+
+        response.andExpect(MockMvcResultMatchers.status().isCreated())
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    public void refreshToken_ValidTokenAndActiveAuthTokenExists_ReturnsBadRequestStatusAndErrorResponseDto() throws Exception {
+        when(jwtTokenService.isAuthTokenValid(authTokenDto.getToken(), AuthTokenType.REFRESH)).thenReturn(true);
+        when(jwtTokenService.isActiveAuthTokenExists(authTokenDto.getToken(), AuthTokenType.ACCESS)).thenReturn(true);
+
+        ResultActions response = mockMvc.perform(post("/api/v1/auth/refresh-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(authTokenDto)));
+
+        verify(jwtTokenService, never()).refreshAccessToken(any());
+
+        ErrorResponseDto errorResponseDto = responseStatusExceptionToErrorResponseDto(accessTokenAlreadyExistsException);
+
+        response.andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)));
+    }
+
+    @Test
+    public void refreshToken_InvalidToken_ReturnsBadRequestStatusAndErrorResponseDto() throws Exception {
+        when(jwtTokenService.isAuthTokenValid(authTokenDto.getToken(), AuthTokenType.REFRESH)).thenReturn(false);
+
+        ResultActions response = mockMvc.perform(post("/api/v1/auth/refresh-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(authTokenDto)));
+
+        verify(jwtTokenService, never()).refreshAccessToken(any());
+
+        ErrorResponseDto errorResponseDto = responseStatusExceptionToErrorResponseDto(invalidRefreshTokenException);
+
+        response.andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)));
+    }
 
     private ErrorResponseDto responseStatusExceptionToErrorResponseDto(ResponseStatusException ex) {
         int statusCode = ex.getStatusCode().value();
