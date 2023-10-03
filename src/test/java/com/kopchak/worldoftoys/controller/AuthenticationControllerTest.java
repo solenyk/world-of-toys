@@ -60,6 +60,7 @@ class AuthenticationControllerTest {
 
     private UserRegistrationDto userRegistrationDto;
     private ConfirmationTokenType activationTokenType;
+    private ConfirmationTokenType resetPasswordTokenType;
     private String username;
     private String confirmToken;
     private ConfirmTokenDto confirmTokenDto;
@@ -80,6 +81,7 @@ class AuthenticationControllerTest {
                 .password("password")
                 .build();
         activationTokenType = ConfirmationTokenType.ACTIVATION;
+        resetPasswordTokenType = ConfirmationTokenType.RESET_PASSWORD;
         confirmToken = "confirm-token";
         confirmTokenDto = ConfirmTokenDto
                 .builder()
@@ -212,6 +214,41 @@ class AuthenticationControllerTest {
         ErrorResponseDto errorResponseDto = responseStatusExceptionToErrorResponseDto(accountIsAlreadyActivatedException);
 
         response.andExpect(MockMvcResultMatchers.status().isConflict())
+                .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)));
+    }
+
+    @Test
+    public void sendResetPasswordEmail_RegisteredUser_ReturnsNoContentStatus() throws Exception {
+        when(userService.isUserRegistered(username)).thenReturn(true);
+        when(confirmationTokenService.isNoActiveConfirmationToken(username,resetPasswordTokenType)).thenReturn(true);
+        when(confirmationTokenService.createConfirmationToken(username, resetPasswordTokenType)).thenReturn(confirmTokenDto);
+        doNothing().when(emailSenderService).sendEmail(username, confirmToken, resetPasswordTokenType);
+
+        ResultActions response = mockMvc.perform(post("/api/v1/auth/forgot-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(usernameDto)));
+
+        verify(confirmationTokenService).createConfirmationToken(username, resetPasswordTokenType);
+        verify(emailSenderService).sendEmail(username, confirmToken, resetPasswordTokenType);
+
+        response.andExpect(MockMvcResultMatchers.status().isNoContent())
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    public void sendResetPasswordEmail_NotRegisteredUser_ReturnsNoContentStatus() throws Exception {
+        when(userService.isUserRegistered(username)).thenReturn(false);
+
+        ResultActions response = mockMvc.perform(post("/api/v1/auth/forgot-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(usernameDto)));
+
+        verify(confirmationTokenService, never()).createConfirmationToken(any(), any());
+        verify(emailSenderService, never()).sendEmail(any(), any(), any());
+
+        ErrorResponseDto errorResponseDto = responseStatusExceptionToErrorResponseDto(userNotFoundException);
+
+        response.andExpect(MockMvcResultMatchers.status().isNotFound())
                 .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)));
     }
 
