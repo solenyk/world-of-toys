@@ -4,7 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kopchak.worldoftoys.dto.error.ErrorResponseDto;
 import com.kopchak.worldoftoys.dto.token.ConfirmTokenDto;
 import com.kopchak.worldoftoys.dto.user.UserRegistrationDto;
+import com.kopchak.worldoftoys.dto.user.UsernameDto;
+import com.kopchak.worldoftoys.exception.AccountIsAlreadyActivatedException;
 import com.kopchak.worldoftoys.exception.InvalidConfirmationTokenException;
+import com.kopchak.worldoftoys.exception.UserNotFoundException;
 import com.kopchak.worldoftoys.exception.UsernameAlreadyExistException;
 import com.kopchak.worldoftoys.model.token.ConfirmationTokenType;
 import com.kopchak.worldoftoys.service.ConfirmationTokenService;
@@ -57,18 +60,23 @@ class AuthenticationControllerTest {
 
     private UserRegistrationDto userRegistrationDto;
     private ConfirmationTokenType activationTokenType;
+    private String username;
     private String confirmToken;
     private ConfirmTokenDto confirmTokenDto;
     private ResponseStatusException usernameAlreadyExistException;
     private ResponseStatusException invalidConfirmationTokenException;
+    private ResponseStatusException userNotFoundException;
+    private ResponseStatusException accountIsAlreadyActivatedException;
+    private UsernameDto usernameDto;
 
     @BeforeEach
     public void setUp() {
+        username = "test@gmail.com";
         userRegistrationDto = UserRegistrationDto
                 .builder()
                 .firstname("Firstname")
                 .lastname("Lastname")
-                .email("test@gmail.com")
+                .email(username)
                 .password("password")
                 .build();
         activationTokenType = ConfirmationTokenType.ACTIVATION;
@@ -77,18 +85,20 @@ class AuthenticationControllerTest {
                 .builder()
                 .token(confirmToken)
                 .build();
+        usernameDto = UsernameDto.builder().email(username).build();
         usernameAlreadyExistException = new UsernameAlreadyExistException(HttpStatus.BAD_REQUEST, "This username already exist!");
         invalidConfirmationTokenException = new InvalidConfirmationTokenException(HttpStatus.BAD_REQUEST, "This confirmation token is invalid!");
+        userNotFoundException = new UserNotFoundException(HttpStatus.NOT_FOUND, "User with this username does not exist!");
+        accountIsAlreadyActivatedException = new AccountIsAlreadyActivatedException(HttpStatus.CONFLICT, "Account is already activated!");
     }
 
     @Test
     public void registerUser_UserRegistrationDtoWithUnregisteredUserEmail_ReturnsCreatedStatus() throws Exception {
-        when(userService.isUserRegistered(userRegistrationDto.getEmail())).thenReturn(false);
+        when(userService.isUserRegistered(username)).thenReturn(false);
         doNothing().when(userService).registerUser(userRegistrationDto);
-        when(confirmationTokenService.createConfirmationToken(userRegistrationDto.getEmail(), activationTokenType))
+        when(confirmationTokenService.createConfirmationToken(username, activationTokenType))
                 .thenReturn(confirmTokenDto);
-        doNothing().when(emailSenderService).sendEmail(userRegistrationDto.getEmail(), confirmTokenDto.getToken(),
-                activationTokenType);
+        doNothing().when(emailSenderService).sendEmail(username, confirmTokenDto.getToken(), activationTokenType);
 
         ResultActions response = mockMvc.perform(post("/api/v1/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -149,6 +159,59 @@ class AuthenticationControllerTest {
         ErrorResponseDto errorResponseDto = responseStatusExceptionToErrorResponseDto(invalidConfirmationTokenException);
 
         response.andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)));
+    }
+
+    @Test
+    public void resendVerificationEmail_RegisteredAndNotActivatedUser_ReturnsNoContentStatus() throws Exception {
+        when(userService.isUserRegistered(username)).thenReturn(true);
+        when(userService.isUserActivated(username)).thenReturn(false);
+        when(confirmationTokenService.isNoActiveConfirmationToken(username,activationTokenType)).thenReturn(true);
+        when(confirmationTokenService.createConfirmationToken(username, activationTokenType)).thenReturn(confirmTokenDto);
+        doNothing().when(emailSenderService).sendEmail(username, confirmToken, activationTokenType);
+
+        ResultActions response = mockMvc.perform(post("/api/v1/auth/resend-verification-email")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(usernameDto)));
+
+        verify(confirmationTokenService).createConfirmationToken(username, activationTokenType);
+        verify(emailSenderService).sendEmail(username, confirmToken, activationTokenType);
+
+        response.andExpect(MockMvcResultMatchers.status().isNoContent())
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    public void resendVerificationEmail_NotRegisteredUser_ReturnsNotFoundStatus() throws Exception {
+        when(userService.isUserRegistered(username)).thenReturn(false);
+
+        ResultActions response = mockMvc.perform(post("/api/v1/auth/resend-verification-email")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(usernameDto)));
+
+        verify(confirmationTokenService, never()).createConfirmationToken(any(), any());
+        verify(emailSenderService, never()).sendEmail(any(), any(), any());
+
+        ErrorResponseDto errorResponseDto = responseStatusExceptionToErrorResponseDto(userNotFoundException);
+
+        response.andExpect(MockMvcResultMatchers.status().isNotFound())
+                .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)));
+    }
+    @Test
+    public void resendVerificationEmail_RegisteredAndActivatedUser_ReturnsConflictStatus() throws Exception {
+        when(userService.isUserRegistered(username)).thenReturn(true);
+        when(userService.isUserActivated(username)).thenReturn(true);
+
+        ResultActions response = mockMvc.perform(post("/api/v1/auth/resend-verification-email")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(usernameDto)));
+
+        verify(confirmationTokenService, never()).createConfirmationToken(any(), any());
+        verify(emailSenderService, never()).sendEmail(any(), any(), any());
+
+        ErrorResponseDto errorResponseDto = responseStatusExceptionToErrorResponseDto(accountIsAlreadyActivatedException);
+
+        response.andExpect(MockMvcResultMatchers.status().isConflict())
                 .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)));
     }
 
