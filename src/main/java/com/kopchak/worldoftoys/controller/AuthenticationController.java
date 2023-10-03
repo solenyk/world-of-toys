@@ -56,7 +56,7 @@ public class AuthenticationController {
                             schema = @Schema(implementation = UsernameAlreadyExistException.class)))
     })
     @PostMapping("/register")
-    public ResponseEntity<?> register(@Valid @RequestBody UserRegistrationDto userRegistrationDto) {
+    public ResponseEntity<?> registerUser(@Valid @RequestBody UserRegistrationDto userRegistrationDto) {
         if (userService.isUserRegistered(userRegistrationDto.getEmail())) {
             log.error("User with username: {} already exist!", userRegistrationDto.getEmail());
             throw new UsernameAlreadyExistException(HttpStatus.BAD_REQUEST, "This username already exist!");
