@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kopchak.worldoftoys.dto.error.ErrorResponseDto;
 import com.kopchak.worldoftoys.dto.token.ConfirmTokenDto;
 import com.kopchak.worldoftoys.dto.user.UserRegistrationDto;
+import com.kopchak.worldoftoys.exception.InvalidConfirmationTokenException;
 import com.kopchak.worldoftoys.exception.UsernameAlreadyExistException;
 import com.kopchak.worldoftoys.model.token.ConfirmationTokenType;
 import com.kopchak.worldoftoys.service.ConfirmationTokenService;
@@ -28,6 +29,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.web.server.ResponseStatusException;
 
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 
@@ -55,8 +57,10 @@ class AuthenticationControllerTest {
 
     private UserRegistrationDto userRegistrationDto;
     private ConfirmationTokenType activationTokenType;
+    private String confirmToken;
     private ConfirmTokenDto confirmTokenDto;
     private ResponseStatusException usernameAlreadyExistException;
+    private ResponseStatusException invalidConfirmationTokenException;
 
     @BeforeEach
     public void setUp() {
@@ -68,11 +72,13 @@ class AuthenticationControllerTest {
                 .password("password")
                 .build();
         activationTokenType = ConfirmationTokenType.ACTIVATION;
+        confirmToken = "confirm-token";
         confirmTokenDto = ConfirmTokenDto
                 .builder()
-                .token("confirm-token")
+                .token(confirmToken)
                 .build();
         usernameAlreadyExistException = new UsernameAlreadyExistException(HttpStatus.BAD_REQUEST, "This username already exist!");
+        invalidConfirmationTokenException = new InvalidConfirmationTokenException(HttpStatus.BAD_REQUEST, "This confirmation token is invalid!");
     }
 
     @Test
@@ -110,6 +116,37 @@ class AuthenticationControllerTest {
         verify(emailSenderService, never()).sendEmail(any(), any(), any());
 
         ErrorResponseDto errorResponseDto = responseStatusExceptionToErrorResponseDto(usernameAlreadyExistException);
+
+        response.andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)));
+    }
+
+    @Test
+    public void activateAccount_ValidConfirmToken_ReturnsNoContentStatus() throws Exception {
+        when(confirmationTokenService.isConfirmationTokenInvalid(confirmToken, activationTokenType)).thenReturn(false);
+        doNothing().when(confirmationTokenService).activateAccountUsingActivationToken(confirmToken);
+
+        ResultActions response = mockMvc.perform(get("/api/v1/auth/confirm")
+                .contentType(MediaType.APPLICATION_JSON)
+                .param("token", confirmToken));
+
+        verify(confirmationTokenService).activateAccountUsingActivationToken(confirmToken);
+
+        response.andExpect(MockMvcResultMatchers.status().isNoContent())
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    public void activateAccount_InvalidConfirmToken_ReturnsBadRequestStatus() throws Exception {
+        when(confirmationTokenService.isConfirmationTokenInvalid(confirmToken, activationTokenType)).thenReturn(true);
+
+        ResultActions response = mockMvc.perform(get("/api/v1/auth/confirm")
+                .contentType(MediaType.APPLICATION_JSON)
+                .param("token", confirmToken));
+
+        verify(confirmationTokenService, never()).activateAccountUsingActivationToken(any());
+
+        ErrorResponseDto errorResponseDto = responseStatusExceptionToErrorResponseDto(invalidConfirmationTokenException);
 
         response.andExpect(MockMvcResultMatchers.status().isBadRequest())
                 .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)));
