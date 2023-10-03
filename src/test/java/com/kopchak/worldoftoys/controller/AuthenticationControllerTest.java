@@ -2,8 +2,10 @@ package com.kopchak.worldoftoys.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kopchak.worldoftoys.dto.error.ErrorResponseDto;
+import com.kopchak.worldoftoys.dto.token.AccessAndRefreshTokensDto;
 import com.kopchak.worldoftoys.dto.token.ConfirmTokenDto;
 import com.kopchak.worldoftoys.dto.user.ResetPasswordDto;
+import com.kopchak.worldoftoys.dto.user.UserAuthDto;
 import com.kopchak.worldoftoys.dto.user.UserRegistrationDto;
 import com.kopchak.worldoftoys.dto.user.UsernameDto;
 import com.kopchak.worldoftoys.exception.*;
@@ -62,13 +64,17 @@ class AuthenticationControllerTest {
     private String username;
     private String confirmToken;
     private ConfirmTokenDto confirmTokenDto;
+    private UserAuthDto userAuthDto;
     private ResponseStatusException usernameAlreadyExistException;
     private ResponseStatusException invalidConfirmationTokenException;
-    private ResponseStatusException userNotFoundException;
+    private ResponseStatusException userNotFoundExceptionUserIsNotExist;
+    private ResponseStatusException userNotFoundExceptionBadCredentials;
+    private ResponseStatusException userNotFoundExceptionAccountIsNotActivated;
     private ResponseStatusException accountIsAlreadyActivatedException;
     private ResponseStatusException invalidPasswordException;
     private UsernameDto usernameDto;
     private ResetPasswordDto resetPasswordDto;
+    private AccessAndRefreshTokensDto accessAndRefreshTokensDto;
 
     @BeforeEach
     public void setUp() {
@@ -87,11 +93,23 @@ class AuthenticationControllerTest {
                 .builder()
                 .token(confirmToken)
                 .build();
+        userAuthDto = UserAuthDto
+                .builder()
+                .email(username)
+                .password("password")
+                .build();
         usernameDto = UsernameDto.builder().email(username).build();
         resetPasswordDto = ResetPasswordDto.builder().password("new-password").build();
+        accessAndRefreshTokensDto = AccessAndRefreshTokensDto
+                .builder()
+                .accessToken("access-token")
+                .refreshToken("refresh-token")
+                .build();
         usernameAlreadyExistException = new UsernameAlreadyExistException(HttpStatus.BAD_REQUEST, "This username already exist!");
         invalidConfirmationTokenException = new InvalidConfirmationTokenException(HttpStatus.BAD_REQUEST, "This confirmation token is invalid!");
-        userNotFoundException = new UserNotFoundException(HttpStatus.NOT_FOUND, "User with this username does not exist!");
+        userNotFoundExceptionUserIsNotExist = new UserNotFoundException(HttpStatus.NOT_FOUND, "User with this username does not exist!");
+        userNotFoundExceptionBadCredentials = new UserNotFoundException(HttpStatus.UNAUTHORIZED, "Bad user credentials!");
+        userNotFoundExceptionAccountIsNotActivated = new UserNotFoundException(HttpStatus.FORBIDDEN, "Account is not activated!");
         accountIsAlreadyActivatedException = new AccountIsAlreadyActivatedException(HttpStatus.CONFLICT, "Account is already activated!");
         invalidPasswordException = new InvalidPasswordException(HttpStatus.BAD_REQUEST, "New password matches old password!");
     }
@@ -118,7 +136,7 @@ class AuthenticationControllerTest {
     }
 
     @Test
-    public void registerUser_UserRegistrationDtoWithRegisteredUserEmail_ReturnsBadRequestStatus() throws Exception {
+    public void registerUser_UserRegistrationDtoWithRegisteredUserEmail_ReturnsBadRequestStatusAndErrorResponseDto() throws Exception {
         when(userService.isUserRegistered(userRegistrationDto.getEmail())).thenReturn(true);
 
         ResultActions response = mockMvc.perform(post("/api/v1/auth/register")
@@ -151,7 +169,7 @@ class AuthenticationControllerTest {
     }
 
     @Test
-    public void activateAccount_InvalidConfirmToken_ReturnsBadRequestStatus() throws Exception {
+    public void activateAccount_InvalidConfirmToken_ReturnsBadRequestStatusAndErrorResponseDto() throws Exception {
         when(confirmationTokenService.isConfirmationTokenInvalid(confirmToken, activationTokenType)).thenReturn(true);
 
         ResultActions response = mockMvc.perform(get("/api/v1/auth/confirm")
@@ -186,7 +204,7 @@ class AuthenticationControllerTest {
     }
 
     @Test
-    public void resendVerificationEmail_NotRegisteredUser_ReturnsNotFoundStatus() throws Exception {
+    public void resendVerificationEmail_NotRegisteredUser_ReturnsNotFoundStatusAndErrorResponseDto() throws Exception {
         when(userService.isUserRegistered(username)).thenReturn(false);
 
         ResultActions response = mockMvc.perform(post("/api/v1/auth/resend-verification-email")
@@ -196,14 +214,14 @@ class AuthenticationControllerTest {
         verify(confirmationTokenService, never()).createConfirmationToken(any(), any());
         verify(emailSenderService, never()).sendEmail(any(), any(), any());
 
-        ErrorResponseDto errorResponseDto = responseStatusExceptionToErrorResponseDto(userNotFoundException);
+        ErrorResponseDto errorResponseDto = responseStatusExceptionToErrorResponseDto(userNotFoundExceptionUserIsNotExist);
 
         response.andExpect(MockMvcResultMatchers.status().isNotFound())
                 .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)));
     }
 
     @Test
-    public void resendVerificationEmail_RegisteredAndActivatedUser_ReturnsConflictStatus() throws Exception {
+    public void resendVerificationEmail_RegisteredAndActivatedUser_ReturnsConflictStatusAndErrorResponseDto() throws Exception {
         when(userService.isUserRegistered(username)).thenReturn(true);
         when(userService.isUserActivated(username)).thenReturn(true);
 
@@ -239,7 +257,7 @@ class AuthenticationControllerTest {
     }
 
     @Test
-    public void sendResetPasswordEmail_NotRegisteredUser_ReturnsNotFoundStatus() throws Exception {
+    public void sendResetPasswordEmail_NotRegisteredUser_ReturnsNotFoundStatusAndErrorResponseDto() throws Exception {
         when(userService.isUserRegistered(username)).thenReturn(false);
 
         ResultActions response = mockMvc.perform(post("/api/v1/auth/forgot-password")
@@ -249,7 +267,7 @@ class AuthenticationControllerTest {
         verify(confirmationTokenService, never()).createConfirmationToken(any(), any());
         verify(emailSenderService, never()).sendEmail(any(), any(), any());
 
-        ErrorResponseDto errorResponseDto = responseStatusExceptionToErrorResponseDto(userNotFoundException);
+        ErrorResponseDto errorResponseDto = responseStatusExceptionToErrorResponseDto(userNotFoundExceptionUserIsNotExist);
 
         response.andExpect(MockMvcResultMatchers.status().isNotFound())
                 .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)));
@@ -273,7 +291,7 @@ class AuthenticationControllerTest {
     }
 
     @Test
-    public void changePassword_ValidConfirmTokenAndNewPasswordMatchOldPassword_ReturnsBadRequestStatus() throws Exception {
+    public void changePassword_ValidConfirmTokenAndNewPasswordMatchOldPassword_ReturnsBadRequestStatusAndErrorResponseDto() throws Exception {
         when(confirmationTokenService.isConfirmationTokenInvalid(confirmToken, resetPasswordTokenType)).thenReturn(false);
         when(userService.isNewPasswordMatchOldPassword(confirmToken, resetPasswordDto.getPassword())).thenReturn(true);
 
@@ -291,7 +309,7 @@ class AuthenticationControllerTest {
     }
 
     @Test
-    public void changePassword_InvalidConfirmToken_ReturnsBadRequestStatus() throws Exception {
+    public void changePassword_InvalidConfirmToken_ReturnsBadRequestStatusAndErrorResponseDto() throws Exception {
         when(confirmationTokenService.isConfirmationTokenInvalid(confirmToken, resetPasswordTokenType)).thenReturn(true);
 
         ResultActions response = mockMvc.perform(post("/api/v1/auth/reset-password")
@@ -306,6 +324,66 @@ class AuthenticationControllerTest {
         response.andExpect(MockMvcResultMatchers.status().isBadRequest())
                 .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)));
     }
+
+    @Test
+    public void authenticate_RegisteredAndActivatedUser_ReturnsOkStatusAndAccessAndRefreshTokensDto() throws Exception {
+        when(userService.isUserRegistered(username)).thenReturn(true);
+        when(userService.isPasswordsMatch(username, userAuthDto.getPassword())).thenReturn(true);
+        when(userService.isUserActivated(username)).thenReturn(true);
+
+        doNothing().when(jwtTokenService).revokeAllUserAuthTokens(username);
+        when(jwtTokenService.generateAuthTokens(username)).thenReturn(accessAndRefreshTokensDto);
+
+        ResultActions response = mockMvc.perform(post("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(userAuthDto)));
+
+        verify(authenticationManager).authenticate(any());
+        verify(jwtTokenService).revokeAllUserAuthTokens(username);
+        verify(jwtTokenService).generateAuthTokens(username);
+
+        response.andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(content().json(objectMapper.writeValueAsString(accessAndRefreshTokensDto)));
+    }
+
+    @Test
+    public void authenticate_RegisteredAndNotActivatedUser_ReturnsForbiddenStatusAndErrorResponseDto() throws Exception {
+        when(userService.isUserRegistered(username)).thenReturn(true);
+        when(userService.isPasswordsMatch(username, userAuthDto.getPassword())).thenReturn(true);
+        when(userService.isUserActivated(username)).thenReturn(false);
+
+        ResultActions response = mockMvc.perform(post("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(userAuthDto)));
+
+        verify(authenticationManager, never()).authenticate(any());
+        verify(jwtTokenService, never()).revokeAllUserAuthTokens(any());
+        verify(jwtTokenService, never()).generateAuthTokens(any());
+
+        ErrorResponseDto errorResponseDto = responseStatusExceptionToErrorResponseDto(userNotFoundExceptionAccountIsNotActivated);
+
+        response.andExpect(MockMvcResultMatchers.status().isForbidden())
+                .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)));
+    }
+
+    @Test
+    public void authenticate_NotRegisteredUser_ReturnsUnauthorizedStatusAndErrorResponseDto() throws Exception {
+        when(userService.isUserRegistered(username)).thenReturn(false);
+
+        ResultActions response = mockMvc.perform(post("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(userAuthDto)));
+
+        verify(authenticationManager, never()).authenticate(any());
+        verify(jwtTokenService, never()).revokeAllUserAuthTokens(any());
+        verify(jwtTokenService, never()).generateAuthTokens(any());
+
+        ErrorResponseDto errorResponseDto = responseStatusExceptionToErrorResponseDto(userNotFoundExceptionBadCredentials);
+
+        response.andExpect(MockMvcResultMatchers.status().isUnauthorized())
+                .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)));
+    }
+
 
     private ErrorResponseDto responseStatusExceptionToErrorResponseDto(ResponseStatusException ex) {
         int statusCode = ex.getStatusCode().value();
