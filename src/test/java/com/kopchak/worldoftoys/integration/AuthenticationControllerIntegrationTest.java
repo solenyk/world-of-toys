@@ -6,12 +6,9 @@ import com.icegreen.greenmail.junit5.GreenMailExtension;
 import com.icegreen.greenmail.util.ServerSetupTest;
 import com.kopchak.worldoftoys.dto.error.ErrorResponseDto;
 import com.kopchak.worldoftoys.dto.user.ResetPasswordDto;
+import com.kopchak.worldoftoys.dto.user.UserAuthDto;
 import com.kopchak.worldoftoys.dto.user.UserRegistrationDto;
 import com.kopchak.worldoftoys.dto.user.UsernameDto;
-import com.kopchak.worldoftoys.repository.token.ConfirmTokenRepository;
-import com.kopchak.worldoftoys.service.ConfirmationTokenService;
-import com.kopchak.worldoftoys.service.EmailSenderService;
-import com.kopchak.worldoftoys.service.UserService;
 import jakarta.mail.internet.MimeMessage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,12 +18,12 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+import org.springframework.transaction.annotation.Transactional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -35,22 +32,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
+@Transactional
 @ActiveProfiles("integrationtest")
 class AuthenticationControllerIntegrationTest {
     @Autowired
     private MockMvc mockMvc;
-
-    @Autowired
-    private UserService userService;
-    @Autowired
-    private ConfirmationTokenService confirmationTokenService;
-    @Autowired
-    private EmailSenderService emailSenderService;
-    @Autowired
-    private AuthenticationManager authenticationManager;
-
-    @Autowired
-    private ConfirmTokenRepository confirmationTokenRepository;
 
     @RegisterExtension
     public static final GreenMailExtension greenMail = new GreenMailExtension(ServerSetupTest.SMTP)
@@ -70,6 +56,10 @@ class AuthenticationControllerIntegrationTest {
     private UsernameDto registeredAndActivatedUserDto;
     private ResetPasswordDto validResetPasswordDto;
     private ResetPasswordDto invalidResetPasswordDto;
+    private UserAuthDto registeredAndActivatedUserAuthDto;
+    private UserAuthDto registeredAndNotActivatedUserAuthDto;
+    private UserAuthDto notRegisteredUserAuthDto;
+    private UserRegistrationDto userRegistrationDto;
 
     @BeforeEach
     public void setUp(){
@@ -83,18 +73,32 @@ class AuthenticationControllerIntegrationTest {
         registeredAndActivatedUserDto = UsernameDto.builder().email("john.doe@example.com").build();
         validResetPasswordDto = ResetPasswordDto.builder().password("new-password").build();
         invalidResetPasswordDto = ResetPasswordDto.builder().password("password").build();
-    }
-
-    @Test
-    public void registerUser_NotRegisteredUser_ReturnsCreatedStatus() throws Exception {
-        UserRegistrationDto userRegistrationDto = UserRegistrationDto
+        registeredAndActivatedUserAuthDto = UserAuthDto
+                .builder()
+                .email("john.doe@example.com")
+                .password("password")
+                .build();
+        registeredAndNotActivatedUserAuthDto = UserAuthDto
+                .builder()
+                .email("alice.johnson@example.com")
+                .password("password")
+                .build();
+        notRegisteredUserAuthDto = UserAuthDto
+                .builder()
+                .email("non-existing-user@example.com")
+                .password("password")
+                .build();
+        userRegistrationDto = UserRegistrationDto
                 .builder()
                 .firstname("Firstname")
                 .lastname("Lastname")
                 .email("test@gmail.com")
                 .password("password")
                 .build();
+    }
 
+    @Test
+    public void registerUser_NotRegisteredUser_ReturnsCreatedStatus() throws Exception {
         ResultActions response = mockMvc.perform(post("/api/v1/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(userRegistrationDto)));
@@ -274,6 +278,43 @@ class AuthenticationControllerIntegrationTest {
                 .andDo(MockMvcResultHandlers.print());
     }
 
+    @Test
+    public void authenticate_RegisteredAndActivatedUser_ReturnsOkStatusAndAccessAndRefreshTokensDto() throws Exception {
+        ResultActions response = mockMvc.perform(post("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(registeredAndActivatedUserAuthDto)));
+
+        response.andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.accessToken").exists())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.refreshToken").exists())
+                .andDo(MockMvcResultHandlers.print());
+
+        assertThat(MockMvcResultMatchers.content()).isNotNull();
+    }
+
+    @Test
+    public void authenticate_RegisteredAndNotActivatedUser_ReturnsForbiddenStatusAndErrorResponseDto() throws Exception {
+        ResultActions response = mockMvc.perform(post("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(registeredAndNotActivatedUserAuthDto)));
+
+        ErrorResponseDto errorResponseDto = getErrorResponseDto(HttpStatus.FORBIDDEN, "Account is not activated!");
+
+        response.andExpect(MockMvcResultMatchers.status().isForbidden())
+                .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)));
+    }
+
+    @Test
+    public void authenticate_NotRegisteredUser_ReturnsUnauthorizedStatusAndErrorResponseDto() throws Exception {
+        ResultActions response = mockMvc.perform(post("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(notRegisteredUserAuthDto)));
+
+        ErrorResponseDto errorResponseDto = getErrorResponseDto(HttpStatus.UNAUTHORIZED, "Bad user credentials!");
+
+        response.andExpect(MockMvcResultMatchers.status().isUnauthorized())
+                .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)));
+    }
     private ErrorResponseDto getErrorResponseDto(HttpStatus httpStatus, String msg) {
         return ErrorResponseDto
                 .builder()
