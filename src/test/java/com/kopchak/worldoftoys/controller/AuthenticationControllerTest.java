@@ -425,11 +425,10 @@ class AuthenticationControllerTest {
     }
 
     private ErrorResponseDto getErrorResponseDto(HttpStatus httpStatus, String msg) {
-        int statusCode = httpStatus.value();
         return ErrorResponseDto
                 .builder()
                 .error(httpStatus.name())
-                .status(statusCode)
+                .status(httpStatus.value())
                 .message(msg)
                 .build();
     }
