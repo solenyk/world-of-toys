@@ -6,6 +6,7 @@ import com.icegreen.greenmail.junit5.GreenMailExtension;
 import com.icegreen.greenmail.util.ServerSetupTest;
 import com.kopchak.worldoftoys.dto.error.ErrorResponseDto;
 import com.kopchak.worldoftoys.dto.user.UserRegistrationDto;
+import com.kopchak.worldoftoys.dto.user.UsernameDto;
 import com.kopchak.worldoftoys.service.ConfirmationTokenService;
 import com.kopchak.worldoftoys.service.EmailSenderService;
 import com.kopchak.worldoftoys.service.UserService;
@@ -49,7 +50,7 @@ class AuthenticationControllerIntegrationTest {
     @RegisterExtension
     public static final GreenMailExtension greenMail = new GreenMailExtension(ServerSetupTest.SMTP)
             .withConfiguration(GreenMailConfiguration.aConfig().withUser("test", "password"))
-            .withPerMethodLifecycle(false);
+            .withPerMethodLifecycle(true);
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -57,12 +58,18 @@ class AuthenticationControllerIntegrationTest {
     private String accountActivationSubject;
     private String confirmToken;
     private String invalidConfirmToken;
+    private UsernameDto registeredNotActivatedUserDto;
+    private UsernameDto notRegisteredUserDto;
+    private UsernameDto registeredAndActivatedUserDto;
 
     @BeforeEach
     public void setUp(){
         accountActivationSubject = "Confirm your email";
         confirmToken = "8e5648d7-9b4e-4724-83a1-be7e64603e48";
         invalidConfirmToken = "invalid-confirm-token";
+        registeredNotActivatedUserDto = UsernameDto.builder().email("alice.johnson@example.com").build();
+        notRegisteredUserDto = UsernameDto.builder().email("non-existing-user@example.com").build();
+        registeredAndActivatedUserDto = UsernameDto.builder().email("john.doe@example.com").build();
     }
 
     @Test
@@ -132,6 +139,56 @@ class AuthenticationControllerIntegrationTest {
 
         response.andExpect(MockMvcResultMatchers.status().isBadRequest())
                 .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)));
+
+        MimeMessage [] receivedMessages = greenMail.getReceivedMessages();
+        assertThat(receivedMessages.length).isEqualTo(0);
+    }
+
+    @Test
+    public void resendVerificationEmail_RegisteredAndNotActivatedUser_ReturnsNoContentStatus() throws Exception {
+        ResultActions response = mockMvc.perform(post("/api/v1/auth/resend-verification-email")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(registeredNotActivatedUserDto)));
+
+        response.andExpect(MockMvcResultMatchers.status().isNoContent())
+                .andDo(MockMvcResultHandlers.print());
+
+        MimeMessage [] receivedMessages = greenMail.getReceivedMessages();
+        assertThat(receivedMessages.length).isEqualTo(1);
+
+        MimeMessage receivedMessage = receivedMessages[0];
+        assertThat(receivedMessage.getSubject()).isEqualTo(accountActivationSubject);
+    }
+
+
+    @Test
+    public void resendVerificationEmail_NotRegisteredUser_ReturnsNotFoundStatusAndErrorResponseDto() throws Exception {
+        ResultActions response = mockMvc.perform(post("/api/v1/auth/resend-verification-email")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(notRegisteredUserDto)));
+
+        ErrorResponseDto errorResponseDto = getErrorResponseDto(HttpStatus.NOT_FOUND, "User with this username does not exist!");
+
+        response.andExpect(MockMvcResultMatchers.status().isNotFound())
+                .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)));
+
+        MimeMessage [] receivedMessages = greenMail.getReceivedMessages();
+        assertThat(receivedMessages.length).isEqualTo(0);
+    }
+
+    @Test
+    public void resendVerificationEmail_RegisteredAndActivatedUser_ReturnsConflictStatusAndErrorResponseDto() throws Exception {
+        ResultActions response = mockMvc.perform(post("/api/v1/auth/resend-verification-email")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(registeredAndActivatedUserDto)));
+
+        ErrorResponseDto errorResponseDto = getErrorResponseDto(HttpStatus.CONFLICT, "Account is already activated!");
+
+        response.andExpect(MockMvcResultMatchers.status().isConflict())
+                .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)));
+
+        MimeMessage [] receivedMessages = greenMail.getReceivedMessages();
+        assertThat(receivedMessages.length).isEqualTo(0);
     }
 
     private ErrorResponseDto getErrorResponseDto(HttpStatus httpStatus, String msg) {
