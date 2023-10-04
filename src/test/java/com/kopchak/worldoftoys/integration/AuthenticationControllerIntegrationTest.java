@@ -5,6 +5,7 @@ import com.icegreen.greenmail.configuration.GreenMailConfiguration;
 import com.icegreen.greenmail.junit5.GreenMailExtension;
 import com.icegreen.greenmail.util.ServerSetupTest;
 import com.kopchak.worldoftoys.dto.error.ErrorResponseDto;
+import com.kopchak.worldoftoys.dto.token.AuthTokenDto;
 import com.kopchak.worldoftoys.dto.user.ResetPasswordDto;
 import com.kopchak.worldoftoys.dto.user.UserAuthDto;
 import com.kopchak.worldoftoys.dto.user.UserRegistrationDto;
@@ -60,6 +61,9 @@ class AuthenticationControllerIntegrationTest {
     private UserAuthDto registeredAndNotActivatedUserAuthDto;
     private UserAuthDto notRegisteredUserAuthDto;
     private UserRegistrationDto userRegistrationDto;
+    private AuthTokenDto validAuthTokenDto;
+    private AuthTokenDto invalidAuthTokenDto;
+    private AuthTokenDto validAuthTokenDtoWithExistingAccessToken;
 
     @BeforeEach
     public void setUp(){
@@ -94,6 +98,18 @@ class AuthenticationControllerIntegrationTest {
                 .lastname("Lastname")
                 .email("test@gmail.com")
                 .password("password")
+                .build();
+        validAuthTokenDto = AuthTokenDto
+                .builder()
+                .token("eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhbGljZS5qb2huc29uQGV4YW1wbGUuY29tIiwiaWF0IjoxNjk2NDI2ODIyLCJleHAiOjEwMzM2NDI2ODIyfQ.K8ACIiQKVcSr5IX_snOX-WXNebx2-FMIQP4gj4Qg_Pk")
+                .build();
+        invalidAuthTokenDto = AuthTokenDto
+                .builder()
+                .token("invalid-token")
+                .build();
+        validAuthTokenDtoWithExistingAccessToken = AuthTokenDto
+                .builder()
+                .token("eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsImlhdCI6MTY5NjQyNjgyMSwiZXhwIjoxMDMzNjQyNjgyMX0.jeeuTzGgKrixMp6_dizMNLicp6n0gwECAId-ATLqbns")
                 .build();
     }
 
@@ -315,6 +331,42 @@ class AuthenticationControllerIntegrationTest {
         response.andExpect(MockMvcResultMatchers.status().isUnauthorized())
                 .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)));
     }
+
+    @Test
+    public void refreshToken_ValidTokenAndActiveAuthTokenNotExists_ReturnsCreatedStatusAndAuthTokenDto() throws Exception {
+        ResultActions response = mockMvc.perform(post("/api/v1/auth/refresh-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(validAuthTokenDto)));
+
+        response.andExpect(MockMvcResultMatchers.status().isCreated())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.token").exists())
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    public void refreshToken_ValidTokenAndActiveAuthTokenExists_ReturnsBadRequestStatusAndErrorResponseDto() throws Exception {
+        ResultActions response = mockMvc.perform(post("/api/v1/auth/refresh-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(validAuthTokenDtoWithExistingAccessToken)));
+
+        ErrorResponseDto errorResponseDto = getErrorResponseDto(HttpStatus.BAD_REQUEST, "There is valid access token!");
+
+        response.andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)));
+    }
+
+    @Test
+    public void refreshToken_InvalidToken_ReturnsBadRequestStatusAndErrorResponseDto() throws Exception {
+        ResultActions response = mockMvc.perform(post("/api/v1/auth/refresh-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(invalidAuthTokenDto)));
+
+        ErrorResponseDto errorResponseDto = getErrorResponseDto(HttpStatus.BAD_REQUEST, "This refresh token is invalid!");
+
+        response.andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)));
+    }
+
     private ErrorResponseDto getErrorResponseDto(HttpStatus httpStatus, String msg) {
         return ErrorResponseDto
                 .builder()
