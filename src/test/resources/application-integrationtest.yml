@@ -9,6 +9,13 @@ spring:
     defer-datasource-initialization: true
     hibernate:
       ddl-auto: update
+  mail:
+    host: localhost
+    port: 3025
+    username: test
+    password: password
+    protocol: smtp
+    test-connection: false
 security:
   jwt:
     secret: testsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkey
