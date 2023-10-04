@@ -27,6 +27,8 @@ import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -56,6 +58,7 @@ class AuthenticationControllerIntegrationTest {
     private ObjectMapper objectMapper;
 
     private String accountActivationSubject;
+    private String passwordResetSubject;
     private String confirmToken;
     private String invalidConfirmToken;
     private UsernameDto registeredNotActivatedUserDto;
@@ -65,6 +68,7 @@ class AuthenticationControllerIntegrationTest {
     @BeforeEach
     public void setUp(){
         accountActivationSubject = "Confirm your email";
+        passwordResetSubject = "Reset your password";
         confirmToken = "8e5648d7-9b4e-4724-83a1-be7e64603e48";
         invalidConfirmToken = "invalid-confirm-token";
         registeredNotActivatedUserDto = UsernameDto.builder().email("alice.johnson@example.com").build();
@@ -185,6 +189,37 @@ class AuthenticationControllerIntegrationTest {
         ErrorResponseDto errorResponseDto = getErrorResponseDto(HttpStatus.CONFLICT, "Account is already activated!");
 
         response.andExpect(MockMvcResultMatchers.status().isConflict())
+                .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)));
+
+        MimeMessage [] receivedMessages = greenMail.getReceivedMessages();
+        assertThat(receivedMessages.length).isEqualTo(0);
+    }
+
+    @Test
+    public void sendResetPasswordEmail_RegisteredUser_ReturnsNoContentStatus() throws Exception {
+        ResultActions response = mockMvc.perform(post("/api/v1/auth/forgot-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(registeredNotActivatedUserDto)));
+
+        response.andExpect(MockMvcResultMatchers.status().isNoContent())
+                .andDo(MockMvcResultHandlers.print());
+
+        MimeMessage [] receivedMessages = greenMail.getReceivedMessages();
+        assertThat(receivedMessages.length).isEqualTo(1);
+
+        MimeMessage receivedMessage = receivedMessages[0];
+        assertThat(receivedMessage.getSubject()).isEqualTo(passwordResetSubject);
+    }
+
+    @Test
+    public void sendResetPasswordEmail_NotRegisteredUser_ReturnsNotFoundStatusAndErrorResponseDto() throws Exception {
+        ResultActions response = mockMvc.perform(post("/api/v1/auth/forgot-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(notRegisteredUserDto)));
+
+        ErrorResponseDto errorResponseDto = getErrorResponseDto(HttpStatus.NOT_FOUND, "User with this username does not exist!");
+
+        response.andExpect(MockMvcResultMatchers.status().isNotFound())
                 .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)));
 
         MimeMessage [] receivedMessages = greenMail.getReceivedMessages();
