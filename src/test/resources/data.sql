@@ -1,8 +1,10 @@
 INSERT INTO app_user (id, firstname, lastname, email, password, role, locked, enabled)
-VALUES (1000, 'John', 'Doe', 'john.doe@example.com', '$2a$10$8Cq9HDEsVwbd4zaHEJiKseCVOMsJQRfzIeIN8v6KoBiC9H2XMcJUm',
+VALUES (1000, 'John', 'Doe', 'john.doe@example.com', '$2a$10$WKoHCVQBee77aRXkS.xpceIyBqRcjlkjfpYCerq8eZJkf6Uvm8QPq',
         'ROLE_USER', false, true),
-       (1001, 'Jane', 'Smith', 'jane.smith@example.com', '$2a$10$8Cq9HDEsVwbd4zaHEJiKseCVOMsJQRfzIeIN8v6KoBiC9H2XMcJUm',
-        'ROLE_ADMIN', false, true);
+       (1001, 'Jane', 'Smith', 'jane.smith@example.com', '$2a$10$WKoHCVQBee77aRXkS.xpceIyBqRcjlkjfpYCerq8eZJkf6Uvm8QPq',
+        'ROLE_ADMIN', false, true),
+       (1002, 'Alice', 'Johnson', 'alice.johnson@example.com', '$2a$10$WKoHCVQBee77aRXkS.xpceIyBqRcjlkjfpYCerq8eZJkf6Uvm8QPq',
+        'ROLE_USER', false, false);
 
 INSERT INTO authentication_token(id, token, token_type, revoked, expired, user_id)
 VALUES (1000, 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsImlhdCI6MTY5NTM3NjA3NiwiZXhwIjoxNzk1Mzc3NTE2fQ.7z-SJjVtAamFjOo0qLd0ehtO59ODHw2B7j1dm4nynE4',

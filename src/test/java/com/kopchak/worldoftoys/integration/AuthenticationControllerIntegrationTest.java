@@ -5,8 +5,10 @@ import com.icegreen.greenmail.configuration.GreenMailConfiguration;
 import com.icegreen.greenmail.junit5.GreenMailExtension;
 import com.icegreen.greenmail.util.ServerSetupTest;
 import com.kopchak.worldoftoys.dto.error.ErrorResponseDto;
+import com.kopchak.worldoftoys.dto.user.ResetPasswordDto;
 import com.kopchak.worldoftoys.dto.user.UserRegistrationDto;
 import com.kopchak.worldoftoys.dto.user.UsernameDto;
+import com.kopchak.worldoftoys.repository.token.ConfirmTokenRepository;
 import com.kopchak.worldoftoys.service.ConfirmationTokenService;
 import com.kopchak.worldoftoys.service.EmailSenderService;
 import com.kopchak.worldoftoys.service.UserService;
@@ -27,8 +29,6 @@ import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -49,6 +49,9 @@ class AuthenticationControllerIntegrationTest {
     @Autowired
     private AuthenticationManager authenticationManager;
 
+    @Autowired
+    private ConfirmTokenRepository confirmationTokenRepository;
+
     @RegisterExtension
     public static final GreenMailExtension greenMail = new GreenMailExtension(ServerSetupTest.SMTP)
             .withConfiguration(GreenMailConfiguration.aConfig().withUser("test", "password"))
@@ -59,21 +62,27 @@ class AuthenticationControllerIntegrationTest {
 
     private String accountActivationSubject;
     private String passwordResetSubject;
-    private String confirmToken;
+    private String activationConfirmToken;
+    private String resetPasswordConfirmToken;
     private String invalidConfirmToken;
     private UsernameDto registeredNotActivatedUserDto;
     private UsernameDto notRegisteredUserDto;
     private UsernameDto registeredAndActivatedUserDto;
+    private ResetPasswordDto validResetPasswordDto;
+    private ResetPasswordDto invalidResetPasswordDto;
 
     @BeforeEach
     public void setUp(){
         accountActivationSubject = "Confirm your email";
         passwordResetSubject = "Reset your password";
-        confirmToken = "8e5648d7-9b4e-4724-83a1-be7e64603e48";
+        activationConfirmToken = "8e5648d7-9b4e-4724-83a1-be7e64603e48";
+        resetPasswordConfirmToken = "8e5648d7-9b4e-4724-83a1-be7e64603e47";
         invalidConfirmToken = "invalid-confirm-token";
         registeredNotActivatedUserDto = UsernameDto.builder().email("alice.johnson@example.com").build();
         notRegisteredUserDto = UsernameDto.builder().email("non-existing-user@example.com").build();
         registeredAndActivatedUserDto = UsernameDto.builder().email("john.doe@example.com").build();
+        validResetPasswordDto = ResetPasswordDto.builder().password("new-password").build();
+        invalidResetPasswordDto = ResetPasswordDto.builder().password("password").build();
     }
 
     @Test
@@ -127,7 +136,7 @@ class AuthenticationControllerIntegrationTest {
     public void activateAccount_ValidConfirmToken_ReturnsNoContentStatus() throws Exception {
         ResultActions response = mockMvc.perform(get("/api/v1/auth/confirm")
                 .contentType(MediaType.APPLICATION_JSON)
-                .param("token", confirmToken));
+                .param("token", activationConfirmToken));
 
         response.andExpect(MockMvcResultMatchers.status().isNoContent())
                 .andDo(MockMvcResultHandlers.print());
@@ -224,6 +233,45 @@ class AuthenticationControllerIntegrationTest {
 
         MimeMessage [] receivedMessages = greenMail.getReceivedMessages();
         assertThat(receivedMessages.length).isEqualTo(0);
+    }
+
+    @Test
+    public void changePassword_ValidConfirmTokenAndNewPasswordNotMatchOldPassword_ReturnsNoContentStatus() throws Exception {
+        ResultActions response = mockMvc.perform(post("/api/v1/auth/reset-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .param("token", resetPasswordConfirmToken)
+                .content(objectMapper.writeValueAsString(validResetPasswordDto)));
+
+        response.andExpect(MockMvcResultMatchers.status().isNoContent())
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    public void changePassword_ValidConfirmTokenAndNewPasswordMatchOldPassword_ReturnsBadRequestStatusAndErrorResponseDto() throws Exception {
+        ResultActions response = mockMvc.perform(post("/api/v1/auth/reset-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .param("token", resetPasswordConfirmToken)
+                .content(objectMapper.writeValueAsString(invalidResetPasswordDto)));
+
+        ErrorResponseDto errorResponseDto = getErrorResponseDto(HttpStatus.BAD_REQUEST, "New password matches old password!");
+
+        response.andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    public void changePassword_InvalidConfirmToken_ReturnsBadRequestStatusAndErrorResponseDto() throws Exception {
+        ResultActions response = mockMvc.perform(post("/api/v1/auth/reset-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .param("token", activationConfirmToken)
+                .content(objectMapper.writeValueAsString(validResetPasswordDto)));
+
+        ErrorResponseDto errorResponseDto = getErrorResponseDto(HttpStatus.BAD_REQUEST, "This confirmation token is invalid!");
+
+        response.andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)))
+                .andDo(MockMvcResultHandlers.print());
     }
 
     private ErrorResponseDto getErrorResponseDto(HttpStatus httpStatus, String msg) {
