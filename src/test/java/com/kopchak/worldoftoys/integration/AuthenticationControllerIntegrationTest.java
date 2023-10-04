@@ -10,6 +10,7 @@ import com.kopchak.worldoftoys.service.ConfirmationTokenService;
 import com.kopchak.worldoftoys.service.EmailSenderService;
 import com.kopchak.worldoftoys.service.UserService;
 import jakarta.mail.internet.MimeMessage;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +26,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 
@@ -45,14 +47,23 @@ class AuthenticationControllerIntegrationTest {
     private AuthenticationManager authenticationManager;
 
     @RegisterExtension
-    private static final GreenMailExtension greenMail = new GreenMailExtension(ServerSetupTest.SMTP)
+    public static final GreenMailExtension greenMail = new GreenMailExtension(ServerSetupTest.SMTP)
             .withConfiguration(GreenMailConfiguration.aConfig().withUser("test", "password"))
             .withPerMethodLifecycle(false);
 
     @Autowired
     private ObjectMapper objectMapper;
 
-    private final static String ACCOUNT_ACTIVATION_SUBJECT = "Confirm your email";
+    private String accountActivationSubject;
+    private String confirmToken;
+    private String invalidConfirmToken;
+
+    @BeforeEach
+    public void setUp(){
+        accountActivationSubject = "Confirm your email";
+        confirmToken = "8e5648d7-9b4e-4724-83a1-be7e64603e48";
+        invalidConfirmToken = "invalid-confirm-token";
+    }
 
     @Test
     public void registerUser_NotRegisteredUser_ReturnsCreatedStatus() throws Exception {
@@ -75,7 +86,7 @@ class AuthenticationControllerIntegrationTest {
         assertThat(receivedMessages.length).isEqualTo(1);
 
         MimeMessage receivedMessage = receivedMessages[0];
-        assertThat(receivedMessage.getSubject()).isEqualTo(ACCOUNT_ACTIVATION_SUBJECT);
+        assertThat(receivedMessage.getSubject()).isEqualTo(accountActivationSubject);
     }
 
     @Test
@@ -99,6 +110,28 @@ class AuthenticationControllerIntegrationTest {
 
         MimeMessage [] receivedMessages = greenMail.getReceivedMessages();
         assertThat(receivedMessages.length).isEqualTo(0);
+    }
+
+    @Test
+    public void activateAccount_ValidConfirmToken_ReturnsNoContentStatus() throws Exception {
+        ResultActions response = mockMvc.perform(get("/api/v1/auth/confirm")
+                .contentType(MediaType.APPLICATION_JSON)
+                .param("token", confirmToken));
+
+        response.andExpect(MockMvcResultMatchers.status().isNoContent())
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    public void activateAccount_InvalidConfirmToken_ReturnsBadRequestStatusAndErrorResponseDto() throws Exception {
+        ResultActions response = mockMvc.perform(get("/api/v1/auth/confirm")
+                .contentType(MediaType.APPLICATION_JSON)
+                .param("token", invalidConfirmToken));
+
+        ErrorResponseDto errorResponseDto = getErrorResponseDto(HttpStatus.BAD_REQUEST, "This confirmation token is invalid!");
+
+        response.andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)));
     }
 
     private ErrorResponseDto getErrorResponseDto(HttpStatus httpStatus, String msg) {
