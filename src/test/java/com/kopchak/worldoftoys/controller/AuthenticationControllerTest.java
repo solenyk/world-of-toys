@@ -83,15 +83,8 @@ class AuthenticationControllerTest {
         activationTokenType = ConfirmationTokenType.ACTIVATION;
         resetPasswordTokenType = ConfirmationTokenType.RESET_PASSWORD;
         confirmToken = "confirm-token";
-        confirmTokenDto = ConfirmTokenDto
-                .builder()
-                .token(confirmToken)
-                .build();
-        userAuthDto = UserAuthDto
-                .builder()
-                .email(username)
-                .password("password")
-                .build();
+        confirmTokenDto = ConfirmTokenDto.builder().token(confirmToken).build();
+        userAuthDto = UserAuthDto.builder().email(username).password("password").build();
         usernameDto = UsernameDto.builder().email(username).build();
         resetPasswordDto = ResetPasswordDto.builder().password("new-password").build();
         accessAndRefreshTokensDto = AccessAndRefreshTokensDto

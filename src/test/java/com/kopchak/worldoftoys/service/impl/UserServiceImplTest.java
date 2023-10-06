@@ -37,11 +37,9 @@ class UserServiceImplTest {
     private UserServiceImpl userService;
     private String userEmail;
     private AppUser user;
-    private ConfirmationToken confirmationToken;
     private String confirmToken;
     private String userPassword;
     private String userNotFoundExceptionMsg;
-    private String invalidConfirmationTokenExceptionMsg;
 
     @BeforeEach
     void setUp() {
@@ -51,11 +49,9 @@ class UserServiceImplTest {
                 .enabled(true)
                 .password("password")
                 .build();
-        confirmationToken = ConfirmationToken.builder().user(user).build();
         confirmToken = "confirm-token";
         userPassword = "new-password";
         userNotFoundExceptionMsg = "User with this username does not exist!";
-        invalidConfirmationTokenExceptionMsg = "This confirmation token is invalid!";
     }
 
     @Test
@@ -99,6 +95,8 @@ class UserServiceImplTest {
 
     @Test
     public void isNewPasswordMatchOldPassword_ExistingConfirmTokenAndMatchingPasswords_ReturnsTrue() {
+        ConfirmationToken confirmationToken = ConfirmationToken.builder().user(user).build();
+
         when(confirmationTokenRepository.findByToken(confirmToken)).thenReturn(Optional.of(confirmationToken));
         when(passwordEncoder.matches(userPassword, user.getPassword())).thenReturn(true);
 
@@ -109,6 +107,8 @@ class UserServiceImplTest {
 
     @Test
     public void isNewPasswordMatchOldPassword_NonExistingConfirmToken_ThrowsInvalidConfirmationTokenException() {
+        String  invalidConfirmationTokenExceptionMsg = "This confirmation token is invalid!";
+
         assertResponseStatusException(InvalidConfirmationTokenException.class, invalidConfirmationTokenExceptionMsg,
                 HttpStatus.BAD_REQUEST, () -> userService.isNewPasswordMatchOldPassword(confirmToken, userPassword));
     }

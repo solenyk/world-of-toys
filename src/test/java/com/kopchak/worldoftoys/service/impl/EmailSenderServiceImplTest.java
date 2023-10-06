@@ -49,11 +49,6 @@ class EmailSenderServiceImplTest {
     private String msgSubject;
     private String userEmail;
     private String confirmToken;
-    private String requestUrl;
-    private String servletPath;
-    private String expectedEmailContent;
-    private AppUser user;
-    private ConfirmationTokenType activationTokenType;
     private ConfirmationTokenType resetPasswordTokenType;
 
     @BeforeEach
@@ -64,15 +59,6 @@ class EmailSenderServiceImplTest {
         msgSubject = "Test Subject";
         userEmail = "user@example.com";
         confirmToken = "testConfirmationToken";
-        requestUrl = "Test-string-request-url";
-        servletPath = "Test-servlet-path";
-        expectedEmailContent = "Expected Email Content";
-        user = AppUser
-                .builder()
-                .firstname("Firstname")
-                .lastname("Lastname")
-                .build();
-        activationTokenType = ConfirmationTokenType.ACTIVATION;
         resetPasswordTokenType = ConfirmationTokenType.RESET_PASSWORD;
     }
 
@@ -109,7 +95,7 @@ class EmailSenderServiceImplTest {
     public void sendEmail_ActivationToken_SuccessfulSend(){
         mockMethodsCallForSendEmail();
 
-        emailSenderService.sendEmail(userEmail, confirmToken, activationTokenType);
+        emailSenderService.sendEmail(userEmail, confirmToken, ConfirmationTokenType.ACTIVATION);
 
         verify(templateEngine).process(eq("email-template"), any(Context.class));
         verify(mailSender).send(any(MimeMessage.class));
@@ -140,6 +126,15 @@ class EmailSenderServiceImplTest {
     }
 
     private void mockMethodsCallForSendEmail(){
+        AppUser user = AppUser
+                .builder()
+                .firstname("Firstname")
+                .lastname("Lastname")
+                .build();
+        String requestUrl = "Test-string-request-url";
+        String servletPath = "Test-servlet-path";
+        String expectedEmailContent = "Expected Email Content";
+
         when(userRepository.findByEmail(userEmail)).thenReturn(java.util.Optional.of(user));
         when(request.getRequestURL()).thenReturn(new StringBuffer(requestUrl));
         when(request.getServletPath()).thenReturn(servletPath);

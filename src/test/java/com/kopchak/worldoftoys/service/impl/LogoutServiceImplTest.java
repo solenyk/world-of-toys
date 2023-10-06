@@ -37,27 +37,20 @@ class LogoutServiceImplTest {
     @Mock
     private Authentication authentication;
 
-    private String validJwtToken;
-    private String authHeaderPrefix;
-    private AuthenticationToken authToken;
-
-    @BeforeEach
-    void setUp() {
-        validJwtToken = "valid-jwt-token";
-        authHeaderPrefix = "Bearer ";
+    @Test
+    void logout_ValidAuthorizationHeader() {
+        String authHeaderPrefix = "Bearer ";
+        String validJwtToken = "valid-jwt-token";
         AppUser user = AppUser
                 .builder()
                 .email("test@gmail.com")
                 .build();
-        authToken = AuthenticationToken
+        AuthenticationToken authToken = AuthenticationToken
                 .builder()
                 .token(validJwtToken)
                 .user(user)
                 .build();
-    }
 
-    @Test
-    void logout_ValidAuthorizationHeader() {
         when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn(authHeaderPrefix + validJwtToken);
         when(authTokenRepository.findByToken(validJwtToken)).thenReturn(Optional.of(authToken));
 

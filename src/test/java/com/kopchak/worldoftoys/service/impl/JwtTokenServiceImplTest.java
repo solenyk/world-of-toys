@@ -44,51 +44,24 @@ class JwtTokenServiceImplTest {
     @InjectMocks
     @Spy
     private JwtTokenServiceImpl jwtTokenService;
-
+    private final static long EXP_TOKEN_TIME_IN_SECONDS = 9579738330L;
+    private final static String VALID_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyQGV4YW1wbGUuY29tIiwiaWF0IjoxNjk1NzM4MzMwLCJleHAiOjk1Nzk3MzgzMzB9.EFuKx_EUPx8pEpVGk0wIIck1nxXB8prHj7noH8Nb3QI";
     private String username;
-    private String validToken;
-    private long expTokenTimeInSeconds;
     private String invalidToken;
     private AuthTokenType accessTokenType;
     private AppUser user;
-    private AuthenticationToken validAuthToken;
-    private AuthenticationToken invalidAuthToken;
     private AuthTokenDto validAuthTokenDto;
-    private AuthTokenDto invalidAuthTokenDto;
     private String userNotFoundExceptionMsg;
-    private String invalidRefreshTokenExceptionMsg;
 
     @BeforeEach
     void setUp() {
         ReflectionTestUtils.setField(jwtTokenService, "SECRET_KEY", "testsecretkey".repeat(20));
         username = "user@example.com";
-        validToken = "eyJhbGciOiJIUzI1NiJ9" +
-                ".eyJzdWIiOiJ1c2VyQGV4YW1wbGUuY29tIiwiaWF0IjoxNjk1NzM4MzMwLCJleHAiOjk1Nzk3MzgzMzB9" +
-                ".EFuKx_EUPx8pEpVGk0wIIck1nxXB8prHj7noH8Nb3QI";
-        expTokenTimeInSeconds = 9579738330L;
         invalidToken = "invalid-token";
         accessTokenType = AuthTokenType.ACCESS;
         user = AppUser.builder().email(username).build();
-        validAuthToken = AuthenticationToken
-                .builder()
-                .token(validToken)
-                .tokenType(accessTokenType)
-                .revoked(false)
-                .expired(false)
-                .user(user)
-                .build();
-        invalidAuthToken = AuthenticationToken
-                .builder()
-                .token(invalidToken)
-                .tokenType(accessTokenType)
-                .revoked(false)
-                .expired(false)
-                .user(user)
-                .build();
-        validAuthTokenDto = AuthTokenDto.builder().token(validToken).build();
-        invalidAuthTokenDto = AuthTokenDto.builder().token(invalidToken).build();
+        validAuthTokenDto = AuthTokenDto.builder().token(VALID_TOKEN).build();
         userNotFoundExceptionMsg = "User with this username does not exist!";
-        invalidRefreshTokenExceptionMsg = "This refresh token is invalid!";
     }
 
     @Test
@@ -111,6 +84,14 @@ class JwtTokenServiceImplTest {
     @Test
     void isAuthTokenValid_ValidToken_ReturnsTrue() {
         String validToken = getValidToken();
+        AuthenticationToken validAuthToken = AuthenticationToken
+                .builder()
+                .token(validToken)
+                .tokenType(accessTokenType)
+                .revoked(false)
+                .expired(false)
+                .user(user)
+                .build();
 
         when(authTokenRepository.findByToken(validToken)).thenReturn(Optional.of(validAuthToken));
         doReturn(Optional.of(username)).when(jwtTokenService).extractUsername(validToken);
@@ -130,6 +111,15 @@ class JwtTokenServiceImplTest {
 
     @Test
     void isAuthTokenValid_InvalidToken_ReturnsFalse() {
+        AuthenticationToken invalidAuthToken = AuthenticationToken
+                .builder()
+                .token(invalidToken)
+                .tokenType(accessTokenType)
+                .revoked(false)
+                .expired(false)
+                .user(user)
+                .build();
+
         when(authTokenRepository.findByToken(invalidToken)).thenReturn(Optional.of(invalidAuthToken));
         doReturn(Optional.of(username)).when(jwtTokenService).extractUsername(invalidToken);
         when(userRepository.findByEmail(username)).thenReturn(Optional.of(user));
@@ -160,7 +150,7 @@ class JwtTokenServiceImplTest {
     void isActiveAuthTokenExists_ValidTokenAndAuthTokenType_ReturnsTrue() {
         when(authTokenRepository.isActiveAuthTokenExists(username, accessTokenType)).thenReturn(true);
 
-        boolean isActiveAuthTokenExists = jwtTokenService.isActiveAuthTokenExists(validToken, accessTokenType);
+        boolean isActiveAuthTokenExists = jwtTokenService.isActiveAuthTokenExists(VALID_TOKEN, accessTokenType);
 
         assertTrue(isActiveAuthTokenExists);
     }
@@ -183,6 +173,9 @@ class JwtTokenServiceImplTest {
 
     @Test
     void refreshAccessToken_InvalidAuthTokenDto_ThrowsInvalidRefreshTokenException() {
+        String invalidRefreshTokenExceptionMsg = "This refresh token is invalid!";
+        AuthTokenDto invalidAuthTokenDto = AuthTokenDto.builder().token(invalidToken).build();
+
         assertResponseStatusException(InvalidRefreshTokenException.class, invalidRefreshTokenExceptionMsg,
                 HttpStatus.BAD_REQUEST, () -> jwtTokenService.refreshAccessToken(invalidAuthTokenDto));
     }
@@ -204,10 +197,10 @@ class JwtTokenServiceImplTest {
     }
 
     private String getValidToken() {
-        Instant instant = Instant.ofEpochSecond(expTokenTimeInSeconds);
+        Instant instant = Instant.ofEpochSecond(EXP_TOKEN_TIME_IN_SECONDS);
         LocalDateTime localDateTime = instant.atZone(ZoneId.systemDefault()).toLocalDateTime();
         log.warn("Token expiration date is {}", localDateTime);
-        return validToken;
+        return VALID_TOKEN;
     }
 
     private void assertResponseStatusException(Class<? extends ResponseStatusException> expectedExceptionType,

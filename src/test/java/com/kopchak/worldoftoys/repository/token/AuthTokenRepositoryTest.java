@@ -26,9 +26,7 @@ class AuthTokenRepositoryTest {
     @Test
     public void findByToken_ExistingAuthToken_ReturnsAuthenticationToken(){
         //Arrange
-        String jwtToken = "eyJhbGciOiJIUzI1NiJ9." +
-                "eyJzdWIiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsImlhdCI6MTY5NTM3NjA3NiwiZXhwIjoxNzk1Mzc3NTE2fQ." +
-                "7z-SJjVtAamFjOo0qLd0ehtO59ODHw2B7j1dm4nynE4";
+        String jwtToken = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsImlhdCI6MTY5NjQyNjc0OSwiZXhwIjoxMDMzNjQyNjc0OX0.0pl9Ee9SmSZbOv1AVeXbQuwkcW1l8TUpEBhZrv0EwDo";
 
         //Act
         Optional<AuthenticationToken> returnedToken = authTokenRepository.findByToken(jwtToken);

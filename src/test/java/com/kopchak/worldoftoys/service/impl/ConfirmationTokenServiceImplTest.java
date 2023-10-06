@@ -50,7 +50,6 @@ class ConfirmationTokenServiceImplTest {
     private String token;
     private ConfirmationToken confirmToken;
     private ResetPasswordDto newPassword;
-    private String userNotFoundExceptionMsg;
     private String invalidConfirmationTokenExceptionMsg;
 
     @BeforeEach
@@ -68,7 +67,6 @@ class ConfirmationTokenServiceImplTest {
                 .user(user)
                 .build();
         newPassword = ResetPasswordDto.builder().password("new-password").build();
-        userNotFoundExceptionMsg = "User with this username does not exist!";
         invalidConfirmationTokenExceptionMsg = "This confirmation token is invalid!";
     }
 
@@ -85,6 +83,8 @@ class ConfirmationTokenServiceImplTest {
 
     @Test
     void createConfirmationToken_UsernameOfNonExistingUserAndTokenType_ThrowsUserNotFoundException() {
+        String userNotFoundExceptionMsg = "User with this username does not exist!";
+
         assertResponseStatusException(UserNotFoundException.class, userNotFoundExceptionMsg, HttpStatus.NOT_FOUND, () ->
                 confirmationTokenService.createConfirmationToken(username, activationTokenType));
     }

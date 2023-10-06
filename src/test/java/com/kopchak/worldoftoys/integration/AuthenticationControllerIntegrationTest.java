@@ -11,6 +11,7 @@ import com.kopchak.worldoftoys.dto.user.UserAuthDto;
 import com.kopchak.worldoftoys.dto.user.UserRegistrationDto;
 import com.kopchak.worldoftoys.dto.user.UsernameDto;
 import jakarta.mail.internet.MimeMessage;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -26,6 +27,10 @@ import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -34,11 +39,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @Transactional
+@Slf4j
 @ActiveProfiles("integrationtest")
 class AuthenticationControllerIntegrationTest {
     @Autowired
     private MockMvc mockMvc;
 
+    //TODO: add  descr in the README
     @RegisterExtension
     public static final GreenMailExtension greenMail = new GreenMailExtension(ServerSetupTest.SMTP)
             .withConfiguration(GreenMailConfiguration.aConfig().withUser("test", "password"))
@@ -47,74 +54,36 @@ class AuthenticationControllerIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    private final static String REGISTERED_ACTIVATED_USERNAME = "john.doe@example.com";
+    private final static String REGISTERED_NOT_ACTIVATED_USERNAME = "alice.johnson@example.com";
+    private final static String NOT_REGISTERED_USERNAME = "not_registered_user@example.com";
     private String accountActivationSubject;
-    private String passwordResetSubject;
     private String activationConfirmToken;
     private String resetPasswordConfirmToken;
-    private String invalidConfirmToken;
     private UsernameDto registeredNotActivatedUserDto;
     private UsernameDto notRegisteredUserDto;
-    private UsernameDto registeredAndActivatedUserDto;
     private ResetPasswordDto validResetPasswordDto;
-    private ResetPasswordDto invalidResetPasswordDto;
-    private UserAuthDto registeredAndActivatedUserAuthDto;
-    private UserAuthDto registeredAndNotActivatedUserAuthDto;
-    private UserAuthDto notRegisteredUserAuthDto;
-    private UserRegistrationDto userRegistrationDto;
-    private AuthTokenDto validAuthTokenDto;
-    private AuthTokenDto invalidAuthTokenDto;
-    private AuthTokenDto validAuthTokenDtoWithExistingAccessToken;
 
     @BeforeEach
-    public void setUp(){
+    public void setUp() {
         accountActivationSubject = "Confirm your email";
-        passwordResetSubject = "Reset your password";
         activationConfirmToken = "8e5648d7-9b4e-4724-83a1-be7e64603e48";
         resetPasswordConfirmToken = "8e5648d7-9b4e-4724-83a1-be7e64603e47";
-        invalidConfirmToken = "invalid-confirm-token";
-        registeredNotActivatedUserDto = UsernameDto.builder().email("alice.johnson@example.com").build();
-        notRegisteredUserDto = UsernameDto.builder().email("non-existing-user@example.com").build();
-        registeredAndActivatedUserDto = UsernameDto.builder().email("john.doe@example.com").build();
+        registeredNotActivatedUserDto = UsernameDto.builder().email(REGISTERED_NOT_ACTIVATED_USERNAME).build();
+        notRegisteredUserDto = UsernameDto.builder().email(NOT_REGISTERED_USERNAME).build();
         validResetPasswordDto = ResetPasswordDto.builder().password("new-password").build();
-        invalidResetPasswordDto = ResetPasswordDto.builder().password("password").build();
-        registeredAndActivatedUserAuthDto = UserAuthDto
-                .builder()
-                .email("john.doe@example.com")
-                .password("password")
-                .build();
-        registeredAndNotActivatedUserAuthDto = UserAuthDto
-                .builder()
-                .email("alice.johnson@example.com")
-                .password("password")
-                .build();
-        notRegisteredUserAuthDto = UserAuthDto
-                .builder()
-                .email("non-existing-user@example.com")
-                .password("password")
-                .build();
-        userRegistrationDto = UserRegistrationDto
-                .builder()
-                .firstname("Firstname")
-                .lastname("Lastname")
-                .email("test@gmail.com")
-                .password("password")
-                .build();
-        validAuthTokenDto = AuthTokenDto
-                .builder()
-                .token("eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhbGljZS5qb2huc29uQGV4YW1wbGUuY29tIiwiaWF0IjoxNjk2NDI2ODIyLCJleHAiOjEwMzM2NDI2ODIyfQ.K8ACIiQKVcSr5IX_snOX-WXNebx2-FMIQP4gj4Qg_Pk")
-                .build();
-        invalidAuthTokenDto = AuthTokenDto
-                .builder()
-                .token("invalid-token")
-                .build();
-        validAuthTokenDtoWithExistingAccessToken = AuthTokenDto
-                .builder()
-                .token("eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsImlhdCI6MTY5NjQyNjgyMSwiZXhwIjoxMDMzNjQyNjgyMX0.jeeuTzGgKrixMp6_dizMNLicp6n0gwECAId-ATLqbns")
-                .build();
     }
 
     @Test
     public void registerUser_NotRegisteredUser_ReturnsCreatedStatus() throws Exception {
+        UserRegistrationDto userRegistrationDto = UserRegistrationDto
+                .builder()
+                .firstname("Firstname")
+                .lastname("Lastname")
+                .email(NOT_REGISTERED_USERNAME)
+                .password("password")
+                .build();
+
         ResultActions response = mockMvc.perform(post("/api/v1/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(userRegistrationDto)));
@@ -122,7 +91,7 @@ class AuthenticationControllerIntegrationTest {
         response.andExpect(MockMvcResultMatchers.status().isCreated())
                 .andDo(MockMvcResultHandlers.print());
 
-        MimeMessage [] receivedMessages = greenMail.getReceivedMessages();
+        MimeMessage[] receivedMessages = greenMail.getReceivedMessages();
         assertThat(receivedMessages.length).isEqualTo(1);
 
         MimeMessage receivedMessage = receivedMessages[0];
@@ -148,7 +117,7 @@ class AuthenticationControllerIntegrationTest {
         response.andExpect(MockMvcResultMatchers.status().isBadRequest())
                 .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)));
 
-        MimeMessage [] receivedMessages = greenMail.getReceivedMessages();
+        MimeMessage[] receivedMessages = greenMail.getReceivedMessages();
         assertThat(receivedMessages.length).isEqualTo(0);
     }
 
@@ -164,6 +133,8 @@ class AuthenticationControllerIntegrationTest {
 
     @Test
     public void activateAccount_InvalidConfirmToken_ReturnsBadRequestStatusAndErrorResponseDto() throws Exception {
+        String invalidConfirmToken = "invalid-confirm-token";
+
         ResultActions response = mockMvc.perform(get("/api/v1/auth/confirm")
                 .contentType(MediaType.APPLICATION_JSON)
                 .param("token", invalidConfirmToken));
@@ -173,7 +144,7 @@ class AuthenticationControllerIntegrationTest {
         response.andExpect(MockMvcResultMatchers.status().isBadRequest())
                 .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)));
 
-        MimeMessage [] receivedMessages = greenMail.getReceivedMessages();
+        MimeMessage[] receivedMessages = greenMail.getReceivedMessages();
         assertThat(receivedMessages.length).isEqualTo(0);
     }
 
@@ -186,7 +157,7 @@ class AuthenticationControllerIntegrationTest {
         response.andExpect(MockMvcResultMatchers.status().isNoContent())
                 .andDo(MockMvcResultHandlers.print());
 
-        MimeMessage [] receivedMessages = greenMail.getReceivedMessages();
+        MimeMessage[] receivedMessages = greenMail.getReceivedMessages();
         assertThat(receivedMessages.length).isEqualTo(1);
 
         MimeMessage receivedMessage = receivedMessages[0];
@@ -205,12 +176,14 @@ class AuthenticationControllerIntegrationTest {
         response.andExpect(MockMvcResultMatchers.status().isNotFound())
                 .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)));
 
-        MimeMessage [] receivedMessages = greenMail.getReceivedMessages();
+        MimeMessage[] receivedMessages = greenMail.getReceivedMessages();
         assertThat(receivedMessages.length).isEqualTo(0);
     }
 
     @Test
     public void resendVerificationEmail_RegisteredAndActivatedUser_ReturnsConflictStatusAndErrorResponseDto() throws Exception {
+        UsernameDto registeredAndActivatedUserDto = UsernameDto.builder().email(REGISTERED_ACTIVATED_USERNAME).build();
+
         ResultActions response = mockMvc.perform(post("/api/v1/auth/resend-verification-email")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(registeredAndActivatedUserDto)));
@@ -220,12 +193,13 @@ class AuthenticationControllerIntegrationTest {
         response.andExpect(MockMvcResultMatchers.status().isConflict())
                 .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)));
 
-        MimeMessage [] receivedMessages = greenMail.getReceivedMessages();
+        MimeMessage[] receivedMessages = greenMail.getReceivedMessages();
         assertThat(receivedMessages.length).isEqualTo(0);
     }
 
     @Test
     public void sendResetPasswordEmail_RegisteredUser_ReturnsNoContentStatus() throws Exception {
+        String passwordResetSubject = "Reset your password";
         ResultActions response = mockMvc.perform(post("/api/v1/auth/forgot-password")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(registeredNotActivatedUserDto)));
@@ -233,7 +207,7 @@ class AuthenticationControllerIntegrationTest {
         response.andExpect(MockMvcResultMatchers.status().isNoContent())
                 .andDo(MockMvcResultHandlers.print());
 
-        MimeMessage [] receivedMessages = greenMail.getReceivedMessages();
+        MimeMessage[] receivedMessages = greenMail.getReceivedMessages();
         assertThat(receivedMessages.length).isEqualTo(1);
 
         MimeMessage receivedMessage = receivedMessages[0];
@@ -251,7 +225,7 @@ class AuthenticationControllerIntegrationTest {
         response.andExpect(MockMvcResultMatchers.status().isNotFound())
                 .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)));
 
-        MimeMessage [] receivedMessages = greenMail.getReceivedMessages();
+        MimeMessage[] receivedMessages = greenMail.getReceivedMessages();
         assertThat(receivedMessages.length).isEqualTo(0);
     }
 
@@ -268,6 +242,8 @@ class AuthenticationControllerIntegrationTest {
 
     @Test
     public void changePassword_ValidConfirmTokenAndNewPasswordMatchOldPassword_ReturnsBadRequestStatusAndErrorResponseDto() throws Exception {
+        ResetPasswordDto invalidResetPasswordDto = ResetPasswordDto.builder().password("password").build();
+
         ResultActions response = mockMvc.perform(post("/api/v1/auth/reset-password")
                 .contentType(MediaType.APPLICATION_JSON)
                 .param("token", resetPasswordConfirmToken)
@@ -296,6 +272,8 @@ class AuthenticationControllerIntegrationTest {
 
     @Test
     public void authenticate_RegisteredAndActivatedUser_ReturnsOkStatusAndAccessAndRefreshTokensDto() throws Exception {
+        UserAuthDto registeredAndActivatedUserAuthDto = UserAuthDto.builder().email(REGISTERED_ACTIVATED_USERNAME).password("password").build();
+
         ResultActions response = mockMvc.perform(post("/api/v1/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(registeredAndActivatedUserAuthDto)));
@@ -310,6 +288,8 @@ class AuthenticationControllerIntegrationTest {
 
     @Test
     public void authenticate_RegisteredAndNotActivatedUser_ReturnsForbiddenStatusAndErrorResponseDto() throws Exception {
+        UserAuthDto registeredAndNotActivatedUserAuthDto = UserAuthDto.builder().email(REGISTERED_NOT_ACTIVATED_USERNAME).password("password").build();
+
         ResultActions response = mockMvc.perform(post("/api/v1/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(registeredAndNotActivatedUserAuthDto)));
@@ -322,6 +302,12 @@ class AuthenticationControllerIntegrationTest {
 
     @Test
     public void authenticate_NotRegisteredUser_ReturnsUnauthorizedStatusAndErrorResponseDto() throws Exception {
+        UserAuthDto notRegisteredUserAuthDto = UserAuthDto
+                .builder()
+                .email(NOT_REGISTERED_USERNAME)
+                .password("password")
+                .build();
+
         ResultActions response = mockMvc.perform(post("/api/v1/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(notRegisteredUserAuthDto)));
@@ -334,6 +320,13 @@ class AuthenticationControllerIntegrationTest {
 
     @Test
     public void refreshToken_ValidTokenAndActiveAuthTokenNotExists_ReturnsCreatedStatusAndAuthTokenDto() throws Exception {
+        AuthTokenDto validAuthTokenDto = AuthTokenDto
+                .builder()
+                .token("eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhbGljZS5qb2huc29uQGV4YW1wbGUuY29tIiwiaWF0IjoxNjk2NDI2ODIyLCJleHAiOjEwMzM2NDI2ODIyfQ.K8ACIiQKVcSr5IX_snOX-WXNebx2-FMIQP4gj4Qg_Pk")
+                .build();
+        long expTokenTimeInSeconds = 10336426822L;
+        logTokenExpirationDate(expTokenTimeInSeconds);
+
         ResultActions response = mockMvc.perform(post("/api/v1/auth/refresh-token")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(validAuthTokenDto)));
@@ -345,9 +338,16 @@ class AuthenticationControllerIntegrationTest {
 
     @Test
     public void refreshToken_ValidTokenAndActiveAuthTokenExists_ReturnsBadRequestStatusAndErrorResponseDto() throws Exception {
+        AuthTokenDto validAuthTokenDto = AuthTokenDto
+                .builder()
+                .token("eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsImlhdCI6MTY5NjQyNjgyMSwiZXhwIjoxMDMzNjQyNjgyMX0.jeeuTzGgKrixMp6_dizMNLicp6n0gwECAId-ATLqbns")
+                .build();
+        long expTokenTimeInSeconds = 10336426821L;
+        logTokenExpirationDate(expTokenTimeInSeconds);
+
         ResultActions response = mockMvc.perform(post("/api/v1/auth/refresh-token")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(validAuthTokenDtoWithExistingAccessToken)));
+                .content(objectMapper.writeValueAsString(validAuthTokenDto)));
 
         ErrorResponseDto errorResponseDto = getErrorResponseDto(HttpStatus.BAD_REQUEST, "There is valid access token!");
 
@@ -357,6 +357,11 @@ class AuthenticationControllerIntegrationTest {
 
     @Test
     public void refreshToken_InvalidToken_ReturnsBadRequestStatusAndErrorResponseDto() throws Exception {
+        AuthTokenDto invalidAuthTokenDto = AuthTokenDto
+                .builder()
+                .token("invalid-token")
+                .build();
+
         ResultActions response = mockMvc.perform(post("/api/v1/auth/refresh-token")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(invalidAuthTokenDto)));
@@ -374,5 +379,11 @@ class AuthenticationControllerIntegrationTest {
                 .status(httpStatus.value())
                 .message(msg)
                 .build();
+    }
+
+    private void logTokenExpirationDate(long expTokenTimeInSeconds) {
+        Instant instant = Instant.ofEpochSecond(expTokenTimeInSeconds);
+        LocalDateTime localDateTime = instant.atZone(ZoneId.systemDefault()).toLocalDateTime();
+        log.warn("Token expiration date is {}", localDateTime);
     }
 }
