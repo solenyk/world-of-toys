@@ -1,6 +1,6 @@
 # world-of-toys
 
-This is a backend API for a toy store web application built using Spring Boot 3, Spring Security 6 and Java 17. This API is responsible for handling all of the requests made to the server and returning the appropriate data to the front-end.
+This is a backend API for a toy store web application built using Spring Boot 3, Spring Security 6 and Java 17. This API is responsible for handling all requests made to the server and returning the appropriate data to the front-end.
 
 ## Table of Contents
 
@@ -28,9 +28,25 @@ This application was built using the following technologies:
 ## Features
 
 The following features are currently available in the application:
+- User registration 
+- Account activation using email letter
+- Resend activation account email letter
+- Send change password email letter
+- Change password 
+- Login 
+- Refresh access token
+- Logout
 
 ## Endpoints
 The following endpoints are currently available in the API:
+- POST /api/v1/auth/register - User registration
+- GET /api/v1/auth/confirm - User account activation using email
+- POST /api/v1/auth/resend-verification-email - Resend the account activation email letter 
+- POST /api/v1/auth/forgot-password - Send reset password email
+- GET /api/v1/auth/reset-password - Change user password
+- POST /api/v1/auth/login - Login
+- POST /api/v1/auth/refresh-token - Refresh access token
+- GET /api/v1/auth/logout - Logout
 
 ## API Documentation
 
