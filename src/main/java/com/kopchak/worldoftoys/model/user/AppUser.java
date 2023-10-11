@@ -23,39 +23,38 @@ public class AppUser implements UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(length = 60)
-    @NotBlank(message = "Invalid firstname: firstname is empty")
-    @NotNull(message = "Invalid firstname: firstname is NULL")
+    @Column(length = 60, nullable = false)
+    @NotBlank(message = "Invalid firstname: firstname is blank")
     @Size(min = 3, max = 60, message = "Invalid firstname: firstname must be up to 60 characters long")
     private String firstname;
 
-    @Column(length = 60)
-    @NotBlank(message = "Invalid lastname: lastname is empty")
-    @NotNull(message = "Invalid lastname: lastname is NULL")
+    @Column(length = 60, nullable = false)
+    @NotBlank(message = "Invalid lastname: lastname is blank")
     @Size(min = 3, max = 60, message = "Invalid lastname: lastname must be up to 60 characters long")
     private String lastname;
 
 
     @Email(message = "Invalid email")
-    @NotBlank(message = "Invalid email: email is empty")
-    @NotNull(message = "Invalid email: email is NULL")
+    @NotBlank(message = "Invalid email: email is blank")
     @Size(min = 6, max = 320, message = "Invalid email: email must be up to 320 characters long")
-    @Column(length = 320)
+    @Column(length = 320, nullable = false)
     private String email;
 
-    @Column(length = 60)
+    @Column(length = 60, nullable = false)
     @NotBlank(message = "Invalid password: password is empty")
-    @NotNull(message = "Invalid password: password is NULL")
     @Size(min = 60, max = 60, message = "Invalid password: encoded password must be 60 characters long")
     private String password;
 
+    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     @NotNull(message = "Invalid role: role is NULL")
     private Role role;
 
+    @Column(nullable = false)
     @NotNull(message = "Invalid locked value: locked value is NULL")
     private Boolean locked = false;
 
+    @Column(nullable = false)
     @NotNull(message = "Invalid enabled value: enabled value is NULL")
     private Boolean enabled = false;
 
