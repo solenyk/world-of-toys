@@ -1,5 +1,6 @@
 package com.kopchak.worldoftoys.model.image;
 
+import com.kopchak.worldoftoys.model.product.Product;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
@@ -28,4 +29,8 @@ public class Image {
     @Column(nullable = false, length = 1000)
     @NotEmpty(message = "Invalid image: image is empty")
     private byte[] image;
+
+    @ManyToOne
+    @JoinColumn(name = "product_id", nullable = false)
+    private Product product;
 }
