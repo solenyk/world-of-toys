@@ -17,7 +17,7 @@ public class Image {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(length = 20, nullable = false)
+    @Column(length = 50, nullable = false)
     @NotBlank(message = "Invalid name: name is blank")
     private String name;
 
@@ -26,7 +26,7 @@ public class Image {
     private String type;
 
     @Lob
-    @Column(nullable = false, length = 1000)
+    @Column(nullable = false, length = 10000, columnDefinition = "BLOB")
     @NotEmpty(message = "Invalid image: image is empty")
     private byte[] image;
 

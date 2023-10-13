@@ -5,13 +5,11 @@ import com.kopchak.worldoftoys.model.product.category.AgeCategory;
 import com.kopchak.worldoftoys.model.product.category.BrandCategory;
 import com.kopchak.worldoftoys.model.product.category.OriginCategory;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Set;
 
 @Getter
@@ -37,12 +35,16 @@ public class Product {
 
     @Column(length = 250, nullable = false)
     @NotBlank(message = "Description is mandatory")
-    @Size(max = 250, message = "Description must be up to 250 characters long")
+    @Size(max = 500, message = "Description must be up to 250 characters long")
     private String description;
 
     @NotNull(message = "Price is mandatory")
     @DecimalMin(value = "0.0", inclusive = false)
     private BigDecimal price;
+
+    @NotNull(message = "Product quantity is mandatory")
+    @Min(value = 0, message = "Product quantity should not be less than 0")
+    private BigInteger availableQuantity;
 
     @OneToMany(mappedBy = "product")
     private Set<Image> images;
