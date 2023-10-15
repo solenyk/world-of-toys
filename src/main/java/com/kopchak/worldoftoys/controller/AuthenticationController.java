@@ -32,6 +32,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/auth")
+@CrossOrigin
 @RequiredArgsConstructor
 @Tag(name = "authentication-controller", description = "Controller for user registration, account confirmation, " +
         "reset password and login")
@@ -206,7 +207,7 @@ public class AuthenticationController {
     public ResponseEntity<AccessAndRefreshTokensDto> authenticate(@Valid @RequestBody UserAuthDto userAuthDto) {
         String username = userAuthDto.getEmail();
         if (!userService.isUserRegistered(username) || !userService.isPasswordsMatch(username, userAuthDto.getPassword())) {
-            log.error( "Bad user credentials!");
+            log.error("Bad user credentials!");
             throw new UserNotFoundException(HttpStatus.UNAUTHORIZED, "Bad user credentials!");
         }
         if (!userService.isUserActivated(username)) {
