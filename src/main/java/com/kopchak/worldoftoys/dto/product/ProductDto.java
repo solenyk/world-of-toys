@@ -3,6 +3,7 @@ package com.kopchak.worldoftoys.dto.product;
 import com.kopchak.worldoftoys.dto.image.ImageDto;
 import com.kopchak.worldoftoys.dto.product.category.ProductCategoryDto;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 
 import java.math.BigDecimal;
@@ -10,6 +11,7 @@ import java.math.BigInteger;
 import java.util.List;
 
 @Getter
+@Builder
 @AllArgsConstructor
 public class ProductDto {
     private String name;
