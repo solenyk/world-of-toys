@@ -2,14 +2,9 @@ package com.kopchak.worldoftoys.mapper;
 
 import com.kopchak.worldoftoys.dto.image.ImageDto;
 import com.kopchak.worldoftoys.model.image.Image;
+import org.mapstruct.Mapper;
 
-public class ImageMapper {
-    public ImageDto toImageDto(Image image) {
-        return ImageDto
-                .builder()
-                .name(image.getName())
-                .type(image.getType())
-                .image(image.getImage())
-                .build();
-    }
+@Mapper(componentModel = "spring")
+public interface ImageMapper {
+    ImageDto toImageDto(Image image);
 }

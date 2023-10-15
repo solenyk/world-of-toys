@@ -187,22 +187,22 @@ VALUES (1, 'lyalka-klaymber1.png', 'image/png',0x78DAEB0CF073E7E592E2626060E0F5F
 
 UPDATE product
 SET image_id =
-    CASE
-        WHEN id = 1 THEN 1
-        WHEN id = 2 THEN 4
-        WHEN id = 3 THEN 5
-        WHEN id = 4 THEN 6
-        WHEN id = 7 THEN 8
-        WHEN id = 8 THEN 9
-        WHEN id = 9 THEN 10
-        WHEN id = 12 THEN 12
-        WHEN id = 14 THEN 14
-        WHEN id = 15 THEN 15
-        WHEN id = 16 THEN 16
-        WHEN id = 19 THEN 18
-        WHEN id = 21 THEN 19
-        WHEN id = 23 THEN 21
-        WHEN id = 26 THEN 22
-        WHEN id = 28 THEN 24
-        WHEN id = 30 THEN 25
-        END;
+        CASE
+            WHEN id = 1 THEN 1
+            WHEN id = 2 THEN 4
+            WHEN id = 3 THEN 5
+            WHEN id = 4 THEN 6
+            WHEN id = 7 THEN 8
+            WHEN id = 8 THEN 9
+            WHEN id = 9 THEN 10
+            WHEN id = 12 THEN 12
+            WHEN id = 14 THEN 14
+            WHEN id = 15 THEN 15
+            WHEN id = 16 THEN 16
+            WHEN id = 19 THEN 18
+            WHEN id = 21 THEN 19
+            WHEN id = 23 THEN 21
+            WHEN id = 26 THEN 22
+            WHEN id = 28 THEN 24
+            WHEN id = 30 THEN 25
+            END;
