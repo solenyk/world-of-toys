@@ -13,7 +13,7 @@ import java.util.Set;
 @NoArgsConstructor
 @Builder
 @Entity
-public class BrandCategory extends ProductCategory{
+public class BrandCategory extends ProductCategory {
     @OneToMany(mappedBy = "brandCategory")
     private Set<Product> products;
 }

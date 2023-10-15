@@ -49,12 +49,12 @@ public class Product {
     @OneToMany(mappedBy = "product")
     private Set<Image> images;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "origin_id", nullable = false)
     @NotNull(message = "Origin category is mandatory")
     private OriginCategory originCategory;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "brand_id", nullable = false)
     @NotNull(message = "Brand category is mandatory")
     private BrandCategory brandCategory;

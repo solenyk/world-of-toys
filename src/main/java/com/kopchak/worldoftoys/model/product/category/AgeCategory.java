@@ -13,7 +13,7 @@ import java.util.Set;
 @NoArgsConstructor
 @Builder
 @Entity
-public class AgeCategory extends ProductCategory{
+public class AgeCategory extends ProductCategory {
     @ManyToMany(mappedBy = "ageCategory")
     private Set<Product> products;
 }
