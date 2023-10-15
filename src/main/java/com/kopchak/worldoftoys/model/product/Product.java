@@ -46,7 +46,7 @@ public class Product {
     @Min(value = 0, message = "Product quantity should not be less than 0")
     private BigInteger availableQuantity;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "image_id", referencedColumnName = "id")
     private Image mainImage;
 
