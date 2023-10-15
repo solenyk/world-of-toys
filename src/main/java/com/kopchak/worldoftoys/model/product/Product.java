@@ -46,6 +46,10 @@ public class Product {
     @Min(value = 0, message = "Product quantity should not be less than 0")
     private BigInteger availableQuantity;
 
+    @OneToOne
+    @JoinColumn(name = "image_id", referencedColumnName = "id")
+    private Image mainImage;
+
     @OneToMany(mappedBy = "product")
     private Set<Image> images;
 
@@ -60,6 +64,10 @@ public class Product {
     private BrandCategory brandCategory;
 
     @ManyToMany
+    @JoinTable(
+            name = "product_age_category",
+            joinColumns = @JoinColumn(name = "products_id"),
+            inverseJoinColumns = @JoinColumn(name = "age_category_id"))
     @NotNull(message = "Age categories is mandatory")
-    private Set<AgeCategory> ageCategory;
+    private Set<AgeCategory> ageCategories;
 }
