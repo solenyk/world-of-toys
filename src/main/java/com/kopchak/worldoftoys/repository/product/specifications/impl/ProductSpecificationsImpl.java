@@ -54,7 +54,7 @@ public class ProductSpecificationsImpl implements ProductSpecifications {
 
     public Specification<Product> hasProductInAgeCategory(List<String> ageCategories) {
         return (root, query, criteriaBuilder) -> {
-            if(ageCategories != null && !ageCategories.isEmpty()) {
+            if(ageCategories == null || ageCategories.isEmpty()) {
                 return criteriaBuilder.conjunction();
             }
             SetJoin<Product, AgeCategory> productAgeCategorySetJoin = root.joinSet(Product_.AGE_CATEGORIES, JoinType.INNER);
@@ -85,7 +85,7 @@ public class ProductSpecificationsImpl implements ProductSpecifications {
                                                                        productCategoryAttribute,
                                                                List<String> productCategories) {
         return (root, query, criteriaBuilder) -> {
-            if(productCategories != null && !productCategories.isEmpty()) {
+            if(productCategories == null || productCategories.isEmpty()) {
                 return criteriaBuilder.conjunction();
             }
             Join<Product, ?> productCategoryJoin = root.join(productCategoryAttribute, JoinType.INNER);
