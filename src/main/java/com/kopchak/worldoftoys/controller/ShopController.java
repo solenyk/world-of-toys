@@ -27,10 +27,11 @@ public class ShopController {
                                                            @RequestParam(name = "max-price", required = false) BigDecimal maxPrice,
                                                            @RequestParam(name = "origin", required = false) List<String> originCategories,
                                                            @RequestParam(name = "brand", required = false) List<String> brandCategories,
-                                                           @RequestParam(name = "age", required = false) List<String> ageCategories
+                                                           @RequestParam(name = "age", required = false) List<String> ageCategories,
+                                                           @RequestParam(name = "price-sort", required = false) String priceSortOrder
     ) {
         var productsPage = productService.getAllProducts(page, size, productName, minPrice, maxPrice,
-                originCategories, brandCategories, ageCategories);
+                originCategories, brandCategories, ageCategories, priceSortOrder);
         return new ResponseEntity<>(productsPage, HttpStatus.OK);
     }
 }

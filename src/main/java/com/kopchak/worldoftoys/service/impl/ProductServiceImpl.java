@@ -26,27 +26,16 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public List<ProductDto> getAllProducts(int page, int size, String productName, BigDecimal minPrice, BigDecimal maxPrice,
                                            List<String> originCategories, List<String> brandCategories,
-                                           List<String> ageCategories) {
+                                           List<String> ageCategories, String priceSortOrder) {
         Pageable pageable = PageRequest.of(page, size);
-        Specification<Product> spec = Specification.where(null);
-        if(productName != null){
-            spec = spec.and(productSpecifications.hasProductName(productName));
-        }
-        if(minPrice != null){
-            spec = spec.and(productSpecifications.hasPriceGreaterThanOrEqualTo(minPrice));
-        }
-        if(maxPrice != null){
-            spec = spec.and(productSpecifications.hasPriceLessThanOrEqualTo(maxPrice));
-        }
-        if(originCategories != null && !originCategories.isEmpty()){
-            spec = spec.and(productSpecifications.hasProductInOriginCategory(originCategories));
-        }
-        if(brandCategories != null && !brandCategories.isEmpty()){
-            spec = spec.and(productSpecifications.hasProductInBrandCategory(brandCategories));
-        }
-        if(ageCategories != null && !ageCategories.isEmpty()){
-            spec = spec.and(productSpecifications.hasProductInAgeCategory(ageCategories));
-        }
+        Specification<Product> spec = Specification
+                .where(productSpecifications.hasProductName(productName))
+                .and(productSpecifications.hasPriceGreaterThanOrEqualTo(minPrice))
+                .and(productSpecifications.hasPriceLessThanOrEqualTo(maxPrice))
+                .and(productSpecifications.hasProductInOriginCategory(originCategories))
+                .and(productSpecifications.hasProductInBrandCategory(brandCategories))
+                .and(productSpecifications.hasProductInAgeCategory(ageCategories))
+                .and(productSpecifications.sortByPrice(priceSortOrder));
         return productRepository.findAll(spec, pageable)
                 .getContent()
                 .stream().map(productMapper::toProductDto)

@@ -8,5 +8,5 @@ import java.util.List;
 public interface ProductService {
     List<ProductDto> getAllProducts(int page, int size, String productName, BigDecimal minPrice, BigDecimal maxPrice,
                                     List<String> originCategories, List<String> brandCategories,
-                                    List<String> ageCategories);
+                                    List<String> ageCategories, String priceSortOrder);
 }
