@@ -2,7 +2,9 @@ package com.kopchak.worldoftoys.repository.product.specifications.impl;
 
 import com.kopchak.worldoftoys.model.product.Product;
 import com.kopchak.worldoftoys.model.product.category.AgeCategory;
+import com.kopchak.worldoftoys.model.product.category.BrandCategory;
 import com.kopchak.worldoftoys.model.product.category.OriginCategory;
+import com.kopchak.worldoftoys.model.product.category.ProductCategory;
 import com.kopchak.worldoftoys.repository.product.specifications.ProductSpecifications;
 import jakarta.persistence.criteria.*;
 import org.springframework.data.jpa.domain.Specification;
@@ -28,17 +30,13 @@ public class ProductSpecificationsImpl implements ProductSpecifications {
                 criteriaBuilder.greaterThanOrEqualTo(root.get("price"), minPrice);
     }
     public Specification<Product> hasProductInOriginCategory(List<String> originCategories) {
-        return (root, query, criteriaBuilder) -> {
-            Join<Product, OriginCategory> productJoin = root.join("originCategory", JoinType.INNER);
-            return productJoin.get("slug").in(originCategories);
-        };
+        return hasProductInProductCategory(OriginCategory.class,
+                "originCategory", originCategories);
     }
 
     public Specification<Product> hasProductInBrandCategory(List<String> brandCategories) {
-        return (root, query, criteriaBuilder) -> {
-            Join<Product, OriginCategory> productJoin = root.join("brandCategory", JoinType.INNER);
-            return productJoin.get("slug").in(brandCategories);
-        };
+        return hasProductInProductCategory(BrandCategory.class,
+                "brandCategory", brandCategories);
     }
 
     public Specification<Product> hasProductInAgeCategory(List<String> ageCategories) {
@@ -51,6 +49,17 @@ public class ProductSpecificationsImpl implements ProductSpecifications {
                         .toArray(Predicate[]::new);
 
                 return criteriaBuilder.or(predicates);
+        };
+    }
+
+    private Specification<Product> hasProductInProductCategory(Class<? extends ProductCategory> productCategoryType,
+                                                              String joinFieldName,
+                                                              List<String> productCategories) {
+        return (root, query, criteriaBuilder) -> {
+            Join<Product, ?> productJoin = root.join(joinFieldName, JoinType.INNER);
+            Predicate typePredicate = criteriaBuilder.equal(productJoin.type(), productCategoryType);
+            Predicate brandPredicate = productJoin.get("slug").in(productCategories);
+            return criteriaBuilder.and(typePredicate, brandPredicate);
         };
     }
 }
