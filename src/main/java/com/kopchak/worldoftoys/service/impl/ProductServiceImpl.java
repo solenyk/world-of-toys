@@ -1,12 +1,14 @@
 package com.kopchak.worldoftoys.service.impl;
 
-import com.kopchak.worldoftoys.dto.product.ProductDto;
+import com.kopchak.worldoftoys.dto.product.FilteredProductDto;
+import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.mapper.ProductMapper;
 import com.kopchak.worldoftoys.model.product.Product;
 import com.kopchak.worldoftoys.repository.product.ProductRepository;
 import com.kopchak.worldoftoys.repository.product.specifications.impl.ProductSpecificationsImpl;
 import com.kopchak.worldoftoys.service.ProductService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -24,9 +26,9 @@ public class ProductServiceImpl implements ProductService {
     private final ProductMapper productMapper;
 
     @Override
-    public List<ProductDto> getAllProducts(int page, int size, String productName, BigDecimal minPrice, BigDecimal maxPrice,
-                                           List<String> originCategories, List<String> brandCategories,
-                                           List<String> ageCategories, String priceSortOrder) {
+    public FilteredProductsPageDto getAllProducts(int page, int size, String productName, BigDecimal minPrice, BigDecimal maxPrice,
+                                                  List<String> originCategories, List<String> brandCategories,
+                                                  List<String> ageCategories, String priceSortOrder) {
         Pageable pageable = PageRequest.of(page, size);
         Specification<Product> spec = Specification
                 .where(productSpecifications.hasProductName(productName))
@@ -36,9 +38,17 @@ public class ProductServiceImpl implements ProductService {
                 .and(productSpecifications.hasProductInBrandCategory(brandCategories))
                 .and(productSpecifications.hasProductInAgeCategory(ageCategories))
                 .and(productSpecifications.sortByPrice(priceSortOrder));
-        return productRepository.findAll(spec, pageable)
+        Page<Product> productPage = productRepository.findAll(spec, pageable);
+        List<FilteredProductDto> filteredProductsDtoSet = productPage
                 .getContent()
-                .stream().map(productMapper::toProductDto)
+                .stream()
+                .map(productMapper::toProductDto)
                 .collect(Collectors.toList());
+        return FilteredProductsPageDto
+                .builder()
+                .content(filteredProductsDtoSet)
+                .totalElementsAmount(productPage.getTotalElements())
+                .totalPagesAmount(productPage.getTotalPages())
+                .build();
     }
 }

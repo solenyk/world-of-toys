@@ -17,7 +17,7 @@ public class ProductSpecificationsImpl implements ProductSpecifications {
     @Override
     public Specification<Product> hasProductName(String productName) {
         return (root, query, criteriaBuilder) -> {
-            if(productName == null){
+            if (productName == null) {
                 return criteriaBuilder.conjunction();
             }
             return criteriaBuilder.like(root.get(Product_.name), "%" + productName + "%");
@@ -26,7 +26,7 @@ public class ProductSpecificationsImpl implements ProductSpecifications {
 
     public Specification<Product> hasPriceLessThanOrEqualTo(BigDecimal maxPrice) {
         return (root, query, criteriaBuilder) -> {
-            if(maxPrice == null || maxPrice.compareTo(BigDecimal.ZERO) <= 0) {
+            if (maxPrice == null || maxPrice.compareTo(BigDecimal.ZERO) <= 0) {
                 return criteriaBuilder.conjunction();
             }
             return criteriaBuilder.lessThanOrEqualTo(root.get(Product_.price), maxPrice);
@@ -35,7 +35,7 @@ public class ProductSpecificationsImpl implements ProductSpecifications {
 
     public Specification<Product> hasPriceGreaterThanOrEqualTo(BigDecimal minPrice) {
         return (root, query, criteriaBuilder) -> {
-            if(minPrice == null || minPrice.compareTo(BigDecimal.ZERO) <= 0) {
+            if (minPrice == null || minPrice.compareTo(BigDecimal.ZERO) <= 0) {
                 return criteriaBuilder.conjunction();
             }
             return criteriaBuilder.greaterThanOrEqualTo(root.get(Product_.price), minPrice);
@@ -54,7 +54,7 @@ public class ProductSpecificationsImpl implements ProductSpecifications {
 
     public Specification<Product> hasProductInAgeCategory(List<String> ageCategories) {
         return (root, query, criteriaBuilder) -> {
-            if(ageCategories == null || ageCategories.isEmpty()) {
+            if (ageCategories == null || ageCategories.isEmpty()) {
                 return criteriaBuilder.conjunction();
             }
             SetJoin<Product, AgeCategory> productAgeCategorySetJoin = root.joinSet(Product_.AGE_CATEGORIES, JoinType.INNER);
@@ -70,13 +70,12 @@ public class ProductSpecificationsImpl implements ProductSpecifications {
 
     public Specification<Product> sortByPrice(String sortOrder) {
         return (root, query, criteriaBuilder) -> {
-            Predicate predicate = criteriaBuilder.conjunction();
             if ("asc".equalsIgnoreCase(sortOrder)) {
                 query.orderBy(criteriaBuilder.asc(root.get(Product_.price)));
             } else if ("desc".equalsIgnoreCase(sortOrder)) {
                 query.orderBy(criteriaBuilder.desc(root.get(Product_.price)));
             }
-            return predicate;
+            return query.getRestriction();
         };
     }
 
@@ -85,7 +84,7 @@ public class ProductSpecificationsImpl implements ProductSpecifications {
                                                                        productCategoryAttribute,
                                                                List<String> productCategories) {
         return (root, query, criteriaBuilder) -> {
-            if(productCategories == null || productCategories.isEmpty()) {
+            if (productCategories == null || productCategories.isEmpty()) {
                 return criteriaBuilder.conjunction();
             }
             Join<Product, ?> productCategoryJoin = root.join(productCategoryAttribute, JoinType.INNER);
