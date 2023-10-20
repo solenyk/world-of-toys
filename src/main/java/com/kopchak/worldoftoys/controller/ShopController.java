@@ -1,6 +1,8 @@
 package com.kopchak.worldoftoys.controller;
 
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
+import com.kopchak.worldoftoys.dto.product.ProductDto;
+import com.kopchak.worldoftoys.exception.ProductNotFoundException;
 import com.kopchak.worldoftoys.service.ProductService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/products")
@@ -33,5 +36,14 @@ public class ShopController {
         var productsPage = productService.getAllProducts(page, size, productName, minPrice, maxPrice,
                 originCategories, brandCategories, ageCategories, priceSortOrder);
         return new ResponseEntity<>(productsPage, HttpStatus.OK);
+    }
+
+    @GetMapping("/{productSlug}")
+    public ResponseEntity<ProductDto> getProductDtoBySlug(@PathVariable(name = "productSlug") String productSlug) {
+        Optional<ProductDto> productDtoOptional = productService.getProductDtoBySlug(productSlug);
+        if(productDtoOptional.isEmpty()){
+            throw new ProductNotFoundException(HttpStatus.NOT_FOUND, "Product doesn't exist");
+        }
+        return new ResponseEntity<>(productDtoOptional.get(), HttpStatus.OK);
     }
 }
