@@ -24,13 +24,11 @@ public class ProductDto {
 
     private BigInteger availableQuantity;
 
-//    private ImageDto mainImage;
-
     private List<ImageDto> images;
 
     private ProductCategoryDto originCategory;
 
     private ProductCategoryDto brandCategory;
 
-    private List<ProductCategoryDto> ageCategory;
+    private List<ProductCategoryDto> ageCategories;
 }
