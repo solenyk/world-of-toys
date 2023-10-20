@@ -1,6 +1,5 @@
 package com.kopchak.worldoftoys.service.impl;
 
-import com.kopchak.worldoftoys.dto.product.FilteredProductDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.mapper.ProductMapper;
 import com.kopchak.worldoftoys.model.product.Product;
@@ -16,7 +15,6 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -39,16 +37,6 @@ public class ProductServiceImpl implements ProductService {
                 .and(productSpecifications.hasProductInAgeCategory(ageCategories))
                 .and(productSpecifications.sortByPrice(priceSortOrder));
         Page<Product> productPage = productRepository.findAll(spec, pageable);
-        List<FilteredProductDto> filteredProductsDtoSet = productPage
-                .getContent()
-                .stream()
-                .map(productMapper::toProductDto)
-                .collect(Collectors.toList());
-        return FilteredProductsPageDto
-                .builder()
-                .content(filteredProductsDtoSet)
-                .totalElementsAmount(productPage.getTotalElements())
-                .totalPagesAmount(productPage.getTotalPages())
-                .build();
+        return productMapper.toFilteredProductsPageDto(productPage);
     }
 }
