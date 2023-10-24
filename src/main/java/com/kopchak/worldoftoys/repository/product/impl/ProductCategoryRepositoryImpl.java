@@ -28,16 +28,17 @@ public class ProductCategoryRepositoryImpl implements ProductCategoryRepository 
     private final ProductCategoryMapper productCategoryMapper;
 
     @Override
-    public FilteringProductCategoriesDto findUniqueCategories(Specification<Product> spec) {
+    public FilteringProductCategoriesDto findUniqueFilteringProductCategories(Specification<Product> spec) {
         return FilteringProductCategoriesDto
                 .builder()
-                .originCategories(findCategoriesDto(spec, Product_.ORIGIN_CATEGORY))
-                .brandCategories(findCategoriesDto(spec, Product_.BRAND_CATEGORY))
-                .ageCategories(findCategoriesDto(spec, Product_.AGE_CATEGORIES))
+                .originCategories(findUniqueProductCategoryDtoList(spec, Product_.ORIGIN_CATEGORY))
+                .brandCategories(findUniqueProductCategoryDtoList(spec, Product_.BRAND_CATEGORY))
+                .ageCategories(findUniqueProductCategoryDtoList(spec, Product_.AGE_CATEGORIES))
                 .build();
     }
 
-    private List<ProductCategoryDto> findCategoriesDto(Specification<Product> spec, String productCategoryAttribute) {
+    private List<ProductCategoryDto> findUniqueProductCategoryDtoList(Specification<Product> spec,
+                                                                      String productCategoryAttribute) {
 
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
         CriteriaQuery<ProductCategory> criteriaQuery = criteriaBuilder.createQuery(ProductCategory.class);

@@ -5,5 +5,5 @@ import com.kopchak.worldoftoys.model.product.Product;
 import org.springframework.data.jpa.domain.Specification;
 
 public interface ProductCategoryRepository {
-    FilteringProductCategoriesDto findUniqueCategories(Specification<Product> spec);
+    FilteringProductCategoriesDto findUniqueFilteringProductCategories(Specification<Product> spec);
 }
