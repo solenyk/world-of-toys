@@ -1,11 +1,7 @@
 package com.kopchak.worldoftoys.dto.product.category;
 
-import lombok.*;
+import lombok.Builder;
 
-@Getter
 @Builder
-@AllArgsConstructor
-public class ProductCategoryDto {
-    private String name;
-    private String slug;
+public record ProductCategoryDto(String name, String slug) {
 }

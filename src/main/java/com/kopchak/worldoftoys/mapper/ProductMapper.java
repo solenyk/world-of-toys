@@ -8,29 +8,14 @@ import org.mapstruct.Mapper;
 import org.springframework.data.domain.Page;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Mapper(componentModel = "spring",
         uses = {ImageMapper.class, ProductCategoryMapper.class})
 public interface ProductMapper {
-    FilteredProductDto toFilteredProductDto(Product product);
-
     ProductDto toProductDto(Product product);
-
-    default FilteredProductsPageDto toFilteredProductsPageDto(Page<Product> productPage) {
-        if(productPage == null){
-            return null;
-        }
-        List<FilteredProductDto> filteredProductsDtoSet = productPage
-                .getContent()
-                .stream()
-                .map(this::toFilteredProductDto)
-                .collect(Collectors.toList());
-        return FilteredProductsPageDto
-                .builder()
-                .content(filteredProductsDtoSet)
-                .totalElementsAmount(productPage.getTotalElements())
-                .totalPagesAmount(productPage.getTotalPages())
-                .build();
+    List<FilteredProductDto> toFilteredProductDtoList(List<Product> products);
+    default FilteredProductsPageDto toFilteredProductsPageDto(Page<Product> productPage){
+        return new FilteredProductsPageDto(toFilteredProductDtoList(productPage.getContent()),
+                productPage.getTotalElements(), productPage.getTotalPages());
     }
 }
