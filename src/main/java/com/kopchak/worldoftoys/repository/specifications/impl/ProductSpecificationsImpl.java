@@ -1,9 +1,9 @@
-package com.kopchak.worldoftoys.repository.product.specifications.impl;
+package com.kopchak.worldoftoys.repository.specifications.impl;
 
 import com.kopchak.worldoftoys.model.product.Product;
 import com.kopchak.worldoftoys.model.product.Product_;
 import com.kopchak.worldoftoys.model.product.category.*;
-import com.kopchak.worldoftoys.repository.product.specifications.ProductSpecifications;
+import com.kopchak.worldoftoys.repository.specifications.ProductSpecifications;
 import jakarta.persistence.criteria.*;
 import jakarta.persistence.metamodel.SingularAttribute;
 import org.springframework.data.jpa.domain.Specification;
@@ -15,7 +15,29 @@ import java.util.List;
 @Component
 public class ProductSpecificationsImpl implements ProductSpecifications {
     @Override
-    public Specification<Product> hasProductName(String productName) {
+    public Specification<Product> filterByProductNamePriceAndCategories(String productName, BigDecimal minPrice,
+                                                                        BigDecimal maxPrice,
+                                                                        List<String> originCategories,
+                                                                        List<String> brandCategories,
+                                                                        List<String> ageCategories) {
+        return Specification
+                .where(hasProductName(productName))
+                .and(hasPriceGreaterThanOrEqualTo(minPrice))
+                .and(hasPriceLessThanOrEqualTo(maxPrice))
+                .and(hasProductInOriginCategory(originCategories))
+                .and(hasProductInBrandCategory(brandCategories))
+                .and(hasProductInAgeCategory(ageCategories));
+    }
+
+    @Override
+    public Specification<Product> filterByAllCriteria(String productName, BigDecimal minPrice, BigDecimal maxPrice,
+                                                      List<String> originCategories, List<String> brandCategories,
+                                                      List<String> ageCategories, String priceSortOrder) {
+        return filterByProductNamePriceAndCategories(productName, minPrice, maxPrice, originCategories, brandCategories, ageCategories)
+                .and(sortByPrice(priceSortOrder));
+    }
+
+    private Specification<Product> hasProductName(String productName) {
         return (root, query, criteriaBuilder) -> {
             if (productName == null) {
                 return criteriaBuilder.conjunction();
@@ -24,7 +46,7 @@ public class ProductSpecificationsImpl implements ProductSpecifications {
         };
     }
 
-    public Specification<Product> hasPriceLessThanOrEqualTo(BigDecimal maxPrice) {
+    private Specification<Product> hasPriceLessThanOrEqualTo(BigDecimal maxPrice) {
         return (root, query, criteriaBuilder) -> {
             if (maxPrice == null || maxPrice.compareTo(BigDecimal.ZERO) <= 0) {
                 return criteriaBuilder.conjunction();
@@ -33,7 +55,7 @@ public class ProductSpecificationsImpl implements ProductSpecifications {
         };
     }
 
-    public Specification<Product> hasPriceGreaterThanOrEqualTo(BigDecimal minPrice) {
+    private Specification<Product> hasPriceGreaterThanOrEqualTo(BigDecimal minPrice) {
         return (root, query, criteriaBuilder) -> {
             if (minPrice == null || minPrice.compareTo(BigDecimal.ZERO) <= 0) {
                 return criteriaBuilder.conjunction();
@@ -42,17 +64,17 @@ public class ProductSpecificationsImpl implements ProductSpecifications {
         };
     }
 
-    public Specification<Product> hasProductInOriginCategory(List<String> originCategories) {
+    private Specification<Product> hasProductInOriginCategory(List<String> originCategories) {
         return hasProductInProductCategory(OriginCategory.class,
                 Product_.originCategory, originCategories);
     }
 
-    public Specification<Product> hasProductInBrandCategory(List<String> brandCategories) {
+    private Specification<Product> hasProductInBrandCategory(List<String> brandCategories) {
         return hasProductInProductCategory(BrandCategory.class,
                 Product_.brandCategory, brandCategories);
     }
 
-    public Specification<Product> hasProductInAgeCategory(List<String> ageCategories) {
+    private Specification<Product> hasProductInAgeCategory(List<String> ageCategories) {
         return (root, query, criteriaBuilder) -> {
             if (ageCategories == null || ageCategories.isEmpty()) {
                 return criteriaBuilder.conjunction();
@@ -68,7 +90,7 @@ public class ProductSpecificationsImpl implements ProductSpecifications {
         };
     }
 
-    public Specification<Product> sortByPrice(String sortOrder) {
+    private Specification<Product> sortByPrice(String sortOrder) {
         return (root, query, criteriaBuilder) -> {
             if ("asc".equalsIgnoreCase(sortOrder)) {
                 query.orderBy(criteriaBuilder.asc(root.get(Product_.price)));

@@ -5,7 +5,7 @@ import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.mapper.ProductMapper;
 import com.kopchak.worldoftoys.model.product.Product;
 import com.kopchak.worldoftoys.repository.product.ProductRepository;
-import com.kopchak.worldoftoys.repository.product.specifications.impl.ProductSpecificationsImpl;
+import com.kopchak.worldoftoys.repository.specifications.impl.ProductSpecificationsImpl;
 import com.kopchak.worldoftoys.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -26,18 +26,13 @@ public class ProductServiceImpl implements ProductService {
     private final ProductMapper productMapper;
 
     @Override
-    public FilteredProductsPageDto getAllProducts(int page, int size, String productName, BigDecimal minPrice, BigDecimal maxPrice,
-                                                  List<String> originCategories, List<String> brandCategories,
-                                                  List<String> ageCategories, String priceSortOrder) {
+    public FilteredProductsPageDto getAllProducts(int page, int size, String productName, BigDecimal minPrice,
+                                                  BigDecimal maxPrice, List<String> originCategories,
+                                                  List<String> brandCategories, List<String> ageCategories,
+                                                  String priceSortOrder) {
         Pageable pageable = PageRequest.of(page, size);
-        Specification<Product> spec = Specification
-                .where(productSpecifications.hasProductName(productName))
-                .and(productSpecifications.hasPriceGreaterThanOrEqualTo(minPrice))
-                .and(productSpecifications.hasPriceLessThanOrEqualTo(maxPrice))
-                .and(productSpecifications.hasProductInOriginCategory(originCategories))
-                .and(productSpecifications.hasProductInBrandCategory(brandCategories))
-                .and(productSpecifications.hasProductInAgeCategory(ageCategories))
-                .and(productSpecifications.sortByPrice(priceSortOrder));
+        Specification<Product> spec = productSpecifications.filterByAllCriteria(productName, minPrice,
+                maxPrice, originCategories, brandCategories, ageCategories, priceSortOrder);
         Page<Product> productPage = productRepository.findAll(spec, pageable);
         return productMapper.toFilteredProductsPageDto(productPage);
     }
