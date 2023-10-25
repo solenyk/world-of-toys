@@ -7,6 +7,7 @@ import com.kopchak.worldoftoys.exception.ProductNotFoundException;
 import com.kopchak.worldoftoys.service.ProductService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +20,7 @@ import java.util.Optional;
 @RequestMapping("/api/v1/products")
 @CrossOrigin
 @RequiredArgsConstructor
+@Slf4j
 @Tag(name = "shop-controller", description = "")
 public class ShopController {
     private final ProductService productService;
@@ -58,6 +60,7 @@ public class ShopController {
     public ResponseEntity<ProductDto> getProductDtoBySlug(@PathVariable(name = "productSlug") String productSlug) {
         Optional<ProductDto> productDtoOptional = productService.getProductDtoBySlug(productSlug);
         if (productDtoOptional.isEmpty()) {
+            log.error("Product with slug: '{}' is not found.", productSlug);
             throw new ProductNotFoundException(HttpStatus.NOT_FOUND, "Product doesn't exist");
         }
         return new ResponseEntity<>(productDtoOptional.get(), HttpStatus.OK);

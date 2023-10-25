@@ -62,6 +62,8 @@ public class ProductCategoryRepositoryImpl implements ProductCategoryRepository 
         }
 
         TypedQuery<ProductCategory> query = entityManager.createQuery(criteriaQuery);
-        return productCategoryMapper.toProductCategoryDtoList(query.getResultList());
+        List<ProductCategoryDto> productCategoryDtoList =  productCategoryMapper.toProductCategoryDtoList(query.getResultList());
+        log.info("Found {} unique product categories for category: {}", productCategoryDtoList.size(), productCategoryAttribute);
+        return productCategoryDtoList;
     }
 }
