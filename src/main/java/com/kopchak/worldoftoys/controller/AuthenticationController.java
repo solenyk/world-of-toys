@@ -1,5 +1,6 @@
 package com.kopchak.worldoftoys.controller;
 
+import com.kopchak.worldoftoys.dto.error.ErrorResponseDto;
 import com.kopchak.worldoftoys.dto.token.AccessAndRefreshTokensDto;
 import com.kopchak.worldoftoys.dto.token.AuthTokenDto;
 import com.kopchak.worldoftoys.dto.token.ConfirmTokenDto;
@@ -54,7 +55,7 @@ public class AuthenticationController {
                     description = "Username already exist",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = UsernameAlreadyExistException.class)))
+                            schema = @Schema(implementation = ErrorResponseDto.class)))
     })
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@Valid @RequestBody UserRegistrationDto userRegistrationDto) {
@@ -80,7 +81,7 @@ public class AuthenticationController {
                     description = "Confirmation token is invalid",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = InvalidConfirmationTokenException.class)))
+                            schema = @Schema(implementation = ErrorResponseDto.class)))
     })
     @GetMapping(path = "/confirm")
     public ResponseEntity<?> activateAccount(@Parameter(description = "User account activation token",
@@ -103,12 +104,12 @@ public class AuthenticationController {
                     description = "User not found",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = UserNotFoundException.class))),
+                            schema = @Schema(implementation = ErrorResponseDto.class))),
             @ApiResponse(responseCode = "409",
                     description = "Account is already activated",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = AccountIsAlreadyActivatedException.class)))
+                            schema = @Schema(implementation = ErrorResponseDto.class)))
     })
     @PostMapping("/resend-verification-email")
     public ResponseEntity<?> resendVerificationEmail(@Schema(
@@ -141,7 +142,7 @@ public class AuthenticationController {
                     description = "User not found",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = UserNotFoundException.class)))
+                            schema = @Schema(implementation = ErrorResponseDto.class)))
     })
     @PostMapping("/forgot-password")
     public ResponseEntity<?> sendResetPasswordEmail(@Schema(
@@ -169,9 +170,8 @@ public class AuthenticationController {
             @ApiResponse(
                     responseCode = "400",
                     description = "Confirmation token is invalid or new password matches old password",
-                    content = @Content(schema = @Schema(oneOf = {
-                            UserNotFoundException.class, InvalidPasswordException.class
-                    })))
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class
+                    )))
     })
     @PostMapping(path = "/reset-password")
     public ResponseEntity<?> changePassword(@Parameter(description = "Token to change the user's password",
@@ -197,11 +197,11 @@ public class AuthenticationController {
             @ApiResponse(
                     responseCode = "401",
                     description = "Bad user credentials",
-                    content = @Content(schema = @Schema(implementation = UserNotFoundException.class))),
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))),
             @ApiResponse(
                     responseCode = "403",
                     description = "Account is not activated",
-                    content = @Content(schema = @Schema(implementation = UserNotFoundException.class))),
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))),
     })
     @PostMapping("/login")
     public ResponseEntity<AccessAndRefreshTokensDto> authenticate(@Valid @RequestBody UserAuthDto userAuthDto) {
@@ -229,9 +229,7 @@ public class AuthenticationController {
             @ApiResponse(
                     responseCode = "400",
                     description = "Refresh token is invalid or valid access token already exists",
-                    content = @Content(schema = @Schema(oneOf = {
-                            InvalidRefreshTokenException.class, AccessTokenAlreadyExistsException.class
-                    })))
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class)))
     })
     @PostMapping("/refresh-token")
     public ResponseEntity<AuthTokenDto> refreshToken(@Valid @RequestBody AuthTokenDto refreshTokenDto) {
