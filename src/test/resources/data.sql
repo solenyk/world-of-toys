@@ -12,10 +12,10 @@ VALUES (1000, 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsImlh
        (1001, 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsImlhdCI6MTY5NjQyNjgyMSwiZXhwIjoxMDMzNjQyNjgyMX0.jeeuTzGgKrixMp6_dizMNLicp6n0gwECAId-ATLqbns',
         'REFRESH', false, false, 1000),
        (1002, 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhbGljZS5qb2huc29uQGV4YW1wbGUuY29tIiwiaWF0IjoxNjk2NDI2ODIyLCJleHAiOjEwMzM2NDI2ODIyfQ.K8ACIiQKVcSr5IX_snOX-WXNebx2-FMIQP4gj4Qg_Pk',
-        'REFRESH', false, false, 1002);
+        'REFRESH', false, false, 1001);
 
 INSERT INTO confirmation_token(id, token, token_type, created_at, expires_at, confirmed_at, user_id)
 VALUES (1000, '8e5648d7-9b4e-4724-83a1-be7e64603e48', 'ACTIVATION', '2023-09-22 15:47:15.593933',
         '2226-09-22 16:02:15.593933', null, 1000),
        (1001, '8e5648d7-9b4e-4724-83a1-be7e64603e47', 'RESET_PASSWORD', '2023-09-22 15:47:15.593933',
-        '2226-09-22 16:02:15.593933', null, 1000);
+        '2226-09-22 16:02:15.593933', null, 1002);

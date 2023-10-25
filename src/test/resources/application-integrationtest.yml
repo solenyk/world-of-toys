@@ -2,13 +2,17 @@ spring:
   datasource:
     url: jdbc:h2:mem:test
     driverClassName: org.h2.Driver
+  sql:
+    init:
+      mode: always
+      data-locations: classpath:data.sql
   jpa:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
     defer-datasource-initialization: true
     hibernate:
-      ddl-auto: update
+      ddl-auto: create-drop
   mail:
     host: localhost
     port: 3025
