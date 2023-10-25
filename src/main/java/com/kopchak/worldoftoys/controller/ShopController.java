@@ -3,8 +3,17 @@ package com.kopchak.worldoftoys.controller;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringProductCategoriesDto;
+import com.kopchak.worldoftoys.exception.InvalidPasswordException;
 import com.kopchak.worldoftoys.exception.ProductNotFoundException;
+import com.kopchak.worldoftoys.exception.UserNotFoundException;
+import com.kopchak.worldoftoys.exception.UsernameAlreadyExistException;
 import com.kopchak.worldoftoys.service.ProductService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,10 +30,16 @@ import java.util.Optional;
 @CrossOrigin
 @RequiredArgsConstructor
 @Slf4j
-@Tag(name = "shop-controller", description = "")
+@Tag(name = "shop-controller", description = "Controller for filtering products, fetching product categories and " +
+        "single products by slug")
 public class ShopController {
     private final ProductService productService;
 
+    @Operation(summary = "Fetch filtered products")
+    @ApiResponse(
+            responseCode = "200",
+            description = "Products were successfully fetched",
+            content = @Content(schema = @Schema(implementation = FilteredProductsPageDto.class)))
     @GetMapping
     public ResponseEntity<FilteredProductsPageDto> getFilteredProducts(
             @RequestParam(name = "page", defaultValue = "0") int page,
@@ -42,6 +57,11 @@ public class ShopController {
         return new ResponseEntity<>(productsPage, HttpStatus.OK);
     }
 
+    @Operation(summary = "Fetch filtering product categories")
+    @ApiResponse(
+            responseCode = "200",
+            description = "Product categories were successfully fetched",
+            content = @Content(schema = @Schema(implementation = FilteringProductCategoriesDto.class)))
     @GetMapping("/categories")
     public ResponseEntity<FilteringProductCategoriesDto> getFilteringProductCategories(
             @RequestParam(name = "name", required = false) String productName,
@@ -56,6 +76,17 @@ public class ShopController {
         return new ResponseEntity<>(filteringProductCategoriesDto, HttpStatus.OK);
     }
 
+    @Operation(summary = "Fetch product by slug")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Product was successfully fetched",
+                    content = @Content(schema = @Schema(implementation = ProductDto.class))),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Product with this slug is not found",
+                    content = @Content(schema = @Schema(implementation = ProductNotFoundException.class)))
+    })
     @GetMapping("/{productSlug}")
     public ResponseEntity<ProductDto> getProductDtoBySlug(@PathVariable(name = "productSlug") String productSlug) {
         Optional<ProductDto> productDtoOptional = productService.getProductDtoBySlug(productSlug);

@@ -75,7 +75,7 @@ public class AuthenticationController {
             @ApiResponse(
                     responseCode = "204",
                     description = "Account activated",
-                    content = @Content(schema = @Schema(implementation = String.class))),
+                    content = @Content(schema = @Schema(hidden = true))),
             @ApiResponse(responseCode = "400",
                     description = "Confirmation token is invalid",
                     content = @Content(
@@ -165,7 +165,7 @@ public class AuthenticationController {
             @ApiResponse(
                     responseCode = "204",
                     description = "Password changed successfully",
-                    content = @Content(schema = @Schema(implementation = String.class))),
+                    content = @Content(schema = @Schema(hidden = true))),
             @ApiResponse(
                     responseCode = "400",
                     description = "Confirmation token is invalid or new password matches old password",

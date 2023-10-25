@@ -1,8 +1,8 @@
 INSERT INTO age_category(id, name, slug)
 VALUES (1, 'до 1 року', 'do-1-roku'),
        (2, 'від 1 до 3 років', 'vid-1-do-3-rokiv'),
-       (3, 'від 6 до 10 років', 'vid-6-do-10-rokiv'),
-       (4, 'від 10 до 14 років', 'vid-10-do-14-rokiv');
+       (3, 'від 6 до 9 років', 'vid-6-do-9-rokiv'),
+       (4, 'від 9 до 12 років', 'vid-9-do-12-rokiv');
        
 INSERT INTO brand_category(id, name, slug)
 VALUES (1, 'DJECO', 'djeco'),
