@@ -7,9 +7,11 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public interface ProductSpecifications {
-    Specification<Product> filterByProductNamePriceAndCategories(String productName, BigDecimal minPrice, BigDecimal maxPrice,
-                                                                 List<String> originCategories, List<String> brandCategories,
+    Specification<Product> filterByProductNamePriceAndCategories(String productName, BigDecimal minPrice,
+                                                                 BigDecimal maxPrice, List<String> originCategories,
+                                                                 List<String> brandCategories,
                                                                  List<String> ageCategories);
+
     Specification<Product> filterByAllCriteria(String productName, BigDecimal minPrice, BigDecimal maxPrice,
                                                List<String> originCategories, List<String> brandCategories,
                                                List<String> ageCategories, String priceSortOrder);

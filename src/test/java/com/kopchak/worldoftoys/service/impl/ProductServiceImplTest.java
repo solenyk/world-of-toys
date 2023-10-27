@@ -73,13 +73,13 @@ class ProductServiceImplTest {
 
         Pageable pageable = PageRequest.of(page, size);
         Page<Product> productPage = new PageImpl<>(new ArrayList<>(), pageable, 20);
-        FilteredProductsPageDto filteredProductsPageDto = new FilteredProductsPageDto(new ArrayList<>(),
+        FilteredProductsPageDto expectedFilteredProductsPageDto = new FilteredProductsPageDto(new ArrayList<>(),
                 expectedTotalElementsAmount, expectedTotalPagesAmount);
 
         when(productSpecifications.filterByAllCriteria(eq(productName), eq(minProductPrice), eq(maxProductPrice),
                 eq(originCategories), eq(brandCategories), eq(ageCategories), eq(priceSortOrder))).thenReturn(spec);
         when(productRepository.findAll(eq(spec), eq(pageable))).thenReturn(productPage);
-        when(productMapper.toFilteredProductsPageDto(eq(productPage))).thenReturn(filteredProductsPageDto);
+        when(productMapper.toFilteredProductsPageDto(eq(productPage))).thenReturn(expectedFilteredProductsPageDto);
 
         FilteredProductsPageDto actualFilteredProductsPageDto = productService.getFilteredProducts(page, size,
                 productName, minProductPrice, maxProductPrice, originCategories, brandCategories, ageCategories,
@@ -88,7 +88,7 @@ class ProductServiceImplTest {
         assertThat(actualFilteredProductsPageDto).isNotNull();
         assertThat(actualFilteredProductsPageDto.totalElementsAmount()).isEqualTo(expectedTotalElementsAmount);
         assertThat(actualFilteredProductsPageDto.totalPagesAmount()).isEqualTo(expectedTotalPagesAmount);
-        assertThat(actualFilteredProductsPageDto).isEqualTo(filteredProductsPageDto);
+        assertThat(actualFilteredProductsPageDto).isEqualTo(expectedFilteredProductsPageDto);
     }
 
     @Test
