@@ -17,7 +17,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Repository
@@ -44,14 +43,12 @@ public class ProductCategoryRepositoryImpl implements ProductCategoryRepository 
         CriteriaQuery<ProductCategory> criteriaQuery = criteriaBuilder.createQuery(ProductCategory.class);
         Root<Product> root = criteriaQuery.from(Product.class);
 
-        if (productCategoryAttribute.equals(Product_.ORIGIN_CATEGORY) || productCategoryAttribute.equals(Product_.BRAND_CATEGORY)) {
+        if (productCategoryAttribute.equals(Product_.ORIGIN_CATEGORY) ||
+                productCategoryAttribute.equals(Product_.BRAND_CATEGORY)) {
             criteriaQuery.select(root.get(productCategoryAttribute));
         } else if (productCategoryAttribute.equals(Product_.AGE_CATEGORIES)) {
             Join<Product, AgeCategory> join = root.join(productCategoryAttribute, JoinType.INNER);
             criteriaQuery.select(join);
-        } else {
-            log.warn("Invalid product category attribute: {}", productCategoryAttribute);
-            return new ArrayList<>();
         }
 
         criteriaQuery.distinct(true);
@@ -62,7 +59,7 @@ public class ProductCategoryRepositoryImpl implements ProductCategoryRepository 
         }
 
         TypedQuery<ProductCategory> query = entityManager.createQuery(criteriaQuery);
-        List<ProductCategoryDto> productCategoryDtoList =  productCategoryMapper.toProductCategoryDtoList(query.getResultList());
+        List<ProductCategoryDto> productCategoryDtoList = productCategoryMapper.toProductCategoryDtoList(query.getResultList());
         log.info("Found {} unique product categories for category: {}", productCategoryDtoList.size(), productCategoryAttribute);
         return productCategoryDtoList;
     }

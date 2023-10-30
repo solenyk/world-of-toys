@@ -57,7 +57,7 @@ class ProductRepositoryTest {
         BigDecimal maxPrice = BigDecimal.valueOf(1000);
         List<String> originCategories = List.of("china", "ukraine");
         List<String> brandCategories = List.of("сurlimals", "devilon");
-        List<String> ageCategories = List.of("do-1-roku", "vid-1-do-3-rokiv");
+        List<String> ageCategories = List.of("vid-1-do-3-rokiv");
         String priceAscSortOrder = "asc";
 
         Specification<Product> productSpecification = productSpecifications.filterByAllCriteria(productName,
