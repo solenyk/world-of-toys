@@ -78,6 +78,29 @@ public class ShopControllerIntegrationTest {
     }
 
     @Test
+    public void getFilteredProducts_ReturnsOkStatusAndFilteredProductsPageDto() throws Exception {
+        List<FilteredProductDto> expectedFilteredProductsPageDtoContent = new ArrayList<>() {{
+            add(new FilteredProductDto("Лялька Клаймбер", "lyalka-klaymber", BigDecimal.valueOf(850),
+                    BigInteger.valueOf(1), null));
+            add(new FilteredProductDto("Лялька Даринка", "lyalka-darynka", BigDecimal.valueOf(900),
+                    BigInteger.valueOf(200), null));
+            add(new FilteredProductDto("Лялька Русалочка", "lyalka-rusalochka", BigDecimal.valueOf(550),
+                    BigInteger.valueOf(150), null));
+            add(new FilteredProductDto("Пупсик Оксанка", "pupsik_oksanka", BigDecimal.valueOf(500),
+                    BigInteger.valueOf(150), null));
+        }};
+        FilteredProductsPageDto expectedFilteredProductsPageDto = new FilteredProductsPageDto(
+                expectedFilteredProductsPageDtoContent, 4, 1);
+
+        ResultActions response = mockMvc.perform(get("/api/v1/products")
+                .contentType(MediaType.APPLICATION_JSON));
+
+        response.andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(content().json(objectMapper.writeValueAsString(expectedFilteredProductsPageDto)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
     public void getFilteringProductCategories_RequestFilteringParams_ReturnsOkStatusAndFilteringProductCategoriesDto() throws Exception {
         List<ProductCategoryDto> expectedBrandCategories = new ArrayList<>() {{
             add(new ProductCategoryDto("Devilon", "devilon"));
@@ -101,6 +124,37 @@ public class ShopControllerIntegrationTest {
         ResultActions response = mockMvc.perform(get("/api/v1/products/categories")
                 .contentType(MediaType.APPLICATION_JSON)
                 .params(requestProductFilteringParams));
+
+        response.andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(content().json(objectMapper.writeValueAsString(expectedFilteringProductCategoriesDto)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    public void getFilteringProductCategories_ReturnsOkStatusAndFilteringProductCategoriesDto() throws Exception {
+        List<ProductCategoryDto> expectedBrandCategories = new ArrayList<>() {{
+            add(new ProductCategoryDto("Devilon", "devilon"));
+            add(new ProductCategoryDto("Disney", "disney"));
+            add(new ProductCategoryDto("CoComelon", "сoсomelon"));
+            add(new ProductCategoryDto("Сurlimals", "сurlimals"));
+        }};
+        List<ProductCategoryDto> expectedOriginCategories = new ArrayList<>() {{
+            add(new ProductCategoryDto("Китай", "china"));
+            add(new ProductCategoryDto("Україна", "ukraine"));
+        }};
+        List<ProductCategoryDto> expectedAgeCategories = new ArrayList<>() {{
+            add(new ProductCategoryDto("від 1 до 3 років", "vid-1-do-3-rokiv"));
+            add(new ProductCategoryDto("від 6 до 9 років", "vid-6-do-9-rokiv"));
+        }};
+        var expectedFilteringProductCategoriesDto = FilteringProductCategoriesDto
+                .builder()
+                .originCategories(expectedOriginCategories)
+                .brandCategories(expectedBrandCategories)
+                .ageCategories(expectedAgeCategories)
+                .build();
+
+        ResultActions response = mockMvc.perform(get("/api/v1/products/categories")
+                .contentType(MediaType.APPLICATION_JSON));
 
         response.andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(content().json(objectMapper.writeValueAsString(expectedFilteringProductCategoriesDto)))
