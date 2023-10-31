@@ -1,7 +1,9 @@
 package com.kopchak.worldoftoys.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kopchak.worldoftoys.dto.error.ErrorResponseDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
+import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringProductCategoriesDto;
 import com.kopchak.worldoftoys.dto.product.category.ProductCategoryDto;
 import com.kopchak.worldoftoys.service.JwtTokenService;
@@ -14,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -23,8 +26,10 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -118,6 +123,45 @@ class ShopControllerTest {
 
         response.andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(content().json(objectMapper.writeValueAsString(expectedFilteringProductCategoriesDto)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+
+    @Test
+    public void getProductBySlug_NonExistentProductSlug_ReturnsNotFoundStatusAndErrorResponseDto() throws Exception {
+        String nonExistentProductSlug = "non-existent-product-slug";
+        ErrorResponseDto errorResponseDto = new ErrorResponseDto(HttpStatus.NOT_FOUND.value(),
+                HttpStatus.NOT_FOUND.name(), "Product doesn't exist");
+
+        when(productService.getProductDtoBySlug(eq(nonExistentProductSlug))).thenReturn(Optional.empty());
+
+        ResultActions response = mockMvc.perform(get("/api/v1/products/{productSlug}", nonExistentProductSlug)
+                .contentType(MediaType.APPLICATION_JSON));
+
+        response.andExpect(MockMvcResultMatchers.status().isNotFound())
+                .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    public void getProductBySlug_ExistentProductSlug_ReturnsOkStatusAndProductDto() throws Exception {
+        String existentProductSlug = "lyalka-darynka";
+
+        ProductDto expectedProductDto = ProductDto
+                .builder()
+                .name("Лялька Даринка")
+                .slug("lyalka-darynka")
+                .price(BigDecimal.valueOf(900))
+                .availableQuantity(BigInteger.valueOf(200))
+                .build();
+
+        when(productService.getProductDtoBySlug(eq(existentProductSlug))).thenReturn(Optional.of(expectedProductDto));
+
+        ResultActions response = mockMvc.perform(get("/api/v1/products/{productSlug}", existentProductSlug)
+                .contentType(MediaType.APPLICATION_JSON));
+
+        response.andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(content().json(objectMapper.writeValueAsString(expectedProductDto)))
                 .andDo(MockMvcResultHandlers.print());
     }
 }
