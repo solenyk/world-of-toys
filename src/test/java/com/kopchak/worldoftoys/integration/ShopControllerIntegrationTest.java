@@ -3,6 +3,8 @@ package com.kopchak.worldoftoys.integration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kopchak.worldoftoys.dto.product.FilteredProductDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
+import com.kopchak.worldoftoys.dto.product.category.FilteringProductCategoriesDto;
+import com.kopchak.worldoftoys.dto.product.category.ProductCategoryDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,6 +71,36 @@ public class ShopControllerIntegrationTest {
 
         response.andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(content().json(objectMapper.writeValueAsString(expectedFilteredProductsPageDto)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    public void getFilteringProductCategories_RequestFilteringParams_ReturnsOkStatusAndFilteringProductCategoriesDto() throws Exception {
+        List<ProductCategoryDto> expectedBrandCategories = new ArrayList<>(){{
+            add(new ProductCategoryDto("Devilon", "devilon"));
+            add(new ProductCategoryDto("Сurlimals", "сurlimals"));
+        }};
+        List<ProductCategoryDto> expectedOriginCategories = new ArrayList<>(){{
+            add(new ProductCategoryDto("Китай", "china"));
+            add(new ProductCategoryDto("Україна", "ukraine"));
+        }};
+        List<ProductCategoryDto> expectedAgeCategories = new ArrayList<>(){{
+            add(new ProductCategoryDto("від 1 до 3 років", "vid-1-do-3-rokiv"));
+            add(new ProductCategoryDto("від 6 до 9 років", "vid-6-do-9-rokiv"));
+        }};
+        var expectedFilteringProductCategoriesDto = FilteringProductCategoriesDto
+                .builder()
+                .originCategories(expectedOriginCategories)
+                .brandCategories(expectedBrandCategories)
+                .ageCategories(expectedAgeCategories)
+                .build();
+
+        ResultActions response = mockMvc.perform(get("/api/v1/products/categories")
+                .contentType(MediaType.APPLICATION_JSON)
+                .params(requestProductFilteringParams));
+
+        response.andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(content().json(objectMapper.writeValueAsString(expectedFilteringProductCategoriesDto)))
                 .andDo(MockMvcResultHandlers.print());
     }
 }
