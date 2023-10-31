@@ -1,8 +1,10 @@
 package com.kopchak.worldoftoys.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kopchak.worldoftoys.dto.error.ErrorResponseDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
+import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringProductCategoriesDto;
 import com.kopchak.worldoftoys.dto.product.category.ProductCategoryDto;
 import org.junit.jupiter.api.BeforeEach;
@@ -10,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -40,7 +43,7 @@ public class ShopControllerIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        requestProductFilteringParams = new LinkedMultiValueMap<>(){{
+        requestProductFilteringParams = new LinkedMultiValueMap<>() {{
             add("name", "Лялька");
             add("min-price", "350");
             add("max-price", "1000");
@@ -56,7 +59,7 @@ public class ShopControllerIntegrationTest {
         requestProductFilteringParams.add("size", "10");
         requestProductFilteringParams.add("price-sort", "asc");
 
-        List<FilteredProductDto> expectedFilteredProductsPageDtoContent = new ArrayList<>(){{
+        List<FilteredProductDto> expectedFilteredProductsPageDtoContent = new ArrayList<>() {{
             add(new FilteredProductDto("Лялька Русалочка", "lyalka-rusalochka", BigDecimal.valueOf(550),
                     BigInteger.valueOf(150), null));
             add(new FilteredProductDto("Лялька Даринка", "lyalka-darynka", BigDecimal.valueOf(900),
@@ -76,15 +79,15 @@ public class ShopControllerIntegrationTest {
 
     @Test
     public void getFilteringProductCategories_RequestFilteringParams_ReturnsOkStatusAndFilteringProductCategoriesDto() throws Exception {
-        List<ProductCategoryDto> expectedBrandCategories = new ArrayList<>(){{
+        List<ProductCategoryDto> expectedBrandCategories = new ArrayList<>() {{
             add(new ProductCategoryDto("Devilon", "devilon"));
             add(new ProductCategoryDto("Сurlimals", "сurlimals"));
         }};
-        List<ProductCategoryDto> expectedOriginCategories = new ArrayList<>(){{
+        List<ProductCategoryDto> expectedOriginCategories = new ArrayList<>() {{
             add(new ProductCategoryDto("Китай", "china"));
             add(new ProductCategoryDto("Україна", "ukraine"));
         }};
-        List<ProductCategoryDto> expectedAgeCategories = new ArrayList<>(){{
+        List<ProductCategoryDto> expectedAgeCategories = new ArrayList<>() {{
             add(new ProductCategoryDto("від 1 до 3 років", "vid-1-do-3-rokiv"));
             add(new ProductCategoryDto("від 6 до 9 років", "vid-6-do-9-rokiv"));
         }};
@@ -101,6 +104,54 @@ public class ShopControllerIntegrationTest {
 
         response.andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(content().json(objectMapper.writeValueAsString(expectedFilteringProductCategoriesDto)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    public void getProductBySlug_NonExistentProductSlug_ReturnsNotFoundStatusAndErrorResponseDto() throws Exception {
+        String nonExistentProductSlug = "non-existent-product-slug";
+        ErrorResponseDto errorResponseDto = new ErrorResponseDto(HttpStatus.NOT_FOUND.value(),
+                HttpStatus.NOT_FOUND.name(), "Product doesn't exist");
+
+
+        ResultActions response = mockMvc.perform(get("/api/v1/products/{productSlug}", nonExistentProductSlug)
+                .contentType(MediaType.APPLICATION_JSON));
+
+        response.andExpect(MockMvcResultMatchers.status().isNotFound())
+                .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    public void getProductBySlug_ExistentProductSlug_ReturnsOkStatusAndProductDto() throws Exception {
+        String existentProductSlug = "lyalka-darynka";
+
+        String expectedProductDescription = "Ця іграшка об'єднує інноваційний дизайн та розвиваючий функціонал, що " +
+                "сприяє розвитку навичок у дітей. Вона створює захоплюючий світ уяви, розвиваючи логічне мислення та " +
+                "творчість. Іграшка безпечна, енергоефективна і сприяє розвитку спостережливості, уваги та " +
+                "винахідливості у дітей, забезпечуючи незабутні враження та навчальний досвід.";
+        List<ProductCategoryDto> expectedProductAgeCategories = new ArrayList<>() {{
+            add(new ProductCategoryDto("від 1 до 3 років", "vid-1-do-3-rokiv"));
+            add(new ProductCategoryDto("від 6 до 9 років", "vid-6-do-9-rokiv"));
+        }};
+        ProductDto expectedProductDto = ProductDto
+                .builder()
+                .name("Лялька Даринка")
+                .slug("lyalka-darynka")
+                .description(expectedProductDescription)
+                .price(BigDecimal.valueOf(900))
+                .availableQuantity(BigInteger.valueOf(200))
+                .images(new ArrayList<>())
+                .originCategory(new ProductCategoryDto("Україна", "ukraine"))
+                .brandCategory(new ProductCategoryDto("Сurlimals", "сurlimals"))
+                .ageCategories(expectedProductAgeCategories)
+                .build();
+
+        ResultActions response = mockMvc.perform(get("/api/v1/products/{productSlug}", existentProductSlug)
+                .contentType(MediaType.APPLICATION_JSON));
+
+        response.andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(content().json(objectMapper.writeValueAsString(expectedProductDto)))
                 .andDo(MockMvcResultHandlers.print());
     }
 }

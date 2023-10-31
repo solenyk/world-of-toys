@@ -85,7 +85,7 @@ public class ShopController {
                     content = @Content(schema = @Schema(implementation = ErrorResponseDto.class)))
     })
     @GetMapping("/{productSlug}")
-    public ResponseEntity<ProductDto> getProductDtoBySlug(@PathVariable(name = "productSlug") String productSlug) {
+    public ResponseEntity<ProductDto> getProductBySlug(@PathVariable(name = "productSlug") String productSlug) {
         Optional<ProductDto> productDtoOptional = productService.getProductDtoBySlug(productSlug);
         if (productDtoOptional.isEmpty()) {
             log.error("Product with slug: '{}' is not found.", productSlug);
