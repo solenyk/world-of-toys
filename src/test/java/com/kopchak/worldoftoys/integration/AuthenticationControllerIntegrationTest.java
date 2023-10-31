@@ -45,7 +45,6 @@ class AuthenticationControllerIntegrationTest {
     @Autowired
     private MockMvc mockMvc;
 
-    //TODO: add  descr in the README
     @RegisterExtension
     public static final GreenMailExtension greenMail = new GreenMailExtension(ServerSetupTest.SMTP)
             .withConfiguration(GreenMailConfiguration.aConfig().withUser("test", "password"))

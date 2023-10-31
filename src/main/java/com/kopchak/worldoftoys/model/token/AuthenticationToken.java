@@ -17,17 +17,19 @@ public class AuthenticationToken {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(unique = true)
-    @NotBlank(message = "Invalid token: token is empty")
-    @NotNull(message = "Invalid token: token is NULL")
+    @Column(unique = true, nullable = false)
+    @NotBlank(message = "Invalid token: token is blank")
     private String token;
 
+    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     @NotNull(message = "Invalid token type: token type is NULL")
     private AuthTokenType tokenType;
 
+    @Column(nullable = false)
     private boolean revoked;
 
+    @Column(nullable = false)
     private boolean expired;
 
     @NotNull(message = "Invalid user id: user is NULL")

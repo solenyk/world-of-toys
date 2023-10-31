@@ -47,6 +47,9 @@ The following endpoints are currently available in the API:
 - POST /api/v1/auth/login - Login
 - POST /api/v1/auth/refresh-token - Refresh access token
 - GET /api/v1/auth/logout - Logout
+- GET /api/v1/products - Fetch filtered products
+- GET /api/v1/products/categories - Fetch filtering product categories
+- GET /api/v1/products/{productSlug} - Fetch product by slug
 
 ## API Documentation
 

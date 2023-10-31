@@ -19,9 +19,8 @@ public class ConfirmationToken {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(unique = true)
-    @NotBlank(message = "Invalid token: token is empty")
-    @NotNull(message = "Invalid token: token is NULL")
+    @Column(unique = true, nullable = false)
+    @NotBlank(message = "Invalid token: token is blank")
     private String token;
 
     @Enumerated(EnumType.STRING)
