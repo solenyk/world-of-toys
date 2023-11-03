@@ -1,7 +1,7 @@
 package com.kopchak.worldoftoys.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kopchak.worldoftoys.dto.error.ErrorResponseDto;
+import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringProductCategoriesDto;
@@ -130,7 +130,7 @@ class ShopControllerTest {
     @Test
     public void getProductBySlug_NonExistentProductSlug_ReturnsNotFoundStatusAndErrorResponseDto() throws Exception {
         String nonExistentProductSlug = "non-existent-product-slug";
-        ErrorResponseDto errorResponseDto = new ErrorResponseDto(HttpStatus.NOT_FOUND.value(),
+        ResponseStatusExceptionDto responseStatusExceptionDto = new ResponseStatusExceptionDto(HttpStatus.NOT_FOUND.value(),
                 HttpStatus.NOT_FOUND.name(), "Product doesn't exist");
 
         when(productService.getProductDtoBySlug(eq(nonExistentProductSlug))).thenReturn(Optional.empty());
@@ -139,7 +139,7 @@ class ShopControllerTest {
                 .contentType(MediaType.APPLICATION_JSON));
 
         response.andExpect(MockMvcResultMatchers.status().isNotFound())
-                .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)))
+                .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)))
                 .andDo(MockMvcResultHandlers.print());
     }
 

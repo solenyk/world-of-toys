@@ -13,6 +13,5 @@ import lombok.*;
 @Schema(description = "Access token")
 public class AuthTokenDto {
     @NotBlank(message = "Invalid token: token is empty")
-    @NotNull(message = "Invalid token: token is NULL")
     private String token;
 }

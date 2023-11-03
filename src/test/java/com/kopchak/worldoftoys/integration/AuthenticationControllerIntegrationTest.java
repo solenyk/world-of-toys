@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icegreen.greenmail.configuration.GreenMailConfiguration;
 import com.icegreen.greenmail.junit5.GreenMailExtension;
 import com.icegreen.greenmail.util.ServerSetupTest;
-import com.kopchak.worldoftoys.dto.error.ErrorResponseDto;
+import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
 import com.kopchak.worldoftoys.dto.token.AuthTokenDto;
 import com.kopchak.worldoftoys.dto.user.ResetPasswordDto;
 import com.kopchak.worldoftoys.dto.user.UserAuthDto;
@@ -111,10 +111,10 @@ class AuthenticationControllerIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(userRegistrationDto)));
 
-        ErrorResponseDto errorResponseDto = getErrorResponseDto(HttpStatus.BAD_REQUEST, "This username already exist!");
+        ResponseStatusExceptionDto responseStatusExceptionDto = getErrorResponseDto(HttpStatus.BAD_REQUEST, "This username already exist!");
 
         response.andExpect(MockMvcResultMatchers.status().isBadRequest())
-                .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)));
+                .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)));
 
         MimeMessage[] receivedMessages = greenMail.getReceivedMessages();
         assertThat(receivedMessages.length).isEqualTo(0);
@@ -138,10 +138,10 @@ class AuthenticationControllerIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .param("token", invalidConfirmToken));
 
-        ErrorResponseDto errorResponseDto = getErrorResponseDto(HttpStatus.BAD_REQUEST, "This confirmation token is invalid!");
+        ResponseStatusExceptionDto responseStatusExceptionDto = getErrorResponseDto(HttpStatus.BAD_REQUEST, "This confirmation token is invalid!");
 
         response.andExpect(MockMvcResultMatchers.status().isBadRequest())
-                .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)));
+                .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)));
 
         MimeMessage[] receivedMessages = greenMail.getReceivedMessages();
         assertThat(receivedMessages.length).isEqualTo(0);
@@ -170,10 +170,10 @@ class AuthenticationControllerIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(notRegisteredUserDto)));
 
-        ErrorResponseDto errorResponseDto = getErrorResponseDto(HttpStatus.NOT_FOUND, "User with this username does not exist!");
+        ResponseStatusExceptionDto responseStatusExceptionDto = getErrorResponseDto(HttpStatus.NOT_FOUND, "User with this username does not exist!");
 
         response.andExpect(MockMvcResultMatchers.status().isNotFound())
-                .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)));
+                .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)));
 
         MimeMessage[] receivedMessages = greenMail.getReceivedMessages();
         assertThat(receivedMessages.length).isEqualTo(0);
@@ -187,10 +187,10 @@ class AuthenticationControllerIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(registeredAndActivatedUserDto)));
 
-        ErrorResponseDto errorResponseDto = getErrorResponseDto(HttpStatus.CONFLICT, "Account is already activated!");
+        ResponseStatusExceptionDto responseStatusExceptionDto = getErrorResponseDto(HttpStatus.CONFLICT, "Account is already activated!");
 
         response.andExpect(MockMvcResultMatchers.status().isConflict())
-                .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)));
+                .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)));
 
         MimeMessage[] receivedMessages = greenMail.getReceivedMessages();
         assertThat(receivedMessages.length).isEqualTo(0);
@@ -219,10 +219,10 @@ class AuthenticationControllerIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(notRegisteredUserDto)));
 
-        ErrorResponseDto errorResponseDto = getErrorResponseDto(HttpStatus.NOT_FOUND, "User with this username does not exist!");
+        ResponseStatusExceptionDto responseStatusExceptionDto = getErrorResponseDto(HttpStatus.NOT_FOUND, "User with this username does not exist!");
 
         response.andExpect(MockMvcResultMatchers.status().isNotFound())
-                .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)));
+                .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)));
 
         MimeMessage[] receivedMessages = greenMail.getReceivedMessages();
         assertThat(receivedMessages.length).isEqualTo(0);
@@ -248,10 +248,10 @@ class AuthenticationControllerIntegrationTest {
                 .param("token", resetPasswordConfirmToken)
                 .content(objectMapper.writeValueAsString(invalidResetPasswordDto)));
 
-        ErrorResponseDto errorResponseDto = getErrorResponseDto(HttpStatus.BAD_REQUEST, "New password matches old password!");
+        ResponseStatusExceptionDto responseStatusExceptionDto = getErrorResponseDto(HttpStatus.BAD_REQUEST, "New password matches old password!");
 
         response.andExpect(MockMvcResultMatchers.status().isBadRequest())
-                .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)))
+                .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)))
                 .andDo(MockMvcResultHandlers.print());
     }
 
@@ -262,10 +262,10 @@ class AuthenticationControllerIntegrationTest {
                 .param("token", activationConfirmToken)
                 .content(objectMapper.writeValueAsString(validResetPasswordDto)));
 
-        ErrorResponseDto errorResponseDto = getErrorResponseDto(HttpStatus.BAD_REQUEST, "This confirmation token is invalid!");
+        ResponseStatusExceptionDto responseStatusExceptionDto = getErrorResponseDto(HttpStatus.BAD_REQUEST, "This confirmation token is invalid!");
 
         response.andExpect(MockMvcResultMatchers.status().isBadRequest())
-                .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)))
+                .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)))
                 .andDo(MockMvcResultHandlers.print());
     }
 
@@ -293,10 +293,10 @@ class AuthenticationControllerIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(registeredAndNotActivatedUserAuthDto)));
 
-        ErrorResponseDto errorResponseDto = getErrorResponseDto(HttpStatus.FORBIDDEN, "Account is not activated!");
+        ResponseStatusExceptionDto responseStatusExceptionDto = getErrorResponseDto(HttpStatus.FORBIDDEN, "Account is not activated!");
 
         response.andExpect(MockMvcResultMatchers.status().isForbidden())
-                .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)));
+                .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)));
     }
 
     @Test
@@ -311,10 +311,10 @@ class AuthenticationControllerIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(notRegisteredUserAuthDto)));
 
-        ErrorResponseDto errorResponseDto = getErrorResponseDto(HttpStatus.UNAUTHORIZED, "Bad user credentials!");
+        ResponseStatusExceptionDto responseStatusExceptionDto = getErrorResponseDto(HttpStatus.UNAUTHORIZED, "Bad user credentials!");
 
         response.andExpect(MockMvcResultMatchers.status().isUnauthorized())
-                .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)));
+                .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)));
     }
 
     @Test
@@ -348,10 +348,10 @@ class AuthenticationControllerIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(validAuthTokenDto)));
 
-        ErrorResponseDto errorResponseDto = getErrorResponseDto(HttpStatus.BAD_REQUEST, "There is valid access token!");
+        ResponseStatusExceptionDto responseStatusExceptionDto = getErrorResponseDto(HttpStatus.BAD_REQUEST, "There is valid access token!");
 
         response.andExpect(MockMvcResultMatchers.status().isBadRequest())
-                .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)));
+                .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)));
     }
 
     @Test
@@ -365,14 +365,14 @@ class AuthenticationControllerIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(invalidAuthTokenDto)));
 
-        ErrorResponseDto errorResponseDto = getErrorResponseDto(HttpStatus.BAD_REQUEST, "This refresh token is invalid!");
+        ResponseStatusExceptionDto responseStatusExceptionDto = getErrorResponseDto(HttpStatus.BAD_REQUEST, "This refresh token is invalid!");
 
         response.andExpect(MockMvcResultMatchers.status().isBadRequest())
-                .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)));
+                .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)));
     }
 
-    private ErrorResponseDto getErrorResponseDto(HttpStatus httpStatus, String msg) {
-        return ErrorResponseDto
+    private ResponseStatusExceptionDto getErrorResponseDto(HttpStatus httpStatus, String msg) {
+        return ResponseStatusExceptionDto
                 .builder()
                 .error(httpStatus.name())
                 .status(httpStatus.value())

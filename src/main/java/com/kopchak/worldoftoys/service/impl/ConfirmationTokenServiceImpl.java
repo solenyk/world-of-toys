@@ -18,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -50,8 +51,9 @@ public class ConfirmationTokenServiceImpl implements ConfirmationTokenService {
 
     @Override
     public boolean isConfirmationTokenInvalid(String token, ConfirmationTokenType tokenType) {
-        if (confirmationTokenRepository.findByToken(token).isPresent()) {
-            ConfirmationToken confirmToken = confirmationTokenRepository.findByToken(token).get();
+        Optional<ConfirmationToken> confirmationTokenOptional = confirmationTokenRepository.findByToken(token);
+        if (confirmationTokenOptional.isPresent()) {
+            ConfirmationToken confirmToken = confirmationTokenOptional.get();
             return !confirmToken.getTokenType().equals(tokenType) ||
                     confirmToken.getConfirmedAt() != null || !confirmToken.getExpiresAt().isAfter(LocalDateTime.now());
         }

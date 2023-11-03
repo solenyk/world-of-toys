@@ -1,7 +1,7 @@
 package com.kopchak.worldoftoys.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kopchak.worldoftoys.dto.error.ErrorResponseDto;
+import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
@@ -164,7 +164,7 @@ public class ShopControllerIntegrationTest {
     @Test
     public void getProductBySlug_NonExistentProductSlug_ReturnsNotFoundStatusAndErrorResponseDto() throws Exception {
         String nonExistentProductSlug = "non-existent-product-slug";
-        ErrorResponseDto errorResponseDto = new ErrorResponseDto(HttpStatus.NOT_FOUND.value(),
+        ResponseStatusExceptionDto responseStatusExceptionDto = new ResponseStatusExceptionDto(HttpStatus.NOT_FOUND.value(),
                 HttpStatus.NOT_FOUND.name(), "Product doesn't exist");
 
 
@@ -172,7 +172,7 @@ public class ShopControllerIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON));
 
         response.andExpect(MockMvcResultMatchers.status().isNotFound())
-                .andExpect(content().json(objectMapper.writeValueAsString(errorResponseDto)))
+                .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)))
                 .andDo(MockMvcResultHandlers.print());
     }
 

@@ -14,7 +14,6 @@ import lombok.*;
 @Schema(description = "Confirmation token")
 public class ConfirmTokenDto {
     @NotBlank(message = "Invalid token: token is empty")
-    @NotNull(message = "Invalid token: token is NULL")
     private String token;
 
     public ConfirmTokenDto(ConfirmationToken confirmToken) {

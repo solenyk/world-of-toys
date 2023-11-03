@@ -1,7 +1,7 @@
 package com.kopchak.worldoftoys.exception.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kopchak.worldoftoys.dto.error.ErrorResponseDto;
+import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
@@ -17,7 +17,7 @@ public class AppAuthenticationEntryPoint implements AuthenticationEntryPoint {
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException ex) throws IOException {
         HttpStatus httpStatus = HttpStatus.FORBIDDEN;
-        ErrorResponseDto errorResponse = ErrorResponseDto
+        ResponseStatusExceptionDto errorResponse = ResponseStatusExceptionDto
                 .builder()
                 .error(httpStatus.name())
                 .status(httpStatus.value())
