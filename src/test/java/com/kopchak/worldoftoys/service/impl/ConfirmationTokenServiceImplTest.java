@@ -139,7 +139,7 @@ class ConfirmationTokenServiceImplTest {
         confirmationTokenService.changePasswordUsingResetToken(token, newPassword);
 
         assertThat(confirmToken.getConfirmedAt()).isNotNull();
-        verify(userService).changeUserPassword(user, newPassword.getPassword());
+        verify(userService).changeUserPassword(user, newPassword.password());
         verify(confirmationTokenRepository).save(confirmToken);
         verify(jwtTokenService).revokeAllUserAuthTokens(username);
     }

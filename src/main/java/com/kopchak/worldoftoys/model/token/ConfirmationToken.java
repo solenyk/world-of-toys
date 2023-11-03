@@ -37,8 +37,7 @@ public class ConfirmationToken {
 
     private LocalDateTime confirmedAt;
 
-    @NotNull(message = "Invalid user id: user is NULL")
     @ManyToOne
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
     private AppUser user;
 }

@@ -54,13 +54,11 @@ public class Product {
     private Set<Image> images;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "origin_id", nullable = false)
-    @NotNull(message = "Origin category is mandatory")
+    @JoinColumn(name = "origin_id", referencedColumnName = "id", nullable = false)
     private OriginCategory originCategory;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "brand_id", nullable = false)
-    @NotNull(message = "Brand category is mandatory")
+    @JoinColumn(name = "brand_id", referencedColumnName = "id", nullable = false)
     private BrandCategory brandCategory;
 
     @ManyToMany
@@ -68,6 +66,5 @@ public class Product {
             name = "product_age_category",
             joinColumns = @JoinColumn(name = "products_id"),
             inverseJoinColumns = @JoinColumn(name = "age_category_id"))
-    @NotNull(message = "Age categories is mandatory")
     private Set<AgeCategory> ageCategories;
 }

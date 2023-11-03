@@ -78,7 +78,7 @@ class AuthenticationControllerTest {
                 .firstname("Firstname")
                 .lastname("Lastname")
                 .email(username)
-                .password("password")
+                .password("P@ssword123")
                 .build();
         activationTokenType = ConfirmationTokenType.ACTIVATION;
         resetPasswordTokenType = ConfirmationTokenType.RESET_PASSWORD;
@@ -86,7 +86,7 @@ class AuthenticationControllerTest {
         confirmTokenDto = ConfirmTokenDto.builder().token(confirmToken).build();
         userAuthDto = UserAuthDto.builder().email(username).password("password").build();
         usernameDto = UsernameDto.builder().email(username).build();
-        resetPasswordDto = ResetPasswordDto.builder().password("new-password").build();
+        resetPasswordDto = ResetPasswordDto.builder().password("P@ssword1234").build();
         accessAndRefreshTokensDto = AccessAndRefreshTokensDto
                 .builder()
                 .accessToken("access-token")
@@ -108,8 +108,8 @@ class AuthenticationControllerTest {
                 .content(objectMapper.writeValueAsString(userRegistrationDto)));
 
         verify(userService).registerUser(any());
-        verify(confirmationTokenService).createConfirmationToken(userRegistrationDto.getEmail(), activationTokenType);
-        verify(emailSenderService).sendEmail(userRegistrationDto.getEmail(), confirmTokenDto.token(),
+        verify(confirmationTokenService).createConfirmationToken(userRegistrationDto.email(), activationTokenType);
+        verify(emailSenderService).sendEmail(userRegistrationDto.email(), confirmTokenDto.token(),
                 activationTokenType);
 
         response.andExpect(MockMvcResultMatchers.status().isCreated())
@@ -117,8 +117,8 @@ class AuthenticationControllerTest {
     }
 
     @Test
-    public void registerUser_UserRegistrationDtoWithRegisteredUserEmail_ReturnsBadRequestStatusAndErrorResponseDto() throws Exception {
-        when(userService.isUserRegistered(userRegistrationDto.getEmail())).thenReturn(true);
+    public void registerUser_UserRegistrationDtoWithRegisteredUserEmail_ReturnsBadRequestStatusAndResponseStatusExceptionDto() throws Exception {
+        when(userService.isUserRegistered(userRegistrationDto.email())).thenReturn(true);
 
         ResultActions response = mockMvc.perform(post("/api/v1/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -128,7 +128,8 @@ class AuthenticationControllerTest {
         verify(confirmationTokenService, never()).createConfirmationToken(any(), any());
         verify(emailSenderService, never()).sendEmail(any(), any(), any());
 
-        ResponseStatusExceptionDto responseStatusExceptionDto = getErrorResponseDto(HttpStatus.BAD_REQUEST, "This username already exist!");
+        ResponseStatusExceptionDto responseStatusExceptionDto = getResponseStatusExceptionDto(HttpStatus.BAD_REQUEST,
+                "This username already exist!");
 
         response.andExpect(MockMvcResultMatchers.status().isBadRequest())
                 .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)));
@@ -150,7 +151,7 @@ class AuthenticationControllerTest {
     }
 
     @Test
-    public void activateAccount_InvalidConfirmToken_ReturnsBadRequestStatusAndErrorResponseDto() throws Exception {
+    public void activateAccount_InvalidConfirmToken_ReturnsBadRequestStatusAndResponseStatusExceptionDto() throws Exception {
         when(confirmationTokenService.isConfirmationTokenInvalid(confirmToken, activationTokenType)).thenReturn(true);
 
         ResultActions response = mockMvc.perform(get("/api/v1/auth/confirm")
@@ -159,7 +160,8 @@ class AuthenticationControllerTest {
 
         verify(confirmationTokenService, never()).activateAccountUsingActivationToken(any());
 
-        ResponseStatusExceptionDto responseStatusExceptionDto = getErrorResponseDto(HttpStatus.BAD_REQUEST, "This confirmation token is invalid!");
+        ResponseStatusExceptionDto responseStatusExceptionDto = getResponseStatusExceptionDto(HttpStatus.BAD_REQUEST,
+                "This confirmation token is invalid!");
 
         response.andExpect(MockMvcResultMatchers.status().isBadRequest())
                 .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)));
@@ -170,7 +172,8 @@ class AuthenticationControllerTest {
         when(userService.isUserRegistered(username)).thenReturn(true);
         when(userService.isUserActivated(username)).thenReturn(false);
         when(confirmationTokenService.isNoActiveConfirmationToken(username, activationTokenType)).thenReturn(true);
-        when(confirmationTokenService.createConfirmationToken(username, activationTokenType)).thenReturn(confirmTokenDto);
+        when(confirmationTokenService.createConfirmationToken(username, activationTokenType))
+                .thenReturn(confirmTokenDto);
         doNothing().when(emailSenderService).sendEmail(username, confirmToken, activationTokenType);
 
         ResultActions response = mockMvc.perform(post("/api/v1/auth/resend-verification-email")
@@ -185,7 +188,7 @@ class AuthenticationControllerTest {
     }
 
     @Test
-    public void resendVerificationEmail_NotRegisteredUser_ReturnsNotFoundStatusAndErrorResponseDto() throws Exception {
+    public void resendVerificationEmail_NotRegisteredUser_ReturnsNotFoundStatusAndResponseStatusExceptionDto() throws Exception {
         when(userService.isUserRegistered(username)).thenReturn(false);
 
         ResultActions response = mockMvc.perform(post("/api/v1/auth/resend-verification-email")
@@ -195,14 +198,15 @@ class AuthenticationControllerTest {
         verify(confirmationTokenService, never()).createConfirmationToken(any(), any());
         verify(emailSenderService, never()).sendEmail(any(), any(), any());
 
-        ResponseStatusExceptionDto responseStatusExceptionDto = getErrorResponseDto(HttpStatus.NOT_FOUND, "User with this username does not exist!");
+        ResponseStatusExceptionDto responseStatusExceptionDto = getResponseStatusExceptionDto(HttpStatus.NOT_FOUND,
+                "User with this username does not exist!");
 
         response.andExpect(MockMvcResultMatchers.status().isNotFound())
                 .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)));
     }
 
     @Test
-    public void resendVerificationEmail_RegisteredAndActivatedUser_ReturnsConflictStatusAndErrorResponseDto() throws Exception {
+    public void resendVerificationEmail_RegisteredAndActivatedUser_ReturnsConflictStatusAndResponseStatusExceptionDto() throws Exception {
         when(userService.isUserRegistered(username)).thenReturn(true);
         when(userService.isUserActivated(username)).thenReturn(true);
 
@@ -213,7 +217,8 @@ class AuthenticationControllerTest {
         verify(confirmationTokenService, never()).createConfirmationToken(any(), any());
         verify(emailSenderService, never()).sendEmail(any(), any(), any());
 
-        ResponseStatusExceptionDto responseStatusExceptionDto = getErrorResponseDto(HttpStatus.CONFLICT, "Account is already activated!");
+        ResponseStatusExceptionDto responseStatusExceptionDto = getResponseStatusExceptionDto(HttpStatus.CONFLICT,
+                "Account is already activated!");
 
         response.andExpect(MockMvcResultMatchers.status().isConflict())
                 .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)));
@@ -223,7 +228,8 @@ class AuthenticationControllerTest {
     public void sendResetPasswordEmail_RegisteredUser_ReturnsNoContentStatus() throws Exception {
         when(userService.isUserRegistered(username)).thenReturn(true);
         when(confirmationTokenService.isNoActiveConfirmationToken(username, resetPasswordTokenType)).thenReturn(true);
-        when(confirmationTokenService.createConfirmationToken(username, resetPasswordTokenType)).thenReturn(confirmTokenDto);
+        when(confirmationTokenService.createConfirmationToken(username, resetPasswordTokenType))
+                .thenReturn(confirmTokenDto);
         doNothing().when(emailSenderService).sendEmail(username, confirmToken, resetPasswordTokenType);
 
         ResultActions response = mockMvc.perform(post("/api/v1/auth/forgot-password")
@@ -238,7 +244,7 @@ class AuthenticationControllerTest {
     }
 
     @Test
-    public void sendResetPasswordEmail_NotRegisteredUser_ReturnsNotFoundStatusAndErrorResponseDto() throws Exception {
+    public void sendResetPasswordEmail_NotRegisteredUser_ReturnsNotFoundStatusAndResponseStatusExceptionDto() throws Exception {
         when(userService.isUserRegistered(username)).thenReturn(false);
 
         ResultActions response = mockMvc.perform(post("/api/v1/auth/forgot-password")
@@ -248,7 +254,8 @@ class AuthenticationControllerTest {
         verify(confirmationTokenService, never()).createConfirmationToken(any(), any());
         verify(emailSenderService, never()).sendEmail(any(), any(), any());
 
-        ResponseStatusExceptionDto responseStatusExceptionDto = getErrorResponseDto(HttpStatus.NOT_FOUND, "User with this username does not exist!");
+        ResponseStatusExceptionDto responseStatusExceptionDto = getResponseStatusExceptionDto(HttpStatus.NOT_FOUND,
+                "User with this username does not exist!");
 
         response.andExpect(MockMvcResultMatchers.status().isNotFound())
                 .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)));
@@ -256,8 +263,9 @@ class AuthenticationControllerTest {
 
     @Test
     public void changePassword_ValidConfirmTokenAndNewPasswordNotMatchOldPassword_ReturnsNoContentStatus() throws Exception {
-        when(confirmationTokenService.isConfirmationTokenInvalid(confirmToken, resetPasswordTokenType)).thenReturn(false);
-        when(userService.isNewPasswordMatchOldPassword(confirmToken, resetPasswordDto.getPassword())).thenReturn(false);
+        when(confirmationTokenService.isConfirmationTokenInvalid(confirmToken, resetPasswordTokenType))
+                .thenReturn(false);
+        when(userService.isNewPasswordMatchOldPassword(confirmToken, resetPasswordDto.password())).thenReturn(false);
         doNothing().when(confirmationTokenService).changePasswordUsingResetToken(confirmToken, resetPasswordDto);
 
         ResultActions response = mockMvc.perform(post("/api/v1/auth/reset-password")
@@ -272,9 +280,10 @@ class AuthenticationControllerTest {
     }
 
     @Test
-    public void changePassword_ValidConfirmTokenAndNewPasswordMatchOldPassword_ReturnsBadRequestStatusAndErrorResponseDto() throws Exception {
-        when(confirmationTokenService.isConfirmationTokenInvalid(confirmToken, resetPasswordTokenType)).thenReturn(false);
-        when(userService.isNewPasswordMatchOldPassword(confirmToken, resetPasswordDto.getPassword())).thenReturn(true);
+    public void changePassword_NewPasswordMatchOldPassword_ReturnsBadRequestStatusAndResponseStatusExceptionDto() throws Exception {
+        when(confirmationTokenService.isConfirmationTokenInvalid(confirmToken, resetPasswordTokenType))
+                .thenReturn(false);
+        when(userService.isNewPasswordMatchOldPassword(confirmToken, resetPasswordDto.password())).thenReturn(true);
 
         ResultActions response = mockMvc.perform(post("/api/v1/auth/reset-password")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -283,7 +292,8 @@ class AuthenticationControllerTest {
 
         verify(confirmationTokenService, never()).changePasswordUsingResetToken(any(), any());
 
-        ResponseStatusExceptionDto responseStatusExceptionDto = getErrorResponseDto(HttpStatus.BAD_REQUEST, "New password matches old password!");
+        ResponseStatusExceptionDto responseStatusExceptionDto = getResponseStatusExceptionDto(HttpStatus.BAD_REQUEST,
+                "New password matches old password!");
 
         response.andExpect(MockMvcResultMatchers.status().isBadRequest())
                 .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)))
@@ -291,8 +301,9 @@ class AuthenticationControllerTest {
     }
 
     @Test
-    public void changePassword_InvalidConfirmToken_ReturnsBadRequestStatusAndErrorResponseDto() throws Exception {
-        when(confirmationTokenService.isConfirmationTokenInvalid(confirmToken, resetPasswordTokenType)).thenReturn(true);
+    public void changePassword_InvalidConfirmToken_ReturnsBadRequestStatusAndResponseStatusExceptionDto() throws Exception {
+        when(confirmationTokenService.isConfirmationTokenInvalid(confirmToken, resetPasswordTokenType))
+                .thenReturn(true);
 
         ResultActions response = mockMvc.perform(post("/api/v1/auth/reset-password")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -301,7 +312,8 @@ class AuthenticationControllerTest {
 
         verify(confirmationTokenService, never()).changePasswordUsingResetToken(any(), any());
 
-        ResponseStatusExceptionDto responseStatusExceptionDto = getErrorResponseDto(HttpStatus.BAD_REQUEST, "This confirmation token is invalid!");
+        ResponseStatusExceptionDto responseStatusExceptionDto = getResponseStatusExceptionDto(HttpStatus.BAD_REQUEST,
+                "This confirmation token is invalid!");
 
         response.andExpect(MockMvcResultMatchers.status().isBadRequest())
                 .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)))
@@ -331,7 +343,7 @@ class AuthenticationControllerTest {
     }
 
     @Test
-    public void authenticate_RegisteredAndNotActivatedUser_ReturnsForbiddenStatusAndErrorResponseDto() throws Exception {
+    public void authenticate_RegisteredAndNotActivatedUser_ReturnsForbiddenStatusAndResponseStatusExceptionDto() throws Exception {
         when(userService.isUserRegistered(username)).thenReturn(true);
         when(userService.isPasswordsMatch(username, userAuthDto.password())).thenReturn(true);
         when(userService.isUserActivated(username)).thenReturn(false);
@@ -344,14 +356,15 @@ class AuthenticationControllerTest {
         verify(jwtTokenService, never()).revokeAllUserAuthTokens(any());
         verify(jwtTokenService, never()).generateAuthTokens(any());
 
-        ResponseStatusExceptionDto responseStatusExceptionDto = getErrorResponseDto(HttpStatus.FORBIDDEN, "Account is not activated!");
+        ResponseStatusExceptionDto responseStatusExceptionDto = getResponseStatusExceptionDto(HttpStatus.FORBIDDEN,
+                "Account is not activated!");
 
         response.andExpect(MockMvcResultMatchers.status().isForbidden())
                 .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)));
     }
 
     @Test
-    public void authenticate_NotRegisteredUser_ReturnsUnauthorizedStatusAndErrorResponseDto() throws Exception {
+    public void authenticate_NotRegisteredUser_ReturnsUnauthorizedStatusAndResponseStatusExceptionDto() throws Exception {
         when(userService.isUserRegistered(username)).thenReturn(false);
 
         ResultActions response = mockMvc.perform(post("/api/v1/auth/login")
@@ -362,7 +375,8 @@ class AuthenticationControllerTest {
         verify(jwtTokenService, never()).revokeAllUserAuthTokens(any());
         verify(jwtTokenService, never()).generateAuthTokens(any());
 
-        ResponseStatusExceptionDto responseStatusExceptionDto = getErrorResponseDto(HttpStatus.UNAUTHORIZED, "Bad user credentials!");
+        ResponseStatusExceptionDto responseStatusExceptionDto = getResponseStatusExceptionDto(HttpStatus.UNAUTHORIZED,
+                "Bad user credentials!");
 
         response.andExpect(MockMvcResultMatchers.status().isUnauthorized())
                 .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)));
@@ -385,7 +399,7 @@ class AuthenticationControllerTest {
     }
 
     @Test
-    public void refreshToken_ValidTokenAndActiveAuthTokenExists_ReturnsBadRequestStatusAndErrorResponseDto() throws Exception {
+    public void refreshToken_ValidTokenAndActiveAuthTokenExists_ReturnsBadRequestStatusAndResponseStatusExceptionDto() throws Exception {
         when(jwtTokenService.isAuthTokenValid(authTokenDto.token(), AuthTokenType.REFRESH)).thenReturn(true);
         when(jwtTokenService.isActiveAuthTokenExists(authTokenDto.token(), AuthTokenType.ACCESS)).thenReturn(true);
 
@@ -395,14 +409,14 @@ class AuthenticationControllerTest {
 
         verify(jwtTokenService, never()).refreshAccessToken(any());
 
-        ResponseStatusExceptionDto responseStatusExceptionDto = getErrorResponseDto(HttpStatus.BAD_REQUEST, "There is valid access token!");
+        ResponseStatusExceptionDto responseStatusExceptionDto = getResponseStatusExceptionDto(HttpStatus.BAD_REQUEST, "There is valid access token!");
 
         response.andExpect(MockMvcResultMatchers.status().isBadRequest())
                 .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)));
     }
 
     @Test
-    public void refreshToken_InvalidToken_ReturnsBadRequestStatusAndErrorResponseDto() throws Exception {
+    public void refreshToken_InvalidToken_ReturnsBadRequestStatusAndResponseStatusExceptionDto() throws Exception {
         when(jwtTokenService.isAuthTokenValid(authTokenDto.token(), AuthTokenType.REFRESH)).thenReturn(false);
 
         ResultActions response = mockMvc.perform(post("/api/v1/auth/refresh-token")
@@ -411,13 +425,13 @@ class AuthenticationControllerTest {
 
         verify(jwtTokenService, never()).refreshAccessToken(any());
 
-        ResponseStatusExceptionDto responseStatusExceptionDto = getErrorResponseDto(HttpStatus.BAD_REQUEST, "This refresh token is invalid!");
+        ResponseStatusExceptionDto responseStatusExceptionDto = getResponseStatusExceptionDto(HttpStatus.BAD_REQUEST, "This refresh token is invalid!");
 
         response.andExpect(MockMvcResultMatchers.status().isBadRequest())
                 .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)));
     }
 
-    private ResponseStatusExceptionDto getErrorResponseDto(HttpStatus httpStatus, String msg) {
+    private ResponseStatusExceptionDto getResponseStatusExceptionDto(HttpStatus httpStatus, String msg) {
         return ResponseStatusExceptionDto
                 .builder()
                 .error(httpStatus.name())

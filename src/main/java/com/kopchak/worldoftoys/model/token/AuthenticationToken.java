@@ -32,8 +32,7 @@ public class AuthenticationToken {
     @Column(nullable = false)
     private boolean expired;
 
-    @NotNull(message = "Invalid user id: user is NULL")
     @ManyToOne
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
     private AppUser user;
 }

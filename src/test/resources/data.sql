@@ -1,9 +1,9 @@
 INSERT INTO app_user (id, firstname, lastname, email, password, role, locked, enabled)
-VALUES (1000, 'John', 'Doe', 'john.doe@example.com', '$2a$10$WKoHCVQBee77aRXkS.xpceIyBqRcjlkjfpYCerq8eZJkf6Uvm8QPq',
+VALUES (1000, 'John', 'Doe', 'john.doe@example.com', '$2a$10$bITm.1PZYpJXip2RijlP3OfTWiE0NRK0.BhgJAf2ivnZFfSKnSQuW',
         'ROLE_USER', false, true),
-       (1001, 'Jane', 'Smith', 'jane.smith@example.com', '$2a$10$WKoHCVQBee77aRXkS.xpceIyBqRcjlkjfpYCerq8eZJkf6Uvm8QPq',
+       (1001, 'Jane', 'Smith', 'jane.smith@example.com', '$2a$10$bITm.1PZYpJXip2RijlP3OfTWiE0NRK0.BhgJAf2ivnZFfSKnSQuW',
         'ROLE_ADMIN', false, true),
-       (1002, 'Alice', 'Johnson', 'alice.johnson@example.com', '$2a$10$WKoHCVQBee77aRXkS.xpceIyBqRcjlkjfpYCerq8eZJkf6Uvm8QPq',
+       (1002, 'Alice', 'Johnson', 'alice.johnson@example.com', '$2a$10$bITm.1PZYpJXip2RijlP3OfTWiE0NRK0.BhgJAf2ivnZFfSKnSQuW',
         'ROLE_USER', false, false);
 
 INSERT INTO authentication_token(id, token, token_type, revoked, expired, user_id)
@@ -18,7 +18,7 @@ INSERT INTO confirmation_token(id, token, token_type, created_at, expires_at, co
 VALUES (1000, '8e5648d7-9b4e-4724-83a1-be7e64603e48', 'ACTIVATION', '2023-09-22 15:47:15.593933',
         '2226-09-22 16:02:15.593933', null, 1000),
        (1001, '8e5648d7-9b4e-4724-83a1-be7e64603e47', 'RESET_PASSWORD', '2023-09-22 15:47:15.593933',
-        '2226-09-22 16:02:15.593933', null, 1002);
+        '2226-09-22 16:02:15.593933', null, 1001);
 
 INSERT INTO age_category(id, name, slug)
 VALUES (1, 'до 1 року', 'do-1-roku'),
