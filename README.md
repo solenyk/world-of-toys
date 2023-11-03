@@ -20,10 +20,26 @@ This web application is designed to allow users to view and purchase toys from a
 
 This application was built using the following technologies:
 
+### Backend:
 - Spring Boot 3
 - Spring Security 6
 - Java 17
-- MySQL 8
+
+### Database:
+- Java ORM (JPA 3 + Hibernate 6)
+- MySQL 8: An database used for development purposes
+- H2: An embedded database used for testing purposes
+
+### Mail Servers:
+- Maildev: A local mail server for development and testing environments
+- GreenMail: A mail server designed for integration testing
+
+### Testing Frameworks:
+- JUnit 5: A Java framework for writing unit tests
+- Mockito: A Java framework for writing integration tests
+
+### Documentation:
+- Swagger: A tool for writing API documentation
 
 ## Features
 
@@ -36,6 +52,9 @@ The following features are currently available in the application:
 - Login 
 - Refresh access token
 - Logout
+- Fetch filtered products
+- Fetch filtering product categories
+- Fetch product by slug
 
 ## Endpoints
 The following endpoints are currently available in the API:
