@@ -101,7 +101,7 @@ class AuthenticationControllerTest {
         doNothing().when(userService).registerUser(userRegistrationDto);
         when(confirmationTokenService.createConfirmationToken(username, activationTokenType))
                 .thenReturn(confirmTokenDto);
-        doNothing().when(emailSenderService).sendEmail(username, confirmTokenDto.getToken(), activationTokenType);
+        doNothing().when(emailSenderService).sendEmail(username, confirmTokenDto.token(), activationTokenType);
 
         ResultActions response = mockMvc.perform(post("/api/v1/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -109,7 +109,7 @@ class AuthenticationControllerTest {
 
         verify(userService).registerUser(any());
         verify(confirmationTokenService).createConfirmationToken(userRegistrationDto.getEmail(), activationTokenType);
-        verify(emailSenderService).sendEmail(userRegistrationDto.getEmail(), confirmTokenDto.getToken(),
+        verify(emailSenderService).sendEmail(userRegistrationDto.getEmail(), confirmTokenDto.token(),
                 activationTokenType);
 
         response.andExpect(MockMvcResultMatchers.status().isCreated())
@@ -311,7 +311,7 @@ class AuthenticationControllerTest {
     @Test
     public void authenticate_RegisteredAndActivatedUser_ReturnsOkStatusAndAccessAndRefreshTokensDto() throws Exception {
         when(userService.isUserRegistered(username)).thenReturn(true);
-        when(userService.isPasswordsMatch(username, userAuthDto.getPassword())).thenReturn(true);
+        when(userService.isPasswordsMatch(username, userAuthDto.password())).thenReturn(true);
         when(userService.isUserActivated(username)).thenReturn(true);
 
         doNothing().when(jwtTokenService).revokeAllUserAuthTokens(username);
@@ -333,7 +333,7 @@ class AuthenticationControllerTest {
     @Test
     public void authenticate_RegisteredAndNotActivatedUser_ReturnsForbiddenStatusAndErrorResponseDto() throws Exception {
         when(userService.isUserRegistered(username)).thenReturn(true);
-        when(userService.isPasswordsMatch(username, userAuthDto.getPassword())).thenReturn(true);
+        when(userService.isPasswordsMatch(username, userAuthDto.password())).thenReturn(true);
         when(userService.isUserActivated(username)).thenReturn(false);
 
         ResultActions response = mockMvc.perform(post("/api/v1/auth/login")
@@ -370,8 +370,8 @@ class AuthenticationControllerTest {
 
     @Test
     public void refreshToken_ValidTokenAndActiveAuthTokenNotExists_ReturnsCreatedStatusAndAuthTokenDto() throws Exception {
-        when(jwtTokenService.isAuthTokenValid(authTokenDto.getToken(), AuthTokenType.REFRESH)).thenReturn(true);
-        when(jwtTokenService.isActiveAuthTokenExists(authTokenDto.getToken(), AuthTokenType.ACCESS)).thenReturn(false);
+        when(jwtTokenService.isAuthTokenValid(authTokenDto.token(), AuthTokenType.REFRESH)).thenReturn(true);
+        when(jwtTokenService.isActiveAuthTokenExists(authTokenDto.token(), AuthTokenType.ACCESS)).thenReturn(false);
         when(jwtTokenService.refreshAccessToken(authTokenDto)).thenReturn(authTokenDto);
 
         ResultActions response = mockMvc.perform(post("/api/v1/auth/refresh-token")
@@ -386,8 +386,8 @@ class AuthenticationControllerTest {
 
     @Test
     public void refreshToken_ValidTokenAndActiveAuthTokenExists_ReturnsBadRequestStatusAndErrorResponseDto() throws Exception {
-        when(jwtTokenService.isAuthTokenValid(authTokenDto.getToken(), AuthTokenType.REFRESH)).thenReturn(true);
-        when(jwtTokenService.isActiveAuthTokenExists(authTokenDto.getToken(), AuthTokenType.ACCESS)).thenReturn(true);
+        when(jwtTokenService.isAuthTokenValid(authTokenDto.token(), AuthTokenType.REFRESH)).thenReturn(true);
+        when(jwtTokenService.isActiveAuthTokenExists(authTokenDto.token(), AuthTokenType.ACCESS)).thenReturn(true);
 
         ResultActions response = mockMvc.perform(post("/api/v1/auth/refresh-token")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -403,7 +403,7 @@ class AuthenticationControllerTest {
 
     @Test
     public void refreshToken_InvalidToken_ReturnsBadRequestStatusAndErrorResponseDto() throws Exception {
-        when(jwtTokenService.isAuthTokenValid(authTokenDto.getToken(), AuthTokenType.REFRESH)).thenReturn(false);
+        when(jwtTokenService.isAuthTokenValid(authTokenDto.token(), AuthTokenType.REFRESH)).thenReturn(false);
 
         ResultActions response = mockMvc.perform(post("/api/v1/auth/refresh-token")
                 .contentType(MediaType.APPLICATION_JSON)

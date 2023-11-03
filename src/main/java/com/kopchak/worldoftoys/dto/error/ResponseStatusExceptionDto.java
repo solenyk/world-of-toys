@@ -1,14 +1,7 @@
 package com.kopchak.worldoftoys.dto.error;
 
-import lombok.*;
+import lombok.Builder;
 
-@Getter
-@Setter
 @Builder
-@AllArgsConstructor
-@NoArgsConstructor
-public class ResponseStatusExceptionDto {
-    private int status;
-    private String error;
-    private String message;
+public record ResponseStatusExceptionDto(int status, String error, String message) {
 }

@@ -87,7 +87,7 @@ public class JwtTokenServiceImpl implements JwtTokenService {
 
     @Override
     public AuthTokenDto refreshAccessToken(AuthTokenDto refreshTokenDto) {
-        String refreshToken = refreshTokenDto.getToken();
+        String refreshToken = refreshTokenDto.token();
         Optional<String> username = extractUsername(refreshToken);
         if(username.isPresent()){
             AppUser user = userRepository.findByEmail(username.get()).orElseThrow(() ->

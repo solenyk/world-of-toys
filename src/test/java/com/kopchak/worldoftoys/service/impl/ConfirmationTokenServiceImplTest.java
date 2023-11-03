@@ -78,7 +78,7 @@ class ConfirmationTokenServiceImplTest {
                 activationTokenType);
 
         assertThat(returnedConfirmTokenDto).isNotNull();
-        assertThat(returnedConfirmTokenDto.getToken()).isNotNull();
+        assertThat(returnedConfirmTokenDto.token()).isNotNull();
     }
 
     @Test

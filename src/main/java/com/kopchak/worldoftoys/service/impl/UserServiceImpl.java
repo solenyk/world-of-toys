@@ -26,10 +26,10 @@ public class UserServiceImpl implements UserService {
     @Override
     public void registerUser(UserRegistrationDto userRegistrationDto) {
         AppUser user = AppUser.builder()
-                .firstname(userRegistrationDto.getFirstname())
-                .lastname(userRegistrationDto.getLastname())
-                .email(userRegistrationDto.getEmail())
-                .password(passwordEncoder.encode(userRegistrationDto.getPassword()))
+                .firstname(userRegistrationDto.firstname())
+                .lastname(userRegistrationDto.lastname())
+                .email(userRegistrationDto.email())
+                .password(passwordEncoder.encode(userRegistrationDto.password()))
                 .role(Role.ROLE_USER)
                 .enabled(false)
                 .locked(false)

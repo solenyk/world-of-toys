@@ -46,7 +46,7 @@ public class ConfirmationTokenServiceImpl implements ConfirmationTokenService {
                 .build();
         confirmationTokenRepository.save(confirmationToken);
         log.info("Created confirmation token for user: {}", username);
-        return new ConfirmTokenDto(confirmationToken);
+        return new ConfirmTokenDto(confirmationToken.getToken());
     }
 
     @Override
@@ -82,7 +82,7 @@ public class ConfirmationTokenServiceImpl implements ConfirmationTokenService {
                 new InvalidConfirmationTokenException(HttpStatus.BAD_REQUEST, "This confirmation token is invalid!"));
         confirmationToken.setConfirmedAt(LocalDateTime.now());
         AppUser user = confirmationToken.getUser();
-        userService.changeUserPassword(user, newPassword.getPassword());
+        userService.changeUserPassword(user, newPassword.password());
         confirmationTokenRepository.save(confirmationToken);
         jwtTokenService.revokeAllUserAuthTokens(user.getUsername());
         log.info("Changed password for user: {}", user.getUsername());

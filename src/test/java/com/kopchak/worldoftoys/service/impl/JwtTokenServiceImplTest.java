@@ -136,8 +136,8 @@ class JwtTokenServiceImplTest {
         AccessAndRefreshTokensDto accessAndRefreshTokensDto = jwtTokenService.generateAuthTokens(username);
 
         assertThat(accessAndRefreshTokensDto).isNotNull();
-        assertThat(accessAndRefreshTokensDto.getAccessToken()).isNotNull();
-        assertThat(accessAndRefreshTokensDto.getRefreshToken()).isNotNull();
+        assertThat(accessAndRefreshTokensDto.accessToken()).isNotNull();
+        assertThat(accessAndRefreshTokensDto.refreshToken()).isNotNull();
     }
 
     @Test
@@ -162,7 +162,7 @@ class JwtTokenServiceImplTest {
         AuthTokenDto returnedAuthTokenDto = jwtTokenService.refreshAccessToken(validAuthTokenDto);
 
         assertThat(returnedAuthTokenDto).isNotNull();
-        assertThat(returnedAuthTokenDto.getToken()).isNotNull();
+        assertThat(returnedAuthTokenDto.token()).isNotNull();
     }
 
     @Test

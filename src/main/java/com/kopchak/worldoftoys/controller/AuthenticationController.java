@@ -59,15 +59,15 @@ public class AuthenticationController {
     })
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@Valid @RequestBody UserRegistrationDto userRegistrationDto) {
-        if (userService.isUserRegistered(userRegistrationDto.getEmail())) {
-            log.error("User with username: {} already exist!", userRegistrationDto.getEmail());
+        if (userService.isUserRegistered(userRegistrationDto.email())) {
+            log.error("User with username: {} already exist!", userRegistrationDto.email());
             throw new UsernameAlreadyExistException(HttpStatus.BAD_REQUEST, "This username already exist!");
         }
-        String username = userRegistrationDto.getEmail();
+        String username = userRegistrationDto.email();
         userService.registerUser(userRegistrationDto);
         ConfirmTokenDto confirmationToken = confirmationTokenService.createConfirmationToken(username,
                 ConfirmationTokenType.ACTIVATION);
-        emailSenderService.sendEmail(username, confirmationToken.getToken(), ConfirmationTokenType.ACTIVATION);
+        emailSenderService.sendEmail(username, confirmationToken.token(), ConfirmationTokenType.ACTIVATION);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
@@ -115,7 +115,7 @@ public class AuthenticationController {
     public ResponseEntity<?> resendVerificationEmail(@Schema(
             description = "Username to activate the account",
             implementation = UsernameDto.class) @Valid @RequestBody UsernameDto username) {
-        String email = username.getEmail();
+        String email = username.email();
         if (!userService.isUserRegistered(email)) {
             log.error("User with username: {} does not exist!", email);
             throw new UserNotFoundException(HttpStatus.NOT_FOUND, "User with this username does not exist!");
@@ -127,7 +127,7 @@ public class AuthenticationController {
         if (confirmationTokenService.isNoActiveConfirmationToken(email, ConfirmationTokenType.ACTIVATION)) {
             var confirmationToken = confirmationTokenService.createConfirmationToken(email,
                     ConfirmationTokenType.ACTIVATION);
-            emailSenderService.sendEmail(email, confirmationToken.getToken(), ConfirmationTokenType.ACTIVATION);
+            emailSenderService.sendEmail(email, confirmationToken.token(), ConfirmationTokenType.ACTIVATION);
         }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
@@ -148,7 +148,7 @@ public class AuthenticationController {
     public ResponseEntity<?> sendResetPasswordEmail(@Schema(
             description = "Username to reset the password",
             implementation = UsernameDto.class) @Valid @RequestBody UsernameDto username) {
-        String email = username.getEmail();
+        String email = username.email();
         if (!userService.isUserRegistered(email)) {
             log.error("User with username: {} does not exist!", email);
             throw new UserNotFoundException(HttpStatus.NOT_FOUND, "User with this username does not exist!");
@@ -156,7 +156,7 @@ public class AuthenticationController {
         if (confirmationTokenService.isNoActiveConfirmationToken(email, ConfirmationTokenType.RESET_PASSWORD)) {
             var confirmationToken = confirmationTokenService.createConfirmationToken(email,
                     ConfirmationTokenType.RESET_PASSWORD);
-            emailSenderService.sendEmail(email, confirmationToken.getToken(), ConfirmationTokenType.RESET_PASSWORD);
+            emailSenderService.sendEmail(email, confirmationToken.token(), ConfirmationTokenType.RESET_PASSWORD);
         }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
@@ -174,13 +174,14 @@ public class AuthenticationController {
                     )))
     })
     @PostMapping(path = "/reset-password")
-    public ResponseEntity<?> changePassword(@Parameter(description = "Token to change the user's password",
-            required = true) @RequestParam("token") String token, @Valid @RequestBody ResetPasswordDto newPassword) {
+    public ResponseEntity<?> changePassword(
+            @Parameter(description = "Token to change the user's password", required = true)
+            @Valid @RequestParam("token") String token, @Valid @RequestBody ResetPasswordDto newPassword) {
         if (confirmationTokenService.isConfirmationTokenInvalid(token, ConfirmationTokenType.RESET_PASSWORD)) {
             log.error("Confirmation token is invalid!");
             throw new InvalidConfirmationTokenException(HttpStatus.BAD_REQUEST, "This confirmation token is invalid!");
         }
-        if (userService.isNewPasswordMatchOldPassword(token, newPassword.getPassword())) {
+        if (userService.isNewPasswordMatchOldPassword(token, newPassword.password())) {
             log.error("New password matches old password!");
             throw new InvalidPasswordException(HttpStatus.BAD_REQUEST, "New password matches old password!");
         }
@@ -205,8 +206,8 @@ public class AuthenticationController {
     })
     @PostMapping("/login")
     public ResponseEntity<AccessAndRefreshTokensDto> authenticate(@Valid @RequestBody UserAuthDto userAuthDto) {
-        String username = userAuthDto.getEmail();
-        if (!userService.isUserRegistered(username) || !userService.isPasswordsMatch(username, userAuthDto.getPassword())) {
+        String username = userAuthDto.email();
+        if (!userService.isUserRegistered(username) || !userService.isPasswordsMatch(username, userAuthDto.password())) {
             log.error("Bad user credentials!");
             throw new UserNotFoundException(HttpStatus.UNAUTHORIZED, "Bad user credentials!");
         }
@@ -214,8 +215,8 @@ public class AuthenticationController {
             log.error("Account with username: {} is not activated!", username);
             throw new UserNotFoundException(HttpStatus.FORBIDDEN, "Account is not activated!");
         }
-        String email = userAuthDto.getEmail();
-        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, userAuthDto.getPassword()));
+        String email = userAuthDto.email();
+        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, userAuthDto.password()));
         jwtTokenService.revokeAllUserAuthTokens(email);
         return ResponseEntity.status(HttpStatus.OK).body(jwtTokenService.generateAuthTokens(email));
     }
@@ -233,7 +234,7 @@ public class AuthenticationController {
     })
     @PostMapping("/refresh-token")
     public ResponseEntity<AuthTokenDto> refreshToken(@Valid @RequestBody AuthTokenDto refreshTokenDto) {
-        String refreshToken = refreshTokenDto.getToken();
+        String refreshToken = refreshTokenDto.token();
         if (!jwtTokenService.isAuthTokenValid(refreshToken, AuthTokenType.REFRESH)) {
             log.error("Refresh token is invalid!");
             throw new InvalidRefreshTokenException(HttpStatus.BAD_REQUEST, "This refresh token is invalid!");

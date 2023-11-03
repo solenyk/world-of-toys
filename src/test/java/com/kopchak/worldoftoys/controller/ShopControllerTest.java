@@ -130,8 +130,8 @@ class ShopControllerTest {
     @Test
     public void getProductBySlug_NonExistentProductSlug_ReturnsNotFoundStatusAndErrorResponseDto() throws Exception {
         String nonExistentProductSlug = "non-existent-product-slug";
-        ResponseStatusExceptionDto responseStatusExceptionDto = new ResponseStatusExceptionDto(HttpStatus.NOT_FOUND.value(),
-                HttpStatus.NOT_FOUND.name(), "Product doesn't exist");
+        ResponseStatusExceptionDto responseStatusExceptionDto = new ResponseStatusExceptionDto(
+                HttpStatus.NOT_FOUND.value(), HttpStatus.NOT_FOUND.name(), "Product doesn't exist");
 
         when(productService.getProductDtoBySlug(eq(nonExistentProductSlug))).thenReturn(Optional.empty());
 

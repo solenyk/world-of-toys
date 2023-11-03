@@ -1,22 +1,11 @@
 package com.kopchak.worldoftoys.dto.token;
 
-import com.kopchak.worldoftoys.dto.user.UsernameDto;
-import com.kopchak.worldoftoys.exception.validation.ValidationStepThree;
-import com.kopchak.worldoftoys.exception.validation.ValidationStepTwo;
-import jakarta.validation.GroupSequence;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import lombok.*;
+import lombok.Builder;
 
-@Getter
-@Setter
 @Builder
-@AllArgsConstructor
-@NoArgsConstructor
-public class AccessAndRefreshTokensDto {
-    @NotBlank(message = "Invalid access token: token is empty")
-    private String accessToken;
-
-    @NotBlank(message = "Invalid refresh token: token is empty")
-    private String refreshToken;
+@Schema(description = "Access and refresh tokens")
+public record AccessAndRefreshTokensDto(@NotBlank(message = "Invalid access token: token is empty") String accessToken,
+                                        @NotBlank(message = "Invalid refresh token: token is empty") String refreshToken) {
 }
