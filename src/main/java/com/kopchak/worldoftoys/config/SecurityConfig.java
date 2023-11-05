@@ -1,6 +1,7 @@
 package com.kopchak.worldoftoys.config;
 
 import com.kopchak.worldoftoys.filter.JwtAuthenticationFilter;
+import com.kopchak.worldoftoys.model.user.Role;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,8 +33,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests()
                 .requestMatchers("/api/v*/auth/**", "/api/v*/products/**", "/swagger-ui/**", "/v3/api-docs/**", "/error")
                 .permitAll()
-                .anyRequest()
-                .authenticated()
+                .requestMatchers("/api/v*/cart/**")
+                .hasAuthority(Role.ROLE_USER.name())
                 .and()
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
