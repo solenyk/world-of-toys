@@ -1,6 +1,8 @@
 package com.kopchak.worldoftoys.service.impl;
 
 import com.kopchak.worldoftoys.dto.cart.AddCartItemDto;
+import com.kopchak.worldoftoys.dto.cart.UserCartDetailsDto;
+import com.kopchak.worldoftoys.dto.cart.CartItemDto;
 import com.kopchak.worldoftoys.exception.ProductNotFoundException;
 import com.kopchak.worldoftoys.exception.UserNotFoundException;
 import com.kopchak.worldoftoys.model.cart.CartItem;
@@ -14,6 +16,9 @@ import com.kopchak.worldoftoys.service.CartService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -31,5 +36,12 @@ public class CartServiceImpl implements CartService {
         int cartItemQuantity = addCartItemDto.quantity() == null ? 1 : addCartItemDto.quantity();
         CartItem cartItem = new CartItem(new CartItemId(user, product), cartItemQuantity);
         cartItemRepository.save(cartItem);
+    }
+
+    @Override
+    public UserCartDetailsDto getUserCartDetails(String email) {
+        Set<CartItemDto> content = cartItemRepository.findAllCartItemDtosByUserEmail(email);
+        BigDecimal totalPrice = cartItemRepository.calculateUserCartTotalByEmail(email);
+        return new UserCartDetailsDto(content, totalPrice);
     }
 }

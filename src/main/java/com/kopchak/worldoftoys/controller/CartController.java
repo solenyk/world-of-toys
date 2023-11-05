@@ -1,7 +1,7 @@
 package com.kopchak.worldoftoys.controller;
 
 import com.kopchak.worldoftoys.dto.cart.AddCartItemDto;
-import com.kopchak.worldoftoys.dto.cart.CartDto;
+import com.kopchak.worldoftoys.dto.cart.UserCartDetailsDto;
 import com.kopchak.worldoftoys.service.CartService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -27,5 +27,10 @@ public class CartController {
     public ResponseEntity<?> addProductToCart(@Valid @RequestBody AddCartItemDto addCartItemDto, Principal principal) {
         cartService.addProductToCart(addCartItemDto, principal.getName());
         return new ResponseEntity<>(HttpStatus.CREATED);
+    }
+
+    @GetMapping
+    public ResponseEntity<UserCartDetailsDto> getUserCartDetails(Principal principal) {
+        return new ResponseEntity<>(cartService.getUserCartDetails(principal.getName()), HttpStatus.OK);
     }
 }
