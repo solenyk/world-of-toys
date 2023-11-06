@@ -1,6 +1,6 @@
 package com.kopchak.worldoftoys.service.impl;
 
-import com.kopchak.worldoftoys.dto.cart.AddCartItemDto;
+import com.kopchak.worldoftoys.dto.cart.RequestCartItemDto;
 import com.kopchak.worldoftoys.dto.cart.CartItemDto;
 import com.kopchak.worldoftoys.dto.cart.UserCartDetailsDto;
 import com.kopchak.worldoftoys.repository.cart.CartItemRepository;
@@ -17,9 +17,9 @@ public class CartServiceImpl implements CartService {
     private final CartItemRepository cartItemRepository;
 
     @Override
-    public void addProductToCart(AddCartItemDto addCartItemDto, String email) {
-        int cartItemQuantity = addCartItemDto.quantity() == null ? 1 : addCartItemDto.quantity();
-        cartItemRepository.insertUserCartItem(email, addCartItemDto.slug(), cartItemQuantity);
+    public void addProductToCart(RequestCartItemDto requestCartItemDto, String email) {
+        int cartItemQuantity = requestCartItemDto.quantity() == null ? 1 : requestCartItemDto.quantity();
+        cartItemRepository.insertUserCartItem(email, requestCartItemDto.slug(), cartItemQuantity);
     }
 
     @Override
@@ -30,13 +30,13 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public void updateUserCartItem(AddCartItemDto addCartItemDto, String email) {
-        int cartItemQuantity = addCartItemDto.quantity() == null ? 1 : addCartItemDto.quantity();
-        cartItemRepository.updateUserCartItem(email, addCartItemDto.slug(), cartItemQuantity);
+    public void updateUserCartItem(RequestCartItemDto requestCartItemDto, String email) {
+        int cartItemQuantity = requestCartItemDto.quantity() == null ? 1 : requestCartItemDto.quantity();
+        cartItemRepository.updateUserCartItem(email, requestCartItemDto.slug(), cartItemQuantity);
     }
 
     @Override
-    public void deleteUserCartItem(AddCartItemDto addCartItemDto, String email) {
-        cartItemRepository.deleteUserCartItem(email, addCartItemDto.slug());
+    public void deleteUserCartItem(RequestCartItemDto requestCartItemDto, String email) {
+        cartItemRepository.deleteUserCartItem(email, requestCartItemDto.slug());
     }
 }

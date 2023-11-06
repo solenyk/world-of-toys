@@ -7,8 +7,8 @@ import jakarta.validation.constraints.Size;
 import lombok.Builder;
 
 @Builder
-@Schema(description = "Add product to the card")
-public record AddCartItemDto(
+@Schema(description = "Add, update or delete cart item")
+public record RequestCartItemDto(
         @Schema(description = "Unique product identifier in a URL", example = "teddy-bear",
                 requiredMode = Schema.RequiredMode.REQUIRED)
         @NotBlank(message = "Invalid slug: slug is mandatory")
