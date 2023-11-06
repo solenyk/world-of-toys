@@ -28,4 +28,15 @@ public class CartServiceImpl implements CartService {
         BigDecimal totalPrice = cartItemRepository.calculateUserCartTotalByEmail(email);
         return new UserCartDetailsDto(content, totalPrice);
     }
+
+    @Override
+    public void updateUserCartItem(AddCartItemDto addCartItemDto, String email) {
+        int cartItemQuantity = addCartItemDto.quantity() == null ? 1 : addCartItemDto.quantity();
+        cartItemRepository.updateUserCartItem(email, addCartItemDto.slug(), cartItemQuantity);
+    }
+
+    @Override
+    public void deleteUserCartItem(AddCartItemDto addCartItemDto, String email) {
+        cartItemRepository.deleteUserCartItem(email, addCartItemDto.slug());
+    }
 }

@@ -33,4 +33,16 @@ public class CartController {
     public ResponseEntity<UserCartDetailsDto> getUserCartDetails(Principal principal) {
         return new ResponseEntity<>(cartService.getUserCartDetails(principal.getName()), HttpStatus.OK);
     }
+
+    @PatchMapping
+    public ResponseEntity<?> updateUserCartItem(@Valid @RequestBody AddCartItemDto addCartItemDto, Principal principal) {
+        cartService.updateUserCartItem(addCartItemDto, principal.getName());
+        return new ResponseEntity<>(HttpStatus.CREATED);
+    }
+
+    @DeleteMapping
+    public ResponseEntity<?> deleteUserCartItem(@Valid @RequestBody AddCartItemDto addCartItemDto, Principal principal) {
+        cartService.deleteUserCartItem(addCartItemDto, principal.getName());
+        return new ResponseEntity<>(HttpStatus.CREATED);
+    }
 }
