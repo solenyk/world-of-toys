@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ import java.security.Principal;
 @Slf4j
 @Tag(name = "cart-controller", description = "The cart controller is responsible for managing the user's cart. " +
         "It provides endpoints for adding, editing, and deleting cart items, as well as for retrieving all cart items.")
+@SecurityRequirement(name = "Bearer Authentication")
 public class CartController {
 
     private final CartService cartService;
