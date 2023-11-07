@@ -27,8 +27,8 @@ import java.util.Optional;
 @CrossOrigin
 @RequiredArgsConstructor
 @Slf4j
-@Tag(name = "shop-controller", description = "Controller for filtering products, fetching product categories and " +
-        "single products by slug")
+@Tag(name = "shop-controller", description = "The shop controller is responsible for managing product-related data. " +
+        "It provides endpoints for filtering products, fetching product categories and single products by slug")
 public class ShopController {
     private final ProductService productService;
 

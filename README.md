@@ -55,6 +55,10 @@ The following features are currently available in the application:
 - Fetch filtered products
 - Fetch filtering product categories
 - Fetch product by slug
+- Add the product to the cart
+- Retrieve the contents of the shopping cart for the user
+- Update cart item quantity
+- Delete product from the cart
 
 ## Endpoints
 The following endpoints are currently available in the API:
@@ -69,6 +73,10 @@ The following endpoints are currently available in the API:
 - GET /api/v1/products - Fetch filtered products
 - GET /api/v1/products/categories - Fetch filtering product categories
 - GET /api/v1/products/{productSlug} - Fetch product by slug
+- POST /api/v1/cart/add-product - Add the product to the cart
+- GET /api/v1/cart - Retrieve the contents of the shopping cart for the user
+- PATCH /api/v1/cart - Update cart item quantity
+- DELETE /api/v1/cart - Delete product from the cart
 
 ## API Documentation
 

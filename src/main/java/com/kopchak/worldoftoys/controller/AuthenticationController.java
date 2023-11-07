@@ -35,7 +35,8 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/auth")
 @CrossOrigin
 @RequiredArgsConstructor
-@Tag(name = "authentication-controller", description = "Controller for user registration, account confirmation, " +
+@Tag(name = "authentication-controller", description = "The authentication controller is responsible for handling user " +
+        "authentication and registration. It provides endpoints for user registration, account confirmation, " +
         "reset password and login")
 @Slf4j
 public class AuthenticationController {

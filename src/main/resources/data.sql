@@ -206,3 +206,7 @@ SET image_id =
             WHEN id = 28 THEN 24
             WHEN id = 30 THEN 25
             END;
+
+INSERT INTO app_user (id, firstname, lastname, email, password, role, locked, enabled)
+VALUES (1000, 'John', 'Doe', 'john.doe@example.com', '$2a$10$bITm.1PZYpJXip2RijlP3OfTWiE0NRK0.BhgJAf2ivnZFfSKnSQuW',
+        'ROLE_USER', false, true);
