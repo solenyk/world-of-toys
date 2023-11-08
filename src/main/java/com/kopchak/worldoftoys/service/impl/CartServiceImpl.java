@@ -1,9 +1,10 @@
 package com.kopchak.worldoftoys.service.impl;
 
-import com.kopchak.worldoftoys.dto.cart.RequestCartItemDto;
 import com.kopchak.worldoftoys.dto.cart.CartItemDto;
+import com.kopchak.worldoftoys.dto.cart.RequestCartItemDto;
 import com.kopchak.worldoftoys.dto.cart.UserCartDetailsDto;
 import com.kopchak.worldoftoys.repository.cart.CartItemRepository;
+import com.kopchak.worldoftoys.repository.cart.CrudCartItemRepository;
 import com.kopchak.worldoftoys.service.CartService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -15,11 +16,12 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class CartServiceImpl implements CartService {
     private final CartItemRepository cartItemRepository;
+    private final CrudCartItemRepository crudCartItemRepository;
 
     @Override
     public void addProductToCart(RequestCartItemDto requestCartItemDto, String email) {
         int cartItemQuantity = requestCartItemDto.quantity() == null ? 1 : requestCartItemDto.quantity();
-        cartItemRepository.insertUserCartItem(email, requestCartItemDto.slug(), cartItemQuantity);
+        crudCartItemRepository.insertOrUpdateCartItem(email, requestCartItemDto.slug(), cartItemQuantity);
     }
 
     @Override
