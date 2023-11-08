@@ -32,7 +32,7 @@ class CartItemRepositoryTest {
     private final static String USER_EMAIL = "john.doe@example.com";
 
     @Test
-    public void calculateUserCartTotalByEmail_ExistentProductSlug_ReturnsOptionalOfProduct() {
+    public void calculateUserCartTotalByEmail_UserEmail_ReturnsBigDecimal() {
         BigDecimal expectedTotalPrice = BigDecimal.valueOf(2900);
 
         BigDecimal actualTotalPrice = cartItemRepository.calculateUserCartTotalByEmail(USER_EMAIL);
@@ -42,7 +42,7 @@ class CartItemRepositoryTest {
     }
 
     @Test
-    public void findAllCartItemDtosByUserEmail_ExistentProductSlug_ReturnsOptionalOfProduct() {
+    public void findAllCartItemDtosByUserEmail_UserEmail_ReturnsSetOfCartItemDto() {
         int expectedProductAmount = 2;
         List<CartItemDto> expectedCartItemDtos = new ArrayList<>() {{
             add(new CartItemDto("Лялька Даринка", "lyalka-darynka", BigDecimal.valueOf(900), 1));

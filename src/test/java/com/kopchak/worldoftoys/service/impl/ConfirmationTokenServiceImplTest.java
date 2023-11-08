@@ -71,7 +71,7 @@ class ConfirmationTokenServiceImplTest {
     }
 
     @Test
-    void createConfirmationToken_UsernameOfExistingUserAndTokenType_ReturnsConfirmTokenDto() {
+    public void createConfirmationToken_UsernameOfExistingUserAndTokenType_ReturnsConfirmTokenDto() {
         when(userRepository.findByEmail(username)).thenReturn(Optional.of(user));
 
         ConfirmTokenDto returnedConfirmTokenDto = confirmationTokenService.createConfirmationToken(username,
@@ -82,7 +82,7 @@ class ConfirmationTokenServiceImplTest {
     }
 
     @Test
-    void createConfirmationToken_UsernameOfNonExistingUserAndTokenType_ThrowsUserNotFoundException() {
+    public void createConfirmationToken_UsernameOfNonExistingUserAndTokenType_ThrowsUserNotFoundException() {
         String userNotFoundExceptionMsg = "User with this username does not exist!";
 
         assertResponseStatusException(UserNotFoundException.class, userNotFoundExceptionMsg, HttpStatus.NOT_FOUND, () ->
@@ -90,7 +90,7 @@ class ConfirmationTokenServiceImplTest {
     }
 
     @Test
-    void isConfirmationTokenInvalid_UsernameOfNonExistingUserAndTokenType_ReturnsFalse() {
+    public void isConfirmationTokenInvalid_UsernameOfNonExistingUserAndTokenType_ReturnsFalse() {
         when(confirmationTokenRepository.findByToken(token)).thenReturn(Optional.of(confirmToken));
 
         boolean confirmationTokenInvalid = confirmationTokenService.isConfirmationTokenInvalid(token, activationTokenType);
@@ -99,14 +99,14 @@ class ConfirmationTokenServiceImplTest {
     }
 
     @Test
-    void isConfirmationTokenInvalid_UsernameOfNonExistingUserAndTokenType_ReturnsTrue() {
+    public void isConfirmationTokenInvalid_UsernameOfNonExistingUserAndTokenType_ReturnsTrue() {
         boolean confirmationTokenInvalid = confirmationTokenService.isConfirmationTokenInvalid(token, activationTokenType);
 
         assertTrue(confirmationTokenInvalid);
     }
 
     @Test
-    void activateAccountUsingActivationToken_ExistingToken() {
+    public void activateAccountUsingActivationToken_ExistingToken() {
         when(confirmationTokenRepository.findByToken(token)).thenReturn(Optional.of(confirmToken));
 
         confirmationTokenService.activateAccountUsingActivationToken(token);
@@ -117,13 +117,13 @@ class ConfirmationTokenServiceImplTest {
     }
 
     @Test
-    void activateAccountUsingActivationToken_NonExistingToken_ThrowsInvalidConfirmationTokenException() {
+    public void activateAccountUsingActivationToken_NonExistingToken_ThrowsInvalidConfirmationTokenException() {
         assertResponseStatusException(InvalidConfirmationTokenException.class, invalidConfirmationTokenExceptionMsg,
                 HttpStatus.BAD_REQUEST, () -> confirmationTokenService.activateAccountUsingActivationToken(token));
     }
 
     @Test
-    void isNoActiveConfirmationToken_UsernameAndTokenType_ReturnsTrue() {
+    public void isNoActiveConfirmationToken_UsernameAndTokenType_ReturnsTrue() {
         when(confirmationTokenRepository.isNoActiveConfirmationToken(eq(username), eq(activationTokenType),
                 any(LocalDateTime.class))).thenReturn(true);
 
@@ -133,7 +133,7 @@ class ConfirmationTokenServiceImplTest {
     }
 
     @Test
-    void changePasswordUsingResetToken_ExistingToken() {
+    public void changePasswordUsingResetToken_ExistingToken() {
         when(confirmationTokenRepository.findByToken(token)).thenReturn(Optional.of(confirmToken));
 
         confirmationTokenService.changePasswordUsingResetToken(token, newPassword);
@@ -145,7 +145,7 @@ class ConfirmationTokenServiceImplTest {
     }
 
     @Test
-    void changePasswordUsingResetToken_NonExistingToken_ThrowsInvalidConfirmationTokenException() {
+    public void changePasswordUsingResetToken_NonExistingToken_ThrowsInvalidConfirmationTokenException() {
         assertResponseStatusException(InvalidConfirmationTokenException.class, invalidConfirmationTokenExceptionMsg,
                 HttpStatus.BAD_REQUEST, () -> confirmationTokenService.changePasswordUsingResetToken(token, newPassword));
     }

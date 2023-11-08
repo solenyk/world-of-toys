@@ -1,13 +1,10 @@
 package com.kopchak.worldoftoys.service.impl;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 import com.kopchak.worldoftoys.model.token.AuthenticationToken;
 import com.kopchak.worldoftoys.model.user.AppUser;
 import com.kopchak.worldoftoys.repository.token.AuthTokenRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -18,6 +15,7 @@ import org.springframework.security.core.Authentication;
 
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -38,7 +36,7 @@ class LogoutServiceImplTest {
     private Authentication authentication;
 
     @Test
-    void logout_ValidAuthorizationHeader() {
+    public void logout_ValidAuthorizationHeader() {
         String authHeaderPrefix = "Bearer ";
         String validJwtToken = "valid-jwt-token";
         AppUser user = AppUser
@@ -63,7 +61,7 @@ class LogoutServiceImplTest {
     }
 
     @Test
-    void logout_InvalidAuthorizationHeader() {
+    public void logout_InvalidAuthorizationHeader() {
         logoutService.logout(request, response, authentication);
 
         verify(authTokenRepository, never()).findByToken(any());

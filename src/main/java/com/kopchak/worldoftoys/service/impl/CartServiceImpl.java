@@ -29,9 +29,9 @@ public class CartServiceImpl implements CartService {
     private final UserRepository userRepository;
 
     @Override
-    public void addProductToCart(RequestCartItemDto requestCartItemDto, String email) {
+    public void addProductToCart(RequestCartItemDto requestCartItemDto, String userEmail) {
         int cartItemQuantity = requestCartItemDto.quantity() == null ? 1 : requestCartItemDto.quantity();
-        CartItemId cartItemId = getCartIdByUserEmailAndProductSlug(email, requestCartItemDto.slug());
+        CartItemId cartItemId = getCartIdByUserEmailAndProductSlug(userEmail, requestCartItemDto.slug());
         Optional<CartItem> optionalCartItem = cartItemRepository.findById(cartItemId);
         CartItem cartItem;
         if(optionalCartItem.isPresent()){
@@ -44,30 +44,30 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public UserCartDetailsDto getUserCartDetails(String email) {
-        Set<CartItemDto> content = cartItemRepository.findAllCartItemDtosByUserEmail(email);
-        BigDecimal totalPrice = cartItemRepository.calculateUserCartTotalByEmail(email);
+    public UserCartDetailsDto getUserCartDetails(String userEmail) {
+        Set<CartItemDto> content = cartItemRepository.findAllCartItemDtosByUserEmail(userEmail);
+        BigDecimal totalPrice = cartItemRepository.calculateUserCartTotalByEmail(userEmail);
         return new UserCartDetailsDto(content, totalPrice);
     }
 
     @Override
-    public void updateUserCartItem(RequestCartItemDto requestCartItemDto, String email) {
+    public void updateUserCartItem(RequestCartItemDto requestCartItemDto, String userEmail) {
         int cartItemQuantity = requestCartItemDto.quantity() == null ? 1 : requestCartItemDto.quantity();
-        CartItemId cartItemId = getCartIdByUserEmailAndProductSlug(email, requestCartItemDto.slug());
+        CartItemId cartItemId = getCartIdByUserEmailAndProductSlug(userEmail, requestCartItemDto.slug());
         CartItem cartItem = new CartItem(cartItemId, cartItemQuantity);
         cartItemRepository.save(cartItem);
     }
 
     @Override
-    public void deleteUserCartItem(RequestCartItemDto requestCartItemDto, String email) {
-        CartItemId cartItemId = getCartIdByUserEmailAndProductSlug(email, requestCartItemDto.slug());
+    public void deleteUserCartItem(RequestCartItemDto requestCartItemDto, String userEmail) {
+        CartItemId cartItemId = getCartIdByUserEmailAndProductSlug(userEmail, requestCartItemDto.slug());
         Optional<CartItem> optionalCartItem = cartItemRepository.findById(cartItemId);
         optionalCartItem.ifPresent(cartItemRepository::delete);
     }
 
     private CartItemId getCartIdByUserEmailAndProductSlug(String userEmail, String productSlug){
         AppUser appUser = userRepository.findByEmail(userEmail).orElseThrow(() ->
-                new UserNotFoundException(HttpStatus.NOT_FOUND, "User with this username does not exist!"));
+                new UserNotFoundException(HttpStatus.NOT_FOUND, "User doesn't exist!"));
         Product product = productRepository.findBySlug(productSlug).orElseThrow(() ->
                 new ProductNotFoundException(HttpStatus.NOT_FOUND, "Product doesn't exist"));
         return new CartItemId(appUser, product);
