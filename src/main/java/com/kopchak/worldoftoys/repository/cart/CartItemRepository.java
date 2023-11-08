@@ -26,31 +26,4 @@ public interface CartItemRepository extends JpaRepository<CartItem, CartItemId> 
             "JOIN c.id.product p " +
             "WHERE c.id.user.email = :email")
     BigDecimal calculateUserCartTotalByEmail(@Param("email") String email);
-
-    @Modifying
-    @Transactional
-    @Query(value = "INSERT INTO cart_item (user_id, product_id, quantity) " +
-            "VALUES(" +
-            "(SELECT u.id FROM app_user u WHERE u.email = :userEmail)," +
-            "(SELECT p.id FROM product p WHERE p.slug = :productSlug)," +
-            ":quantity" +
-            ") ON DUPLICATE KEY UPDATE quantity = quantity + :quantity", nativeQuery = true)
-    void insertUserCartItem(@Param("userEmail") String userEmail, @Param("productSlug") String productSlug,
-                            @Param("quantity") Integer quantity);
-
-    @Modifying
-    @Transactional
-    @Query(value = "UPDATE cart_item c " +
-            "SET c.quantity = :quantity " +
-            "WHERE c.product_id IN (SELECT p.id FROM product p WHERE p.slug = :productSlug) " +
-            "AND c.user_id IN (SELECT u.id FROM app_user u WHERE u.email = :userEmail)", nativeQuery = true)
-    void updateUserCartItem(@Param("userEmail") String userEmail, @Param("productSlug") String productSlug,
-                            @Param("quantity") Integer quantity);
-
-    @Modifying
-    @Transactional
-    @Query(value = "DELETE FROM cart_item c " +
-            "WHERE c.product_id IN (SELECT p.id FROM product p WHERE p.slug = :productSlug) " +
-            "AND c.user_id IN (SELECT u.id FROM app_user u WHERE u.email = :userEmail)", nativeQuery = true)
-    void deleteUserCartItem(@Param("userEmail") String userEmail, @Param("productSlug") String productSlug);
 }
