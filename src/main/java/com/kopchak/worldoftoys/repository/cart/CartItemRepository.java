@@ -41,20 +41,16 @@ public interface CartItemRepository extends JpaRepository<CartItem, CartItemId> 
     @Modifying
     @Transactional
     @Query(value = "UPDATE cart_item c " +
-            "JOIN product p ON c.product_id = p.id " +
-            "JOIN app_user u ON c.user_id = u.id " +
             "SET c.quantity = :quantity " +
-            "WHERE p.slug = :productSlug " +
-            "AND u.email = :userEmail", nativeQuery = true)
+            "WHERE c.product_id IN (SELECT p.id FROM product p WHERE p.slug = :productSlug) " +
+            "AND c.user_id IN (SELECT u.id FROM app_user u WHERE u.email = :userEmail)", nativeQuery = true)
     void updateUserCartItem(@Param("userEmail") String userEmail, @Param("productSlug") String productSlug,
                             @Param("quantity") Integer quantity);
 
     @Modifying
     @Transactional
-    @Query(value = "DELETE c FROM cart_item c " +
-            "JOIN product p ON c.product_id = p.id " +
-            "JOIN app_user u ON c.user_id = u.id " +
-            "WHERE p.slug = :productSlug " +
-            "AND u.email = :userEmail", nativeQuery = true)
+    @Query(value = "DELETE FROM cart_item c " +
+            "WHERE c.product_id IN (SELECT p.id FROM product p WHERE p.slug = :productSlug) " +
+            "AND c.user_id IN (SELECT u.id FROM app_user u WHERE u.email = :userEmail)", nativeQuery = true)
     void deleteUserCartItem(@Param("userEmail") String userEmail, @Param("productSlug") String productSlug);
 }

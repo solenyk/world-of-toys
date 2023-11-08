@@ -55,3 +55,8 @@ VALUES (1, 2),
        (2, 2),
        (2, 3),
        (3, 2);
+
+
+INSERT INTO cart_item (user_id, product_id, quantity)
+VALUES(1000, 2, 1),
+      (1000, 4, 4);
