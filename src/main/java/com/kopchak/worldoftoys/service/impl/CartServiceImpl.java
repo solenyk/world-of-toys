@@ -4,14 +4,12 @@ import com.kopchak.worldoftoys.dto.cart.CartItemDto;
 import com.kopchak.worldoftoys.dto.cart.RequestCartItemDto;
 import com.kopchak.worldoftoys.dto.cart.UserCartDetailsDto;
 import com.kopchak.worldoftoys.exception.ProductNotFoundException;
-import com.kopchak.worldoftoys.exception.UserNotFoundException;
 import com.kopchak.worldoftoys.model.cart.CartItem;
 import com.kopchak.worldoftoys.model.cart.CartItemId;
 import com.kopchak.worldoftoys.model.product.Product;
 import com.kopchak.worldoftoys.model.user.AppUser;
 import com.kopchak.worldoftoys.repository.cart.CartItemRepository;
 import com.kopchak.worldoftoys.repository.product.ProductRepository;
-import com.kopchak.worldoftoys.repository.user.UserRepository;
 import com.kopchak.worldoftoys.service.CartService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -26,12 +24,13 @@ import java.util.Set;
 public class CartServiceImpl implements CartService {
     private final CartItemRepository cartItemRepository;
     private final ProductRepository productRepository;
-    private final UserRepository userRepository;
 
     @Override
-    public void addProductToCart(RequestCartItemDto requestCartItemDto, String userEmail) {
+    public void addProductToCart(RequestCartItemDto requestCartItemDto, AppUser user) {
         int cartItemQuantity = requestCartItemDto.quantity() == null ? 1 : requestCartItemDto.quantity();
-        CartItemId cartItemId = getCartIdByUserEmailAndProductSlug(userEmail, requestCartItemDto.slug());
+        Product product = productRepository.findBySlug(requestCartItemDto.slug()).orElseThrow(() ->
+                new ProductNotFoundException(HttpStatus.NOT_FOUND, "Product doesn't exist"));
+        CartItemId cartItemId = new CartItemId(user, product);
         Optional<CartItem> optionalCartItem = cartItemRepository.findById(cartItemId);
         CartItem cartItem;
         if(optionalCartItem.isPresent()){
@@ -44,32 +43,28 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public UserCartDetailsDto getUserCartDetails(String userEmail) {
-        Set<CartItemDto> content = cartItemRepository.findAllCartItemDtosByUserEmail(userEmail);
-        BigDecimal totalPrice = cartItemRepository.calculateUserCartTotalByEmail(userEmail);
+    public UserCartDetailsDto getUserCartDetails(AppUser user) {
+        Set<CartItemDto> content = cartItemRepository.findAllCartItemDtosByUser(user);
+        BigDecimal totalPrice = cartItemRepository.calculateUserCartTotalPrice(user);
         return new UserCartDetailsDto(content, totalPrice);
     }
 
     @Override
-    public void updateUserCartItem(RequestCartItemDto requestCartItemDto, String userEmail) {
+    public void updateUserCartItem(RequestCartItemDto requestCartItemDto, AppUser user) {
         int cartItemQuantity = requestCartItemDto.quantity() == null ? 1 : requestCartItemDto.quantity();
-        CartItemId cartItemId = getCartIdByUserEmailAndProductSlug(userEmail, requestCartItemDto.slug());
+        Product product = productRepository.findBySlug(requestCartItemDto.slug()).orElseThrow(() ->
+                new ProductNotFoundException(HttpStatus.NOT_FOUND, "Product doesn't exist"));
+        CartItemId cartItemId = new CartItemId(user, product);
         CartItem cartItem = new CartItem(cartItemId, cartItemQuantity);
         cartItemRepository.save(cartItem);
     }
 
     @Override
-    public void deleteUserCartItem(RequestCartItemDto requestCartItemDto, String userEmail) {
-        CartItemId cartItemId = getCartIdByUserEmailAndProductSlug(userEmail, requestCartItemDto.slug());
+    public void deleteUserCartItem(RequestCartItemDto requestCartItemDto, AppUser user) {
+        Product product = productRepository.findBySlug(requestCartItemDto.slug()).orElseThrow(() ->
+                new ProductNotFoundException(HttpStatus.NOT_FOUND, "Product doesn't exist"));
+        CartItemId cartItemId = new CartItemId(user, product);
         Optional<CartItem> optionalCartItem = cartItemRepository.findById(cartItemId);
         optionalCartItem.ifPresent(cartItemRepository::delete);
-    }
-
-    private CartItemId getCartIdByUserEmailAndProductSlug(String userEmail, String productSlug){
-        AppUser appUser = userRepository.findByEmail(userEmail).orElseThrow(() ->
-                new UserNotFoundException(HttpStatus.NOT_FOUND, "User doesn't exist!"));
-        Product product = productRepository.findBySlug(productSlug).orElseThrow(() ->
-                new ProductNotFoundException(HttpStatus.NOT_FOUND, "Product doesn't exist"));
-        return new CartItemId(appUser, product);
     }
 }
