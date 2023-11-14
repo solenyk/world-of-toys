@@ -209,4 +209,6 @@ SET image_id =
 
 INSERT INTO app_user (id, firstname, lastname, email, password, role, locked, enabled)
 VALUES (1000, 'John', 'Doe', 'john.doe@example.com', '$2a$10$bITm.1PZYpJXip2RijlP3OfTWiE0NRK0.BhgJAf2ivnZFfSKnSQuW',
-        'ROLE_USER', false, true);
+        'ROLE_USER', false, true),
+       (1001, 'Jane', 'Smith', 'jane.smith@example.com', '$2a$10$bITm.1PZYpJXip2RijlP3OfTWiE0NRK0.BhgJAf2ivnZFfSKnSQuW',
+        'ROLE_ADMIN', false, true);
