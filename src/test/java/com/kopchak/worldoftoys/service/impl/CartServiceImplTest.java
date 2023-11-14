@@ -3,14 +3,12 @@ package com.kopchak.worldoftoys.service.impl;
 import com.kopchak.worldoftoys.dto.cart.RequestCartItemDto;
 import com.kopchak.worldoftoys.dto.cart.UserCartDetailsDto;
 import com.kopchak.worldoftoys.exception.ProductNotFoundException;
-import com.kopchak.worldoftoys.exception.UserNotFoundException;
 import com.kopchak.worldoftoys.model.cart.CartItem;
 import com.kopchak.worldoftoys.model.cart.CartItemId;
 import com.kopchak.worldoftoys.model.product.Product;
 import com.kopchak.worldoftoys.model.user.AppUser;
 import com.kopchak.worldoftoys.repository.cart.CartItemRepository;
 import com.kopchak.worldoftoys.repository.product.ProductRepository;
-import com.kopchak.worldoftoys.repository.user.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,12 +36,8 @@ class CartServiceImplTest {
     private CartItemRepository cartItemRepository;
     @Mock
     private ProductRepository productRepository;
-    @Mock
-    private UserRepository userRepository;
     @InjectMocks
     private CartServiceImpl cartService;
-
-    private final static String USER_EMAIL = "user@example.com";
     private final static String PRODUCT_SLUG = "product-slug";
 
     private RequestCartItemDto requestCartItemDto;
@@ -58,17 +52,17 @@ class CartServiceImplTest {
         user = new AppUser();
         product = new Product();
         cartItemId = new CartItemId(user, product);
-        cartItem = new CartItem(cartItemId,3);
+        cartItem = new CartItem(cartItemId, 3);
     }
 
     @Test
     public void addProductToCart_ExistentCartItem() {
         int expectedCartItemQuantity = requestCartItemDto.quantity() + cartItem.getQuantity();
 
-        mockMethodsCallForUserAndProductRepositories();
+        when(productRepository.findBySlug(PRODUCT_SLUG)).thenReturn(Optional.of(product));
         when(cartItemRepository.findById(cartItemId)).thenReturn(Optional.of(cartItem));
 
-        cartService.addProductToCart(requestCartItemDto, USER_EMAIL);
+        cartService.addProductToCart(requestCartItemDto, user);
 
         assertThat(cartItem.getQuantity()).isEqualTo(expectedCartItemQuantity);
         verify(cartItemRepository).save(cartItem);
@@ -76,10 +70,10 @@ class CartServiceImplTest {
 
     @Test
     public void addProductToCart_NonExistentCartItem() {
-        mockMethodsCallForUserAndProductRepositories();
+        when(productRepository.findBySlug(PRODUCT_SLUG)).thenReturn(Optional.of(product));
         when(cartItemRepository.findById(cartItemId)).thenReturn(Optional.empty());
 
-        cartService.addProductToCart(requestCartItemDto, USER_EMAIL);
+        cartService.addProductToCart(requestCartItemDto, user);
 
         ArgumentCaptor<CartItem> cartItemArgumentCaptor = ArgumentCaptor.forClass(CartItem.class);
         verify(cartItemRepository).save(cartItemArgumentCaptor.capture());
@@ -88,13 +82,18 @@ class CartServiceImplTest {
     }
 
     @Test
+    public void addProductToCart_NonExistentProductSlug() {
+        assertResponseStatusException(() -> cartService.addProductToCart(requestCartItemDto, user));
+    }
+
+    @Test
     public void getUserCartDetails_ExistentUserEmail_ReturnsUserCartDetailsDto() {
         BigDecimal expectedTotalCost = BigDecimal.ZERO;
 
-        when(cartItemRepository.findAllCartItemDtosByUserEmail(USER_EMAIL)).thenReturn(new HashSet<>());
-        when(cartItemRepository.calculateUserCartTotalByEmail(USER_EMAIL)).thenReturn(expectedTotalCost);
+        when(cartItemRepository.findAllUserCartItems(user)).thenReturn(new HashSet<>());
+        when(cartItemRepository.calculateUserCartTotalPrice(user)).thenReturn(expectedTotalCost);
 
-        UserCartDetailsDto userCartDetailsDto = cartService.getUserCartDetails(USER_EMAIL);
+        UserCartDetailsDto userCartDetailsDto = cartService.getUserCartDetails(user);
 
         assertThat(userCartDetailsDto.content()).isNotNull();
         assertThat(userCartDetailsDto.content()).isEmpty();
@@ -103,9 +102,9 @@ class CartServiceImplTest {
 
     @Test
     public void updateUserCartItem_ExistentUserEmailAndProductSlug() {
-        mockMethodsCallForUserAndProductRepositories();
+        when(productRepository.findBySlug(PRODUCT_SLUG)).thenReturn(Optional.of(product));
 
-        cartService.updateUserCartItem(requestCartItemDto, USER_EMAIL);
+        cartService.updateUserCartItem(requestCartItemDto, user);
 
         ArgumentCaptor<CartItem> cartItemArgumentCaptor = ArgumentCaptor.forClass(CartItem.class);
         verify(cartItemRepository).save(cartItemArgumentCaptor.capture());
@@ -114,11 +113,16 @@ class CartServiceImplTest {
     }
 
     @Test
+    public void updateUserCartItem_NonExistentProductSlug() {
+        assertResponseStatusException(() -> cartService.updateUserCartItem(requestCartItemDto, user));
+    }
+
+    @Test
     public void deleteUserCartItem_ExistentUserEmailAndProductSlug() {
-        mockMethodsCallForUserAndProductRepositories();
+        when(productRepository.findBySlug(PRODUCT_SLUG)).thenReturn(Optional.of(product));
         when(cartItemRepository.findById(cartItemId)).thenReturn(Optional.of(cartItem));
 
-        cartService.deleteUserCartItem(requestCartItemDto, USER_EMAIL);
+        cartService.deleteUserCartItem(requestCartItemDto, user);
 
         ArgumentCaptor<CartItem> cartItemArgumentCaptor = ArgumentCaptor.forClass(CartItem.class);
         verify(cartItemRepository).delete(cartItemArgumentCaptor.capture());
@@ -128,32 +132,18 @@ class CartServiceImplTest {
     }
 
     @Test
-    public void deleteUserCartItem_NonExistentUserEmail() {
-        assertResponseStatusException(UserNotFoundException.class, "User doesn't exist!",
-                () -> cartService.deleteUserCartItem(requestCartItemDto, USER_EMAIL));
+    public void deleteUserCartItem_NonExistentProductSlug() {
+        assertResponseStatusException(() -> cartService.deleteUserCartItem(requestCartItemDto, user));
     }
 
-    @Test
-    public void deleteUserCartItem_ExistentUserEmailAndNonExistentProductSlug() {
-        when(userRepository.findByEmail(USER_EMAIL)).thenReturn(Optional.of(user));
-        assertResponseStatusException(ProductNotFoundException.class, "Product doesn't exist",
-                () -> cartService.deleteUserCartItem(requestCartItemDto, USER_EMAIL));
-    }
-
-    private void mockMethodsCallForUserAndProductRepositories(){
-        when(userRepository.findByEmail(USER_EMAIL)).thenReturn(Optional.of(user));
-        when(productRepository.findBySlug(PRODUCT_SLUG)).thenReturn(Optional.of(product));
-    }
-
-    private void assertResponseStatusException(Class<? extends ResponseStatusException> expectedExceptionType,
-                                               String expectedMessage, Executable executable) {
-        ResponseStatusException exception = assertThrows(expectedExceptionType, executable);
+    private void assertResponseStatusException(Executable executable) {
+        ResponseStatusException exception = assertThrows(ProductNotFoundException.class, executable);
 
         String actualMessage = exception.getReason();
         int expectedStatusCode = HttpStatus.NOT_FOUND.value();
         int actualStatusCode = exception.getStatusCode().value();
 
-        assertEquals(expectedMessage, actualMessage);
+        assertEquals("Product doesn't exist", actualMessage);
         assertEquals(expectedStatusCode, actualStatusCode);
     }
 }

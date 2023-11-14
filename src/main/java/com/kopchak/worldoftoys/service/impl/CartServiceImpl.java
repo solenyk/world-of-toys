@@ -44,7 +44,7 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public UserCartDetailsDto getUserCartDetails(AppUser user) {
-        Set<CartItemDto> content = cartItemRepository.findAllCartItemDtosByUser(user);
+        Set<CartItemDto> content = cartItemRepository.findAllUserCartItems(user);
         BigDecimal totalPrice = cartItemRepository.calculateUserCartTotalPrice(user);
         return new UserCartDetailsDto(content, totalPrice);
     }

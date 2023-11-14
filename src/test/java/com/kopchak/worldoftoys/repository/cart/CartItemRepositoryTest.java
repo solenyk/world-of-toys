@@ -1,9 +1,9 @@
 package com.kopchak.worldoftoys.repository.cart;
 
 import com.kopchak.worldoftoys.dto.cart.CartItemDto;
-import com.kopchak.worldoftoys.repository.product.ProductRepository;
-import com.kopchak.worldoftoys.repository.user.UserRepository;
+import com.kopchak.worldoftoys.model.user.AppUser;
 import jakarta.transaction.Transactional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -23,33 +23,32 @@ import static org.assertj.core.api.Assertions.assertThat;
 class CartItemRepositoryTest {
     @Autowired
     CartItemRepository cartItemRepository;
+    private AppUser user;
 
-    @Autowired
-    ProductRepository productRepository;
-
-    @Autowired
-    UserRepository userRepository;
-    private final static String USER_EMAIL = "john.doe@example.com";
+    @BeforeEach
+    public void setUp() {
+        user = AppUser.builder().id(1000).build();
+    }
 
     @Test
-    public void calculateUserCartTotalByEmail_UserEmail_ReturnsBigDecimal() {
+    public void calculateUserCartTotalPrice_UserEmail_ReturnsBigDecimal() {
         BigDecimal expectedTotalPrice = BigDecimal.valueOf(2900);
 
-        BigDecimal actualTotalPrice = cartItemRepository.calculateUserCartTotalByEmail(USER_EMAIL);
+        BigDecimal actualTotalPrice = cartItemRepository.calculateUserCartTotalPrice(user);
 
         assertThat(actualTotalPrice).isNotNull();
         assertThat(actualTotalPrice).isEqualByComparingTo(expectedTotalPrice);
     }
 
     @Test
-    public void findAllCartItemDtosByUserEmail_UserEmail_ReturnsSetOfCartItemDto() {
+    public void findAllUserCartItems_UserEmail_ReturnsSetOfCartItemDto() {
         int expectedProductAmount = 2;
         List<CartItemDto> expectedCartItemDtos = new ArrayList<>() {{
             add(new CartItemDto("Лялька Даринка", "lyalka-darynka", BigDecimal.valueOf(900), 1));
             add(new CartItemDto("Пупсик Оксанка", "pupsik_oksanka", BigDecimal.valueOf(2000), 4));
         }};
 
-        List<CartItemDto> actualCartItemDtos = cartItemRepository.findAllCartItemDtosByUserEmail(USER_EMAIL)
+        List<CartItemDto> actualCartItemDtos = cartItemRepository.findAllUserCartItems(user)
                 .stream().toList();
 
         assertThat(actualCartItemDtos).isNotNull();

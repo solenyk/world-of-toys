@@ -18,7 +18,7 @@ public interface CartItemRepository extends JpaRepository<CartItem, CartItemId> 
             "FROM CartItem c " +
             "JOIN c.id.product p " +
             "WHERE c.id.user = :user")
-    Set<CartItemDto> findAllCartItemDtosByUser(@Param("user") AppUser user);
+    Set<CartItemDto> findAllUserCartItems(@Param("user") AppUser user);
 
     @Query("SELECT SUM(p.price * c.quantity) " +
             "FROM CartItem c " +
