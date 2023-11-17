@@ -33,6 +33,6 @@ public class PhoneNumber {
     @Pattern(regexp = "\\d{7}", message = "Invalid number: number '${validatedValue}' format is invalid")
     private String number;
 
-    @OneToOne(mappedBy = "phoneNumber")
+    @OneToOne(mappedBy = "phoneNumber", fetch = FetchType.LAZY)
     private OrderRecipient orderRecipients;
 }

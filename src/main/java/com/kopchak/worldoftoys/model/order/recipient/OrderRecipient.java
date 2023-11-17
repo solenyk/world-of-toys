@@ -24,16 +24,16 @@ public class OrderRecipient {
     private Integer id;
 
     @Column(length = 60, nullable = false)
-    @NotBlank(message = "Invalid firstname: firstname is blank")
-    @Size(min = 3, max = 60,
-            message = "Invalid firstname: firstname '${validatedValue}' must be from {min} to {max} characters long")
-    private String firstname;
-
-    @Column(length = 60, nullable = false)
     @NotBlank(message = "Invalid lastname: lastname is blank")
     @Size(min = 3, max = 60,
             message = "Invalid lastname: lastname '${validatedValue}' must be from {min} to {max} characters long")
     private String lastname;
+
+    @Column(length = 60, nullable = false)
+    @NotBlank(message = "Invalid firstname: firstname is blank")
+    @Size(min = 3, max = 60,
+            message = "Invalid firstname: firstname '${validatedValue}' must be from {min} to {max} characters long")
+    private String firstname;
 
     @Column(length = 60, nullable = false)
     @NotBlank(message = "Invalid patronymic: patronymic is blank")
@@ -41,11 +41,13 @@ public class OrderRecipient {
             message = "Invalid patronymic: patronymic '${validatedValue}' must be from {min} to {max} characters long")
     private String patronymic;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY,
+            cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.PERSIST})
     @JoinColumn(name = "phone_id", referencedColumnName = "id", nullable = false)
     private PhoneNumber phoneNumber;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY,
+            cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.PERSIST})
     @JoinColumn(name = "address_id", referencedColumnName = "id", nullable = false)
     private Address address;
 

@@ -1,6 +1,7 @@
 package com.kopchak.worldoftoys.dto.order;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -30,7 +31,9 @@ public record OrderRecipientDto(
                 message = "Invalid patronymic: patronymic '${validatedValue}' must be from {min} to {max} characters long"
         ) String patronymic,
 
+        @Valid
         @NotNull(message = "Invalid phone number: phone number is mandatory") PhoneNumberDto phoneNumber,
 
+        @Valid
         @NotNull(message = "Invalid address: address is mandatory") AddressDto address) {
 }

@@ -4,6 +4,7 @@ import com.kopchak.worldoftoys.model.order.recipient.OrderRecipient;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -41,13 +42,13 @@ public class Address {
     private String street;
 
     @Column(nullable = false)
+    @NotNull(message =  "Invalid house: house is mandatory")
     @Min(value = 1, message = "Invalid house number: house number '${validatedValue}' should not be less than {value}")
-    private int house;
+    private Integer house;
 
-    @Column(nullable = false)
     @Min(value = 1,
             message = "Invalid apartment number: apartment number '${validatedValue}' should not be less than {value}")
-    private int apartment;
+    private Integer apartment;
 
     @OneToMany(mappedBy = "address")
     private Set<OrderRecipient> orderRecipients;

@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.GroupSequence;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
 
@@ -37,14 +38,16 @@ public record AddressDto(
         ) String street,
 
         @Schema(example = "2", requiredMode = Schema.RequiredMode.REQUIRED)
+        @NotNull(message =  "Invalid house: house is mandatory")
         @Min(
                 value = 1,
-                message = "Invalid house number: house number '${validatedValue}' should not be less than {value}"
-        ) int house,
+                message = "Invalid house number: house number '${validatedValue}' should not be less than {value}",
+                groups = ValidationStepTwo.class
+        ) Integer house,
 
-        @Schema(example = "8", requiredMode = Schema.RequiredMode.REQUIRED)
+        @Schema(example = "8", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
         @Min(
                 value = 1,
                 message = "Invalid apartment number: apartment number '${validatedValue}' should not be less than {value}"
-        ) int apartment) {
+        ) Integer apartment) {
 }

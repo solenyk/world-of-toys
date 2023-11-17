@@ -36,7 +36,7 @@ public class Payment {
     @Temporal(TemporalType.TIMESTAMP)
     private LocalDateTime dateTime;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", referencedColumnName = "id", nullable = false)
     private OrderDetails order;
 }
