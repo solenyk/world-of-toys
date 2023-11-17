@@ -3,7 +3,7 @@ package com.kopchak.worldoftoys.service.impl;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringProductCategoriesDto;
-import com.kopchak.worldoftoys.mapper.ProductMapper;
+import com.kopchak.worldoftoys.mapper.product.ProductMapper;
 import com.kopchak.worldoftoys.model.product.Product;
 import com.kopchak.worldoftoys.repository.product.ProductCategoryRepository;
 import com.kopchak.worldoftoys.repository.product.ProductRepository;

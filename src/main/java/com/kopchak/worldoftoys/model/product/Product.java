@@ -1,6 +1,7 @@
 package com.kopchak.worldoftoys.model.product;
 
 import com.kopchak.worldoftoys.model.image.Image;
+import com.kopchak.worldoftoys.model.order.OrderDetails;
 import com.kopchak.worldoftoys.model.product.category.AgeCategory;
 import com.kopchak.worldoftoys.model.product.category.BrandCategory;
 import com.kopchak.worldoftoys.model.product.category.OriginCategory;
@@ -73,4 +74,8 @@ public class Product {
             joinColumns = @JoinColumn(name = "product_id"),
             inverseJoinColumns = @JoinColumn(name = "age_category_id"))
     private Set<AgeCategory> ageCategories;
+
+    @ManyToMany(mappedBy = "products",
+            cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.PERSIST})
+    private Set<OrderDetails> orders;
 }
