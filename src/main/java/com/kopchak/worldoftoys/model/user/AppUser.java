@@ -28,16 +28,19 @@ public class AppUser implements UserDetails {
 
     @Column(length = 60, nullable = false)
     @NotBlank(message = "Invalid firstname: firstname is blank")
-    @Size(min = 3, max = 60, message = "Invalid firstname: firstname must be up to 60 characters long")
+    @Size(min = 3, max = 60,
+            message = "Invalid firstname: firstname '${validatedValue}' must be from {min} to {max} characters long")
     private String firstname;
 
     @Column(length = 60, nullable = false)
     @NotBlank(message = "Invalid lastname: lastname is blank")
-    @Size(min = 3, max = 60, message = "Invalid lastname: lastname must be up to 60 characters long")
+    @Size(min = 3, max = 60,
+            message = "Invalid lastname: lastname '${validatedValue}' must be from {min} to {max} characters long")
     private String lastname;
 
     @NotBlank(message = "Invalid email: email is blank")
-    @Size(min = 6, max = 320, message = "Invalid email: email must be up to 320 characters long")
+    @Size(min = 6, max = 320,
+            message = "Invalid email: email '${validatedValue}' must be from {min} to {max} characters long")
     @Email(regexp = "^(?=.{1,64}@)[A-Za-z0-9_-]+(\\.[A-Za-z0-9_-]+)*@[^-][A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$",
             message = "Invalid email: email format is incorrect")
     @Column(length = 320, nullable = false)
@@ -45,7 +48,7 @@ public class AppUser implements UserDetails {
 
     @Column(length = 60, nullable = false)
     @NotBlank(message = "Invalid password: password is empty")
-    @Size(min = 60, max = 60, message = "Invalid password: encoded password must be 60 characters long")
+    @Size(min = 60, max = 60, message = "Invalid password: encoded password must be {min} characters long")
     private String password;
 
     @Column(nullable = false)
