@@ -41,7 +41,6 @@ public class OrderDetails {
     @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
     private AppUser user;
 
-    @Column(nullable = false)
     @OneToMany(mappedBy = "order")
     private Set<Payment> payment;
 
