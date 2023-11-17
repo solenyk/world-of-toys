@@ -1,5 +1,6 @@
-package com.kopchak.worldoftoys.model.order;
+package com.kopchak.worldoftoys.model.order.payment;
 
+import com.kopchak.worldoftoys.model.order.OrderDetails;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
@@ -26,10 +27,12 @@ public class Payment {
             message = "Invalid price: price '${formatter.format('%1$.2f', validatedValue)}' must not be greater than {value}")
     private BigDecimal price;
 
+    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private PaymentStatus status;
 
     @Column(nullable = false)
+    @NotNull(message = "Invalid data and time: data and time is mandatory")
     @Temporal(TemporalType.TIMESTAMP)
     private LocalDateTime dateTime;
 

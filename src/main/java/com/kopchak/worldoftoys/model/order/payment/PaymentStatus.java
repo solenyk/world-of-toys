@@ -1,4 +1,4 @@
-package com.kopchak.worldoftoys.model.order;
+package com.kopchak.worldoftoys.model.order.payment;
 
 public enum PaymentStatus {
     PENDING,

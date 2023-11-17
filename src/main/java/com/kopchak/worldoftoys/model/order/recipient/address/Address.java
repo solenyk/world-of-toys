@@ -1,7 +1,6 @@
-package com.kopchak.worldoftoys.model.order;
+package com.kopchak.worldoftoys.model.order.recipient.address;
 
-import com.kopchak.worldoftoys.model.product.category.AgeCategory;
-import com.kopchak.worldoftoys.model.user.AppUser;
+import com.kopchak.worldoftoys.model.order.recipient.OrderRecipient;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;

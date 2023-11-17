@@ -1,5 +1,8 @@
-package com.kopchak.worldoftoys.model.order;
+package com.kopchak.worldoftoys.model.order.recipient;
 
+import com.kopchak.worldoftoys.model.order.OrderDetails;
+import com.kopchak.worldoftoys.model.order.recipient.address.Address;
+import com.kopchak.worldoftoys.model.order.recipient.number.PhoneNumber;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

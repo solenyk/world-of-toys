@@ -1,4 +1,4 @@
-package com.kopchak.worldoftoys.model.order;
+package com.kopchak.worldoftoys.model.order.recipient.number;
 
 public enum CountryCode {
     UA("+380");
