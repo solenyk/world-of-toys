@@ -3,7 +3,6 @@ package com.kopchak.worldoftoys.repository.cart;
 import com.kopchak.worldoftoys.dto.cart.CartItemDto;
 import com.kopchak.worldoftoys.model.cart.CartItem;
 import com.kopchak.worldoftoys.model.cart.CartItemId;
-import com.kopchak.worldoftoys.model.product.Product;
 import com.kopchak.worldoftoys.model.user.AppUser;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -29,13 +28,7 @@ public interface CartItemRepository extends JpaRepository<CartItem, CartItemId> 
             "WHERE c.id.user = :user")
     BigDecimal calculateUserCartTotalPrice(@Param("user") AppUser user);
 
-    @Query("SELECT p " +
-            "FROM CartItem c " +
-            "JOIN c.id.product p " +
-            "WHERE c.id.user = :user")
-    Set<Product> findAllProductsByUser(@Param("user") AppUser user);
-
     @Modifying
     @Transactional
-    void deleteAllById_User(AppUser user);
+    Set<CartItem> deleteAllById_User(AppUser user);
 }
