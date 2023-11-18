@@ -1,8 +1,8 @@
 package com.kopchak.worldoftoys.model.order;
 
+import com.kopchak.worldoftoys.model.order.details.OrderDetails;
 import com.kopchak.worldoftoys.model.order.payment.Payment;
 import com.kopchak.worldoftoys.model.order.recipient.OrderRecipient;
-import com.kopchak.worldoftoys.model.product.Product;
 import com.kopchak.worldoftoys.model.user.AppUser;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -17,7 +17,8 @@ import java.util.Set;
 @Builder
 @Getter
 @Setter
-public class OrderDetails {
+@Table(name = "app_order")
+public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
@@ -42,10 +43,6 @@ public class OrderDetails {
     @OneToMany(mappedBy = "order")
     private Set<Payment> payment;
 
-    @ManyToMany
-    @JoinTable(
-            name = "order_product",
-            joinColumns = @JoinColumn(name = "order_id"),
-            inverseJoinColumns = @JoinColumn(name = "product_id"))
-    private Set<Product> products;
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
+    private Set<OrderDetails> orderDetails;
 }

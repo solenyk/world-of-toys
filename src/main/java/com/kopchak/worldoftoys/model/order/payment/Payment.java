@@ -1,6 +1,6 @@
 package com.kopchak.worldoftoys.model.order.payment;
 
-import com.kopchak.worldoftoys.model.order.OrderDetails;
+import com.kopchak.worldoftoys.model.order.Order;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
@@ -38,5 +38,5 @@ public class Payment {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", referencedColumnName = "id", nullable = false)
-    private OrderDetails order;
+    private Order order;
 }

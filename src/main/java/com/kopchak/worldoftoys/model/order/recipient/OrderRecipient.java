@@ -1,6 +1,6 @@
 package com.kopchak.worldoftoys.model.order.recipient;
 
-import com.kopchak.worldoftoys.model.order.OrderDetails;
+import com.kopchak.worldoftoys.model.order.Order;
 import com.kopchak.worldoftoys.model.order.recipient.address.Address;
 import com.kopchak.worldoftoys.model.order.recipient.number.PhoneNumber;
 import jakarta.persistence.*;
@@ -52,5 +52,5 @@ public class OrderRecipient {
     private Address address;
 
     @OneToMany(mappedBy = "orderRecipient")
-    private Set<OrderDetails> orders;
+    private Set<Order> orders;
 }
