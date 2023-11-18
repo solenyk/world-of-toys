@@ -1,6 +1,6 @@
 package com.kopchak.worldoftoys.controller;
 
-import com.kopchak.worldoftoys.dto.cart.RequestCartItemDto;
+import com.kopchak.worldoftoys.dto.order.OrderDto;
 import com.kopchak.worldoftoys.dto.order.OrderRecipientDto;
 import com.kopchak.worldoftoys.model.user.AppUser;
 import com.kopchak.worldoftoys.service.OrderPaymentService;
@@ -14,22 +14,28 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Set;
+
 @RestController
 @RequestMapping("/api/v1/order")
 @CrossOrigin
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "order-payment-controller", description = "")
-//@SecurityRequirement(name = "Bearer Authentication")
+@SecurityRequirement(name = "Bearer Authentication")
 public class OrderPaymentController {
 
     private final OrderPaymentService orderPaymentService;
 
     @PostMapping
     public ResponseEntity<?> createOrder(@Valid @RequestBody OrderRecipientDto orderRecipientDto,
-                                              @AuthenticationPrincipal AppUser user) {
-        System.out.println(orderRecipientDto.firstname());
+                                         @AuthenticationPrincipal AppUser user) {
         orderPaymentService.createOrder(orderRecipientDto, user);
         return new ResponseEntity<>(HttpStatus.CREATED);
+    }
+
+    @GetMapping
+    public ResponseEntity<Set<OrderDto>> getAllUserOrders(@AuthenticationPrincipal AppUser user) {
+        return new ResponseEntity<>(orderPaymentService.getAllUserOrders(user), HttpStatus.OK);
     }
 }
