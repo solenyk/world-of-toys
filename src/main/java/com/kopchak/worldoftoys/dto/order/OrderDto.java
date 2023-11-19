@@ -9,6 +9,6 @@ import java.time.LocalDateTime;
 import java.util.Set;
 
 @Builder
-public record OrderDto(@JsonFormat(pattern="yyyy-MM-dd HH:mm:ss") LocalDateTime dateTime, OrderStatus orderStatus,
-                       Set<OrderProductDto> products, BigDecimal totalPrice) {
+public record OrderDto(String id, @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime dateTime,
+                       OrderStatus orderStatus, Set<OrderProductDto> products, BigDecimal totalPrice) {
 }

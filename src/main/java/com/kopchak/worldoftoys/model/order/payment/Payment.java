@@ -4,10 +4,7 @@ import com.kopchak.worldoftoys.model.order.Order;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -17,9 +14,12 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Getter
 @Setter
+@Builder
 public class Payment {
     @Id
+//    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private String id;
+//    private Integer id;
 
     @Column(nullable = false, scale = 2)
     @NotNull(message = "Invalid price: price is mandatory")

@@ -9,6 +9,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 @Entity
@@ -20,8 +21,8 @@ import java.util.Set;
 @Table(name = "app_order")
 public class Order {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
 
     @Column(nullable = false)
     @Temporal(TemporalType.TIMESTAMP)
@@ -40,8 +41,8 @@ public class Order {
     @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
     private AppUser user;
 
-    @OneToMany(mappedBy = "order")
-    private Set<Payment> payment;
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
+    private Set<Payment> payments = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     private Set<OrderDetails> orderDetails;
