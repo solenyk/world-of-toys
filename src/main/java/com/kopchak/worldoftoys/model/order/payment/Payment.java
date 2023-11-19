@@ -17,9 +17,7 @@ import java.time.LocalDateTime;
 @Builder
 public class Payment {
     @Id
-//    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private String id;
-//    private Integer id;
 
     @Column(nullable = false, scale = 2)
     @NotNull(message = "Invalid price: price is mandatory")
