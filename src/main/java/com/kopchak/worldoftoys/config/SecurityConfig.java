@@ -35,7 +35,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests()
                 .requestMatchers("/api/v*/auth/**", "/api/v*/products/**", "/swagger-ui/**", "/v3/api-docs/**", "/error")
                 .permitAll()
-                .requestMatchers("/api/v*/cart/**", "/api/v1/order")
+                .requestMatchers("/api/v*/cart/**", "/api/v1/order/**", "/api/v1/payment/{orderId}")
                 .hasAuthority(Role.ROLE_USER.name())
                 .and()
                 .sessionManagement()
