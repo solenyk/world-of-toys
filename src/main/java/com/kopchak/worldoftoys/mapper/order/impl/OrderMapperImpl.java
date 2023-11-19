@@ -27,6 +27,7 @@ public class OrderMapperImpl implements OrderMapper {
             Set<OrderProductDto> orderProductDtos = toOrderProductDtoSet(order.getOrderDetails());
             return OrderDto
                     .builder()
+                    .id(order.getId())
                     .orderStatus(order.getOrderStatus())
                     .dateTime(order.getDateTime())
                     .products(orderProductDtos)
