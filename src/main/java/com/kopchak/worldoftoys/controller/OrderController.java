@@ -3,7 +3,7 @@ package com.kopchak.worldoftoys.controller;
 import com.kopchak.worldoftoys.dto.order.OrderDto;
 import com.kopchak.worldoftoys.dto.order.OrderRecipientDto;
 import com.kopchak.worldoftoys.model.user.AppUser;
-import com.kopchak.worldoftoys.service.OrderPaymentService;
+import com.kopchak.worldoftoys.service.OrderService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -21,21 +21,21 @@ import java.util.Set;
 @CrossOrigin
 @RequiredArgsConstructor
 @Slf4j
-@Tag(name = "order-payment-controller", description = "")
+@Tag(name = "order-controller", description = "")
 @SecurityRequirement(name = "Bearer Authentication")
-public class OrderPaymentController {
+public class OrderController {
 
-    private final OrderPaymentService orderPaymentService;
+    private final OrderService orderService;
 
     @PostMapping
-    public ResponseEntity<?> createOrder(@Valid @RequestBody OrderRecipientDto orderRecipientDto,
-                                         @AuthenticationPrincipal AppUser user) {
-        orderPaymentService.createOrder(orderRecipientDto, user);
+    public ResponseEntity<Void> createOrder(@Valid @RequestBody OrderRecipientDto orderRecipientDto,
+                                            @AuthenticationPrincipal AppUser user) {
+        orderService.createOrder(orderRecipientDto, user);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
     @GetMapping
     public ResponseEntity<Set<OrderDto>> getAllUserOrders(@AuthenticationPrincipal AppUser user) {
-        return new ResponseEntity<>(orderPaymentService.getAllUserOrders(user), HttpStatus.OK);
+        return new ResponseEntity<>(orderService.getAllUserOrders(user), HttpStatus.OK);
     }
 }

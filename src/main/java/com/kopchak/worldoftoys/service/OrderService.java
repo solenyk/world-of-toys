@@ -6,7 +6,7 @@ import com.kopchak.worldoftoys.model.user.AppUser;
 
 import java.util.Set;
 
-public interface OrderPaymentService {
+public interface OrderService {
     void createOrder(OrderRecipientDto orderRecipientDto, AppUser user);
     Set<OrderDto> getAllUserOrders(AppUser user);
 }
