@@ -1,7 +1,8 @@
 package com.kopchak.worldoftoys.service.impl;
 
 import com.kopchak.worldoftoys.dto.payment.StripeCredentialsDto;
-import com.kopchak.worldoftoys.exception.StripeCheckoutException;
+import com.kopchak.worldoftoys.exception.InvalidOrderException;
+import com.kopchak.worldoftoys.exception.AppStripeException;
 import com.kopchak.worldoftoys.model.order.Order;
 import com.kopchak.worldoftoys.model.order.OrderStatus;
 import com.kopchak.worldoftoys.model.order.details.OrderDetails;
@@ -11,7 +12,7 @@ import com.kopchak.worldoftoys.model.order.payment.PaymentStatus;
 import com.kopchak.worldoftoys.repository.order.OrderRepository;
 import com.kopchak.worldoftoys.service.PaymentService;
 import com.stripe.Stripe;
-import com.stripe.exception.SignatureVerificationException;
+import com.stripe.exception.EventDataObjectDeserializationException;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Customer;
 import com.stripe.model.CustomerSearchResult;
@@ -22,15 +23,13 @@ import com.stripe.param.CustomerCreateParams;
 import com.stripe.param.CustomerSearchParams;
 import com.stripe.param.checkout.SessionCreateParams;
 import com.stripe.param.checkout.SessionRetrieveParams;
-import jakarta.servlet.http.HttpServletRequest;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -52,10 +51,20 @@ public class PaymentServiceImpl implements PaymentService {
 
     private final OrderRepository orderRepository;
 
+    @PostConstruct
+    public void init() {
+        Stripe.apiKey = STRIPE_API_KEY;
+    }
+    private static final String CHECKOUT_SESSION_COMPLETED = "checkout.session.completed";
+    private static final String SUCCESSFUL_DELAYED_PAYMENT = "checkout.session.async_payment_succeeded";
+    private static final String FAILED_DELAYED_PAYMENT = "checkout.session.async_payment_failed";
+    private static final String PAID_SESSION_PAYMENT_STATUS = "paid";
+    private static final String SESSION_ORDER_ID_METADATA_KEY = "order_id";
+
     @Override
     public String stripeCheckout(StripeCredentialsDto credentialsDto, String orderId) {
-        Order order = orderRepository.findById(orderId).orElseThrow();
-        Stripe.apiKey = STRIPE_API_KEY;
+        Order order = orderRepository.findById(orderId).orElseThrow(() ->
+                new InvalidOrderException(HttpStatus.BAD_REQUEST, "The order does not exist or has already been paid!"));
         Customer customer = findOrCreateStripeCustomer(credentialsDto.customerEmail(), credentialsDto.customerName());
         Set<OrderDetails> orderDetails = order.getOrderDetails();
         SessionCreateParams sessionCreateParams = createPaymentSessionParams(customer, orderId, orderDetails);
@@ -63,7 +72,8 @@ public class PaymentServiceImpl implements PaymentService {
         try {
             session = Session.create(sessionCreateParams);
         } catch (StripeException e) {
-            throw new StripeCheckoutException(HttpStatus.valueOf(e.getStatusCode()), e.getMessage());
+            log.error(e.getMessage());
+            throw new AppStripeException(HttpStatus.valueOf(e.getStatusCode()), e.getMessage());
         }
         return session.getUrl();
     }
@@ -73,34 +83,30 @@ public class PaymentServiceImpl implements PaymentService {
         return order.isEmpty() || !order.get().getOrderStatus().equals(OrderStatus.AWAITING_PAYMENT);
     }
 
-    public void handlePaymentWebhook(HttpServletRequest request) throws StripeException, IOException {
-        Stripe.apiKey = STRIPE_API_KEY;
-        String sigHeader = request.getHeader("Stripe-Signature");
-        String requestBody = IOUtils.toString(request.getReader());
-
-        Event event;
+    public void handlePaymentWebhook(String sigHeader, String requestBody) {
         try {
-            event = Webhook.constructEvent(requestBody, sigHeader, WEBHOOK_SECRET_KEY);
-        } catch (SignatureVerificationException e) {
-            throw new RuntimeException(e.getMessage());
+            Event event = Webhook.constructEvent(requestBody, sigHeader, WEBHOOK_SECRET_KEY);
+
+            String eventType = event.getType();
+            if (eventType.equals(CHECKOUT_SESSION_COMPLETED) || eventType.equals(SUCCESSFUL_DELAYED_PAYMENT) ||
+                    eventType.equals(FAILED_DELAYED_PAYMENT)) {
+
+                Session sessionEvent = (Session) event.getDataObjectDeserializer().getObject().orElseThrow(() ->
+                        new EventDataObjectDeserializationException("Event data object deserialization is impossible",
+                                event.toJson()));
+                SessionRetrieveParams params = SessionRetrieveParams.builder()
+                        .addExpand("line_items")
+                        .build();
+                Session session = Session.retrieve(sessionEvent.getId(), params, null);
+                Map<String, String> sessionMetadata = session.getMetadata();
+                String orderId = sessionMetadata.get(SESSION_ORDER_ID_METADATA_KEY);
+
+                buildPayment(orderId, eventType, session.getId(), sessionEvent.getPaymentStatus(), session.getAmountTotal());
+            }
+        } catch (StripeException e) {
+            log.error(e.getMessage());
+            throw new AppStripeException(HttpStatus.valueOf(e.getStatusCode()), e.getMessage());
         }
-
-        String eventType = event.getType();
-        if (eventType.equals("checkout.session.completed") ||
-                eventType.equals("checkout.session.async_payment_succeeded") ||
-                eventType.equals("checkout.session.async_payment_failed")) {
-
-            Session sessionEvent = (Session) event.getDataObjectDeserializer().getObject().orElseThrow();
-            SessionRetrieveParams params = SessionRetrieveParams.builder()
-                    .addExpand("line_items")
-                    .build();
-            Session session = Session.retrieve(sessionEvent.getId(), params, null);
-            Map<String, String> sessionMetadata = session.getMetadata();
-            String orderId = sessionMetadata.get("order_id");
-
-            buildPayment(orderId, eventType, session.getId(), sessionEvent.getPaymentStatus(), session.getAmountTotal());
-        }
-
     }
 
     private Customer findOrCreateStripeCustomer(String email, String name) {
@@ -117,7 +123,8 @@ public class PaymentServiceImpl implements PaymentService {
                 return customerSearchResult.getData().get(0);
             }
         } catch (StripeException e) {
-            throw new StripeCheckoutException(HttpStatus.valueOf(e.getStatusCode()), e.getMessage());
+            log.error(e.getMessage());
+            throw new AppStripeException(HttpStatus.valueOf(e.getStatusCode()), e.getMessage());
         }
     }
 
@@ -127,7 +134,7 @@ public class PaymentServiceImpl implements PaymentService {
                         .setMode(SessionCreateParams.Mode.PAYMENT)
                         .setCustomer(customer.getId())
                         .setCurrency(Currency.UAH.name())
-                        .putMetadata("order_id", orderId)
+                        .putMetadata(SESSION_ORDER_ID_METADATA_KEY, orderId)
                         .setSuccessUrl(STRIPE_SUCCESS_URL);
 
         orderDetails.forEach(orderDetail ->
@@ -157,11 +164,11 @@ public class PaymentServiceImpl implements PaymentService {
         PaymentStatus paymentStatus;
         OrderStatus orderStatus;
 
-        if (eventType.equals("checkout.session.async_payment_failed")) {
+        if (eventType.equals(FAILED_DELAYED_PAYMENT)) {
             paymentStatus = PaymentStatus.FAILED;
             orderStatus = OrderStatus.CANCELED;
         } else {
-            if (sessionPaymentStatus.equals("paid")) {
+            if (sessionPaymentStatus.equals(PAID_SESSION_PAYMENT_STATUS)) {
                 paymentStatus = PaymentStatus.COMPLETE;
                 orderStatus = OrderStatus.AWAITING_FULFILMENT;
             } else {

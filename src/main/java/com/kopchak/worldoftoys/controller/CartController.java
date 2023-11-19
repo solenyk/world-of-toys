@@ -37,7 +37,7 @@ public class CartController {
             content = @Content(schema = @Schema(hidden = true))
     )
     @PostMapping(value = "/add-product")
-    public ResponseEntity<?> addProductToCart(@Valid @RequestBody RequestCartItemDto requestCartItemDto,
+    public ResponseEntity<Void> addProductToCart(@Valid @RequestBody RequestCartItemDto requestCartItemDto,
                                               @AuthenticationPrincipal AppUser user) {
         cartService.addProductToCart(requestCartItemDto, user);
         return new ResponseEntity<>(HttpStatus.CREATED);
@@ -61,7 +61,7 @@ public class CartController {
             content = @Content(schema = @Schema(hidden = true))
     )
     @PatchMapping
-    public ResponseEntity<?> updateUserCartItem(@Valid @RequestBody RequestCartItemDto requestCartItemDto,
+    public ResponseEntity<Void> updateUserCartItem(@Valid @RequestBody RequestCartItemDto requestCartItemDto,
                                                 @AuthenticationPrincipal AppUser user) {
         cartService.updateUserCartItem(requestCartItemDto, user);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -74,7 +74,7 @@ public class CartController {
             content = @Content(schema = @Schema(hidden = true))
     )
     @DeleteMapping
-    public ResponseEntity<?> deleteUserCartItem(@Valid @RequestBody RequestCartItemDto requestCartItemDto,
+    public ResponseEntity<Void> deleteUserCartItem(@Valid @RequestBody RequestCartItemDto requestCartItemDto,
                                                 @AuthenticationPrincipal AppUser user) {
         cartService.deleteUserCartItem(requestCartItemDto, user);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);

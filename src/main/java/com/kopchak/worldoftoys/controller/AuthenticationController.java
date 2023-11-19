@@ -59,7 +59,7 @@ public class AuthenticationController {
                             schema = @Schema(implementation = ResponseStatusExceptionDto.class)))
     })
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@Valid @RequestBody UserRegistrationDto userRegistrationDto) {
+    public ResponseEntity<Void> registerUser(@Valid @RequestBody UserRegistrationDto userRegistrationDto) {
         if (userService.isUserRegistered(userRegistrationDto.email())) {
             log.error("User with username: {} already exist!", userRegistrationDto.email());
             throw new UsernameAlreadyExistException(HttpStatus.BAD_REQUEST, "This username already exist!");
@@ -85,7 +85,7 @@ public class AuthenticationController {
                             schema = @Schema(implementation = ResponseStatusExceptionDto.class)))
     })
     @GetMapping(path = "/confirm")
-    public ResponseEntity<?> activateAccount(@Parameter(description = "User account activation token",
+    public ResponseEntity<Void> activateAccount(@Parameter(description = "User account activation token",
             required = true) @RequestParam("token") String token) {
         if (confirmationTokenService.isConfirmationTokenInvalid(token, ConfirmationTokenType.ACTIVATION)) {
             log.error("Confirmation token is invalid!");
@@ -113,7 +113,7 @@ public class AuthenticationController {
                             schema = @Schema(implementation = ResponseStatusExceptionDto.class)))
     })
     @PostMapping("/resend-verification-email")
-    public ResponseEntity<?> resendVerificationEmail(@Schema(
+    public ResponseEntity<Void> resendVerificationEmail(@Schema(
             description = "Username to activate the account",
             implementation = UsernameDto.class) @Valid @RequestBody UsernameDto username) {
         String email = username.email();
@@ -146,7 +146,7 @@ public class AuthenticationController {
                             schema = @Schema(implementation = ResponseStatusExceptionDto.class)))
     })
     @PostMapping("/forgot-password")
-    public ResponseEntity<?> sendResetPasswordEmail(@Schema(
+    public ResponseEntity<Void> sendResetPasswordEmail(@Schema(
             description = "Username to reset the password",
             implementation = UsernameDto.class) @Valid @RequestBody UsernameDto username) {
         String email = username.email();
@@ -175,7 +175,7 @@ public class AuthenticationController {
                     )))
     })
     @PostMapping(path = "/reset-password")
-    public ResponseEntity<?> changePassword(
+    public ResponseEntity<Void> changePassword(
             @Parameter(description = "Token to change the user's password", required = true)
             @Valid @RequestParam("token") String token, @Valid @RequestBody ResetPasswordDto newPassword) {
         if (confirmationTokenService.isConfirmationTokenInvalid(token, ConfirmationTokenType.RESET_PASSWORD)) {
