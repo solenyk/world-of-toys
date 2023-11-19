@@ -1,9 +1,15 @@
 package com.kopchak.worldoftoys.controller;
 
+import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
 import com.kopchak.worldoftoys.dto.payment.StripeCredentialsDto;
-import com.kopchak.worldoftoys.exception.AppStripeException;
 import com.kopchak.worldoftoys.exception.InvalidOrderException;
+import com.kopchak.worldoftoys.exception.AppStripeException;
 import com.kopchak.worldoftoys.service.PaymentService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,30 +29,57 @@ import java.net.URI;
 @CrossOrigin
 @RequiredArgsConstructor
 @Slf4j
-@Tag(name = "payment-controller", description = "")
-@SecurityRequirement(name = "Bearer Authentication")
+@Tag(name = "payment-controller", description = "The payment controller is responsible for managing payment-related data. " +
+        "It provides endpoints for stripe checkout and stripe payment webhook handling.")
 public class PaymentController {
     private final PaymentService paymentService;
     private static final String STRIPE_HEADER = "Stripe-Signature";
 
+    @Operation(summary = "Stripe checkout")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "302",
+                    description = "Stripe custom checkout link has been successfully created",
+                    content = @Content(schema = @Schema(hidden = true))),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The order does not exist or has already been paid",
+                    content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class
+                    )))
+    })
+    @SecurityRequirement(name = "Bearer Authentication")
     @PostMapping("/{orderId}")
     public ResponseEntity<Void> stripeCheckout(@Valid @RequestBody StripeCredentialsDto credentialsDto,
-                                            @PathVariable(name = "orderId") String orderId) {
+                                               @PathVariable(name = "orderId") String orderId) {
         if (paymentService.isNonExistentOrPaidOrder(orderId)) {
+            log.error("The order with id: {} does not exist or has already been paid!", orderId);
             throw new InvalidOrderException(HttpStatus.BAD_REQUEST, "The order does not exist or has already been paid!");
         }
         String stripeCheckoutUserUrl = paymentService.stripeCheckout(credentialsDto, orderId);
         return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(stripeCheckoutUserUrl)).build();
     }
 
+    @Operation(summary = "Handle payment webhook")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "204",
+                    description = "Payment has been successfully handled",
+                    content = @Content(schema = @Schema(hidden = true))),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Unable to read the request body or a Stripe error occurred while handling the webhook",
+                    content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class
+                    )))
+    })
     @PostMapping("/webhook")
     public ResponseEntity<Void> handlePaymentWebhook(HttpServletRequest request) {
         try {
             String sigHeader = request.getHeader(STRIPE_HEADER);
             String requestBody = IOUtils.toString(request.getReader());
             paymentService.handlePaymentWebhook(sigHeader, requestBody);
-            return new ResponseEntity<>(HttpStatus.OK);
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         } catch (IOException e) {
+            log.error("An error: {} occurred while reading the request body", e.getMessage());
             throw new AppStripeException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
     }
