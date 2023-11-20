@@ -49,14 +49,28 @@ VALUES (1, 'Лялька Клаймбер', 'lyalka-klaymber',
         'Ця іграшка об''єднує інноваційний дизайн та розвиваючий функціонал, що сприяє розвитку навичок у дітей. Вона створює захоплюючий світ уяви, розвиваючи логічне мислення та творчість. Іграшка безпечна, енергоефективна і сприяє розвитку спостережливості, уваги та винахідливості у дітей, забезпечуючи незабутні враження та навчальний досвід.',
         500, 150, 1, 4);
 
-INSERT INTO product_age_category(products_id, age_category_id)
+INSERT INTO product_age_category(product_id, age_category_id)
 VALUES (1, 2),
        (1, 3),
        (2, 2),
        (2, 3),
        (3, 2);
 
-
-INSERT INTO cart_item (user_id, product_id, quantity)
+INSERT INTO cart_item(user_id, product_id, quantity)
 VALUES(1000, 2, 1),
       (1000, 4, 4);
+
+INSERT INTO address(id, region, settlement, street, house, apartment)
+VALUES(1000, 'Київська обл.', 'м. Київ', 'вул. Івана Франка', 12, 158);
+
+INSERT INTO phone_number(id, country_code, operator_code, number)
+VALUES(1000, 'UA', '95', '1234567');
+
+INSERT INTO order_recipient(id, firstname, patronymic, lastname, address_id, phone_id)
+VALUES(1000, 'Іван', 'Іванович', 'Франко', 1000, 1000);
+
+INSERT INTO app_order(id, date_time, order_status, recipient_id, user_id)
+VALUES('4c980930-16eb-41cd-b998-29d03118d67c', '2023-11-19 18:09:52.242927', 'AWAITING_PAYMENT', 1000, 1000);
+
+INSERT INTO order_details(order_id, product_id, quantity)
+VALUES('4c980930-16eb-41cd-b998-29d03118d67c', 1, 2);
