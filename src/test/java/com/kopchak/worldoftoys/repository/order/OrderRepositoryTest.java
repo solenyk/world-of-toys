@@ -23,12 +23,11 @@ class OrderRepositoryTest {
     @Autowired
     private OrderRepository orderRepository;
     private AppUser user;
-    private String existentOrderId;
+    private static final String EXISTENT_ORDER_ID = "4c980930-16eb-41cd-b998-29d03118d67c";
 
     @BeforeEach
     public void setUp() {
         user = AppUser.builder().id(1000).build();
-        existentOrderId = "4c980930-16eb-41cd-b998-29d03118d67c";
     }
 
     @Test
@@ -41,7 +40,7 @@ class OrderRepositoryTest {
         assertThat(actualOrdersSet).isNotEmpty();
         assertThat(actualOrdersSet.size()).isEqualTo(expectedOrdersSetSize);
         assertThat(actualOrdersSet.stream().findFirst()).isNotEmpty();
-        assertThat(actualOrdersSet.stream().findFirst().get().getId()).isEqualTo(existentOrderId);
+        assertThat(actualOrdersSet.stream().findFirst().get().getId()).isEqualTo(EXISTENT_ORDER_ID);
     }
 
     @Test
@@ -56,10 +55,10 @@ class OrderRepositoryTest {
 
     @Test
     public void findById_ExistentOrderId_ReturnsOptionalOfOrder() {
-        Optional<Order> actualOrder = orderRepository.findById(existentOrderId);
+        Optional<Order> actualOrder = orderRepository.findById(EXISTENT_ORDER_ID);
 
         assertThat(actualOrder).isPresent();
-        assertThat(actualOrder.get().getId()).isEqualTo(existentOrderId);
+        assertThat(actualOrder.get().getId()).isEqualTo(EXISTENT_ORDER_ID);
     }
 
     @Test

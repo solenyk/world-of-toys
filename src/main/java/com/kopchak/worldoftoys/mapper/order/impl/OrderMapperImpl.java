@@ -36,7 +36,7 @@ public class OrderMapperImpl implements OrderMapper {
         }).collect(Collectors.toSet());
     }
 
-    public Set<OrderProductDto> toOrderProductDtoSet(Set<OrderDetails> orderDetails) {
+    private Set<OrderProductDto> toOrderProductDtoSet(Set<OrderDetails> orderDetails) {
         return orderDetails.stream().map(orderDetail -> {
             Product product = orderDetail.getProduct();
             int quantity = orderDetail.getQuantity();
