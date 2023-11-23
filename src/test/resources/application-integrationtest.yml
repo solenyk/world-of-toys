@@ -23,3 +23,11 @@ spring:
 security:
   jwt:
     secret: testsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkey
+stripe:
+  api:
+    key: stripe_secret_key
+  success:
+    url: stripe_success_url
+  webhook:
+    secret:
+      key: webhook_secret_key
