@@ -1,4 +1,4 @@
-package com.kopchak.worldoftoys.mapper;
+package com.kopchak.worldoftoys.mapper.product;
 
 import com.kopchak.worldoftoys.dto.image.ImageDto;
 import com.kopchak.worldoftoys.model.image.Image;

@@ -1,4 +1,4 @@
-package com.kopchak.worldoftoys.mapper;
+package com.kopchak.worldoftoys.mapper.product;
 
 import com.kopchak.worldoftoys.dto.product.FilteredProductDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
@@ -9,8 +9,7 @@ import org.springframework.data.domain.Page;
 
 import java.util.List;
 
-@Mapper(componentModel = "spring",
-        uses = {ImageMapper.class, ProductCategoryMapper.class})
+@Mapper(componentModel = "spring", uses = {ImageMapper.class, ProductCategoryMapper.class})
 public interface ProductMapper {
     ProductDto toProductDto(Product product);
     List<FilteredProductDto> toFilteredProductDtoList(List<Product> products);

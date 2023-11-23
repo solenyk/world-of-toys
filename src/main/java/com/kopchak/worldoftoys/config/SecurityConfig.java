@@ -33,9 +33,10 @@ public class SecurityConfig {
                 .and()
                 .csrf().disable()
                 .authorizeHttpRequests()
-                .requestMatchers("/api/v*/auth/**", "/api/v*/products/**", "/swagger-ui/**", "/v3/api-docs/**", "/error")
+                .requestMatchers("/api/v*/auth/**", "/api/v*/products/**", "/api/v*/payment/webhook",
+                        "/swagger-ui/**", "/v3/api-docs/**", "/error")
                 .permitAll()
-                .requestMatchers("/api/v*/cart/**")
+                .requestMatchers("/api/v*/cart/**", "/api/v*/order/**", "/api/v*/payment/{orderId}")
                 .hasAuthority(Role.ROLE_USER.name())
                 .and()
                 .sessionManagement()

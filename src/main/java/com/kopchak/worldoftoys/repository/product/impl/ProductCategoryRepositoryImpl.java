@@ -2,7 +2,7 @@ package com.kopchak.worldoftoys.repository.product.impl;
 
 import com.kopchak.worldoftoys.dto.product.category.FilteringProductCategoriesDto;
 import com.kopchak.worldoftoys.dto.product.category.ProductCategoryDto;
-import com.kopchak.worldoftoys.mapper.ProductCategoryMapper;
+import com.kopchak.worldoftoys.mapper.product.ProductCategoryMapper;
 import com.kopchak.worldoftoys.model.product.Product;
 import com.kopchak.worldoftoys.model.product.Product_;
 import com.kopchak.worldoftoys.model.product.category.AgeCategory;

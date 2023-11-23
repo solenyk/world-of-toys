@@ -1,4 +1,4 @@
-package com.kopchak.worldoftoys.mapper;
+package com.kopchak.worldoftoys.mapper.product;
 
 import com.kopchak.worldoftoys.dto.product.category.ProductCategoryDto;
 import com.kopchak.worldoftoys.model.product.category.ProductCategory;

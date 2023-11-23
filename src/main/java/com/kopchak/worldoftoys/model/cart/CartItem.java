@@ -17,8 +17,9 @@ public class CartItem {
     @EmbeddedId
     private CartItemId id;
 
-    @Column(columnDefinition = "integer default 1")
-    @NotNull(message = "Cart item quantity: quantity is null")
-    @Min(value = 1, message = "Cart item quantity: quantity must be greater than or equal to 1")
+    @Column(columnDefinition = "integer default 1", nullable = false)
+    @NotNull(message = "Invalid cart item quantity: quantity is null")
+    @Min(value = 1,
+            message = "Invalid cart item quantity: quantity '${validatedValue}' must be greater than or equal to {value}")
     private Integer quantity = 1;
 }

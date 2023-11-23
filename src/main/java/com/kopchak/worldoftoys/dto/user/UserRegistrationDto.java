@@ -15,18 +15,27 @@ import lombok.Builder;
 public record UserRegistrationDto(
         @Schema(example = "Iryna", requiredMode = Schema.RequiredMode.REQUIRED)
         @NotBlank(message = "Invalid firstname: firstname is empty")
-        @Size(min = 3, max = 60, message = "Invalid firstname: firstname must be up to 60 characters long",
-                groups = ValidationStepTwo.class) String firstname,
+        @Size(
+                min = 3,
+                max = 60,
+                message = "Invalid firstname: firstname '${validatedValue}' must be up from {min} to {max}" +
+                        " characters long", groups = ValidationStepTwo.class
+        ) String firstname,
 
         @Schema(example = "Kopchak", requiredMode = Schema.RequiredMode.REQUIRED)
         @NotBlank(message = "Invalid lastname: lastname is empty")
-        @Size(min = 3, max = 60, message = "Invalid lastname: lastname must be up to 60 characters long",
-                groups = ValidationStepTwo.class) String lastname,
+        @Size(
+                min = 3,
+                max = 60,
+                message = "Invalid lastname: lastname '${validatedValue}' must be from {min} to {max} characters long",
+                groups = ValidationStepTwo.class
+        ) String lastname,
 
         @Schema(example = "test@test.com", requiredMode = Schema.RequiredMode.REQUIRED)
         @NotBlank(message = "Invalid email: email is empty")
         @Email(regexp = "^(?=.{1,64}@)[A-Za-z0-9_-]+(\\.[A-Za-z0-9_-]+)*@[^-][A-Za-z0-9-]+" +
-                "(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$", message = "Invalid email: email format is incorrect",
+                "(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$",
+                message = "Invalid email: email '${validatedValue}' format is incorrect",
                 groups = ValidationStepTwo.class) String email,
 
         @Schema(example = "P@ssword123", requiredMode = Schema.RequiredMode.REQUIRED)
