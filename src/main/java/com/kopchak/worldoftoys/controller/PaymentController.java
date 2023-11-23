@@ -2,9 +2,10 @@ package com.kopchak.worldoftoys.controller;
 
 import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
 import com.kopchak.worldoftoys.dto.payment.StripeCredentialsDto;
-import com.kopchak.worldoftoys.exception.InvalidOrderException;
 import com.kopchak.worldoftoys.exception.AppStripeException;
+import com.kopchak.worldoftoys.exception.InvalidOrderException;
 import com.kopchak.worldoftoys.service.PaymentService;
+import com.stripe.exception.StripeException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -55,8 +56,13 @@ public class PaymentController {
             log.error("The order with id: {} does not exist or has already been paid!", orderId);
             throw new InvalidOrderException(HttpStatus.BAD_REQUEST, "The order does not exist or has already been paid!");
         }
-        String stripeCheckoutUserUrl = paymentService.stripeCheckout(credentialsDto, orderId);
-        return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(stripeCheckoutUserUrl)).build();
+        try {
+            String stripeCheckoutUserUrl = paymentService.stripeCheckout(credentialsDto, orderId);
+            return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(stripeCheckoutUserUrl)).build();
+        } catch (StripeException e) {
+            log.error(e.getMessage());
+            throw new AppStripeException(HttpStatus.valueOf(e.getStatusCode()), e.getMessage());
+        }
     }
 
     @Operation(summary = "Handle payment webhook")
@@ -78,8 +84,8 @@ public class PaymentController {
             String requestBody = IOUtils.toString(request.getReader());
             paymentService.handlePaymentWebhook(sigHeader, requestBody);
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch (IOException e) {
-            log.error("An error: {} occurred while reading the request body", e.getMessage());
+        } catch (IOException | StripeException e) {
+            log.error("Stripe error: {}", e.getMessage());
             throw new AppStripeException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
     }

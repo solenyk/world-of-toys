@@ -2,7 +2,6 @@ package com.kopchak.worldoftoys.service.impl;
 
 import com.kopchak.worldoftoys.dto.payment.StripeCredentialsDto;
 import com.kopchak.worldoftoys.exception.InvalidOrderException;
-import com.kopchak.worldoftoys.exception.AppStripeException;
 import com.kopchak.worldoftoys.model.order.Order;
 import com.kopchak.worldoftoys.model.order.OrderStatus;
 import com.kopchak.worldoftoys.model.order.details.OrderDetails;
@@ -55,6 +54,7 @@ public class PaymentServiceImpl implements PaymentService {
     public void init() {
         Stripe.apiKey = STRIPE_API_KEY;
     }
+
     private static final String CHECKOUT_SESSION_COMPLETED = "checkout.session.completed";
     private static final String SUCCESSFUL_DELAYED_PAYMENT = "checkout.session.async_payment_succeeded";
     private static final String FAILED_DELAYED_PAYMENT = "checkout.session.async_payment_failed";
@@ -62,19 +62,13 @@ public class PaymentServiceImpl implements PaymentService {
     private static final String SESSION_ORDER_ID_METADATA_KEY = "order_id";
 
     @Override
-    public String stripeCheckout(StripeCredentialsDto credentialsDto, String orderId) {
+    public String stripeCheckout(StripeCredentialsDto credentialsDto, String orderId) throws StripeException {
         Order order = orderRepository.findById(orderId).orElseThrow(() ->
                 new InvalidOrderException(HttpStatus.BAD_REQUEST, "The order does not exist or has already been paid!"));
         Customer customer = findOrCreateStripeCustomer(credentialsDto.customerEmail(), credentialsDto.customerName());
         Set<OrderDetails> orderDetails = order.getOrderDetails();
         SessionCreateParams sessionCreateParams = createPaymentSessionParams(customer, orderId, orderDetails);
-        Session session;
-        try {
-            session = Session.create(sessionCreateParams);
-        } catch (StripeException e) {
-            log.error(e.getMessage());
-            throw new AppStripeException(HttpStatus.valueOf(e.getStatusCode()), e.getMessage());
-        }
+        Session session = Session.create(sessionCreateParams);
         return session.getUrl();
     }
 
@@ -83,52 +77,43 @@ public class PaymentServiceImpl implements PaymentService {
         return order.isEmpty() || !order.get().getOrderStatus().equals(OrderStatus.AWAITING_PAYMENT);
     }
 
-    public void handlePaymentWebhook(String sigHeader, String requestBody) {
-        try {
-            Event event = Webhook.constructEvent(requestBody, sigHeader, WEBHOOK_SECRET_KEY);
+    public void handlePaymentWebhook(String sigHeader, String requestBody) throws StripeException {
+        Event event = Webhook.constructEvent(requestBody, sigHeader, WEBHOOK_SECRET_KEY);
 
-            String eventType = event.getType();
-            if (eventType.equals(CHECKOUT_SESSION_COMPLETED) || eventType.equals(SUCCESSFUL_DELAYED_PAYMENT) ||
-                    eventType.equals(FAILED_DELAYED_PAYMENT)) {
+        String eventType = event.getType();
+        if (eventType.equals(CHECKOUT_SESSION_COMPLETED) || eventType.equals(SUCCESSFUL_DELAYED_PAYMENT) ||
+                eventType.equals(FAILED_DELAYED_PAYMENT)) {
 
-                Session sessionEvent = (Session) event.getDataObjectDeserializer().getObject().orElseThrow(() ->
-                        new EventDataObjectDeserializationException("Event data object deserialization is impossible",
-                                event.toJson()));
-                SessionRetrieveParams params = SessionRetrieveParams.builder()
-                        .addExpand("line_items")
-                        .build();
-                Session session = Session.retrieve(sessionEvent.getId(), params, null);
-                Map<String, String> sessionMetadata = session.getMetadata();
-                String orderId = sessionMetadata.get(SESSION_ORDER_ID_METADATA_KEY);
+            Session sessionEvent = (Session) event.getDataObjectDeserializer().getObject().orElseThrow(() ->
+                    new EventDataObjectDeserializationException("Event data object deserialization is impossible",
+                            event.toJson()));
+            SessionRetrieveParams params = SessionRetrieveParams.builder()
+                    .addExpand("line_items")
+                    .build();
+            Session session = Session.retrieve(sessionEvent.getId(), params, null);
+            Map<String, String> sessionMetadata = session.getMetadata();
+            String orderId = sessionMetadata.get(SESSION_ORDER_ID_METADATA_KEY);
 
-                buildPayment(orderId, eventType, session.getId(), sessionEvent.getPaymentStatus(), session.getAmountTotal());
-            }
-        } catch (StripeException e) {
-            log.error(e.getMessage());
-            throw new AppStripeException(HttpStatus.valueOf(e.getStatusCode()), e.getMessage());
+            buildPayment(orderId, eventType, session.getId(), sessionEvent.getPaymentStatus(), session.getAmountTotal());
         }
     }
 
-    private Customer findOrCreateStripeCustomer(String email, String name) {
+    private Customer findOrCreateStripeCustomer(String email, String name) throws StripeException {
         CustomerSearchParams params = CustomerSearchParams.builder().setQuery("email:'" + email + "'").build();
-        try {
-            CustomerSearchResult customerSearchResult = Customer.search(params);
-            if (customerSearchResult.getData().isEmpty()) {
-                CustomerCreateParams customerCreateParams = CustomerCreateParams.builder()
-                        .setName(name)
-                        .setEmail(email)
-                        .build();
-                return Customer.create(customerCreateParams);
-            } else {
-                return customerSearchResult.getData().get(0);
-            }
-        } catch (StripeException e) {
-            log.error(e.getMessage());
-            throw new AppStripeException(HttpStatus.valueOf(e.getStatusCode()), e.getMessage());
+        CustomerSearchResult customerSearchResult = Customer.search(params);
+        if (customerSearchResult.getData().isEmpty()) {
+            CustomerCreateParams customerCreateParams = CustomerCreateParams.builder()
+                    .setName(name)
+                    .setEmail(email)
+                    .build();
+            return Customer.create(customerCreateParams);
+        } else {
+            return customerSearchResult.getData().get(0);
         }
     }
 
-    private SessionCreateParams createPaymentSessionParams(Customer customer, String orderId, Set<OrderDetails> orderDetails) {
+    private SessionCreateParams createPaymentSessionParams(Customer customer, String orderId,
+                                                           Set<OrderDetails> orderDetails) {
         SessionCreateParams.Builder paramsBuilder =
                 SessionCreateParams.builder()
                         .setMode(SessionCreateParams.Mode.PAYMENT)
