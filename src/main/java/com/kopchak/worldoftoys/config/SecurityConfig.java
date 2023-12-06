@@ -38,6 +38,8 @@ public class SecurityConfig {
                 .permitAll()
                 .requestMatchers("/api/v*/cart/**", "/api/v*/order/**", "/api/v*/payment/{orderId}")
                 .hasAuthority(Role.ROLE_USER.name())
+                .requestMatchers("/api/v1/admin/**")
+                .hasAuthority(Role.ROLE_ADMIN.name())
                 .and()
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
