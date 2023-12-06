@@ -1,12 +1,17 @@
 package com.kopchak.worldoftoys.controller;
 
 import com.kopchak.worldoftoys.dto.admin.product.AdminFilteredProductsPageDto;
+import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
+import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
+import com.kopchak.worldoftoys.dto.product.ProductDto;
+import com.kopchak.worldoftoys.exception.ProductNotFoundException;
 import com.kopchak.worldoftoys.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/admin")
@@ -47,5 +53,26 @@ public class AdminPanelController {
         var productsPage = productService.getAdminFilteredProducts(page, size, productName, minPrice, maxPrice,
                 originCategories, brandCategories, ageCategories, priceSortOrder);
         return new ResponseEntity<>(productsPage, HttpStatus.OK);
+    }
+
+    @Operation(summary = "Fetch product by id")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Product was successfully fetched",
+                    content = @Content(schema = @Schema(implementation = ProductDto.class))),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Product with this id is not found",
+                    content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class)))
+    })
+    @GetMapping("/products/{productId}")
+    public ResponseEntity<AdminProductDto> getAdminProductDtoById(@PathVariable(name = "productId") Integer productId) {
+        Optional<AdminProductDto> productDtoOptional = productService.getAdminProductDtoById(productId);
+        if (productDtoOptional.isEmpty()) {
+            log.error("Product with id: '{}' is not found.", productId);
+            throw new ProductNotFoundException(HttpStatus.NOT_FOUND, "Product doesn't exist");
+        }
+        return new ResponseEntity<>(productDtoOptional.get(), HttpStatus.OK);
     }
 }

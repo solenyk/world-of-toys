@@ -1,6 +1,7 @@
 package com.kopchak.worldoftoys.service.impl;
 
 import com.kopchak.worldoftoys.dto.admin.product.AdminFilteredProductsPageDto;
+import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringProductCategoriesDto;
@@ -72,6 +73,13 @@ public class ProductServiceImpl implements ProductService {
         Page<Product> productPage = getFilteredProductPage(page, size, productName, minPrice, maxPrice,
                 originCategories, brandCategories, ageCategories, priceSortOrder);
         return productMapper.toAdminFilteredProductsPageDto(productPage);
+    }
+
+    @Override
+    public Optional<AdminProductDto> getAdminProductDtoById(Integer productId) {
+        Optional<Product> product = productRepository.findById(productId);
+        log.info("Fetched product by id: '{}'", productId);
+        return product.map(productMapper::toAdminProductDto);
     }
 
     private Page<Product> getFilteredProductPage(int page, int size, String productName, BigDecimal minPrice,
