@@ -1,5 +1,6 @@
 package com.kopchak.worldoftoys.service.impl;
 
+import com.kopchak.worldoftoys.dto.admin.product.AdminFilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringProductCategoriesDto;
@@ -35,14 +36,8 @@ public class ProductServiceImpl implements ProductService {
                                                        BigDecimal maxPrice, List<String> originCategories,
                                                        List<String> brandCategories, List<String> ageCategories,
                                                        String priceSortOrder) {
-        Pageable pageable = PageRequest.of(page, size);
-        Specification<Product> spec = productSpecifications.filterByAllCriteria(productName, minPrice,
-                maxPrice, originCategories, brandCategories, ageCategories, priceSortOrder);
-        Page<Product> productPage = productRepository.findAll(spec, pageable);
-        log.info("Fetched filtered products - Page: {}, Size: {}, Product Name: '{}', Min Price: {}, Max Price: {}, " +
-                        "Origin Categories: {}, Brand Categories: {}, Age Categories: {}, Price Sort Order: '{}'",
-                page, size, productName, minPrice, maxPrice, originCategories, brandCategories, ageCategories,
-                priceSortOrder);
+        Page<Product> productPage = getFilteredProductPage(page, size, productName, minPrice, maxPrice,
+                originCategories, brandCategories, ageCategories, priceSortOrder);
         return productMapper.toFilteredProductsPageDto(productPage);
     }
 
@@ -66,5 +61,31 @@ public class ProductServiceImpl implements ProductService {
                         "Origin Categories: {}, Brand Categories: {}, Age Categories: {}",
                 productName, minPrice, maxPrice, originCategories, brandCategories, ageCategories);
         return filteringProductCategoriesDto;
+    }
+
+    @Override
+    public AdminFilteredProductsPageDto getAdminFilteredProducts(int page, int size, String productName,
+                                                                 BigDecimal minPrice, BigDecimal maxPrice,
+                                                                 List<String> originCategories,
+                                                                 List<String> brandCategories,
+                                                                 List<String> ageCategories, String priceSortOrder) {
+        Page<Product> productPage = getFilteredProductPage(page, size, productName, minPrice, maxPrice,
+                originCategories, brandCategories, ageCategories, priceSortOrder);
+        return productMapper.toAdminFilteredProductsPageDto(productPage);
+    }
+
+    private Page<Product> getFilteredProductPage(int page, int size, String productName, BigDecimal minPrice,
+                                                 BigDecimal maxPrice, List<String> originCategories,
+                                                 List<String> brandCategories, List<String> ageCategories,
+                                                 String priceSortOrder) {
+        Pageable pageable = PageRequest.of(page, size);
+        Specification<Product> spec = productSpecifications.filterByAllCriteria(productName, minPrice,
+                maxPrice, originCategories, brandCategories, ageCategories, priceSortOrder);
+        Page<Product> productPage = productRepository.findAll(spec, pageable);
+        log.info("Fetched filtered products - Page: {}, Size: {}, Product Name: '{}', Min Price: {}, Max Price: {}, " +
+                        "Origin Categories: {}, Brand Categories: {}, Age Categories: {}, Price Sort Order: '{}'",
+                page, size, productName, minPrice, maxPrice, originCategories, brandCategories, ageCategories,
+                priceSortOrder);
+        return productPage;
     }
 }
