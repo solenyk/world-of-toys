@@ -21,4 +21,9 @@ public interface ProductRepository extends JpaRepository<Product, Integer>, JpaS
     @EntityGraph(type = EntityGraph.EntityGraphType.FETCH, attributePaths = {"images", "originCategory",
             "brandCategory", "ageCategories"})
     Optional<Product> findBySlug(String slug);
+
+    @NotNull
+    @EntityGraph(type = EntityGraph.EntityGraphType.FETCH, attributePaths = {"images", "originCategory",
+            "brandCategory", "ageCategories"})
+    Optional<Product> findById(@NotNull Integer id);
 }
