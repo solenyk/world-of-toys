@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.*;
+import org.apache.commons.lang3.RandomStringUtils;
 
 @Entity
 @Getter
@@ -15,9 +16,9 @@ import lombok.*;
 public class Image {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
 
-    @Column(length = 50, nullable = false)
+    @Column(length = 50, nullable = false, unique = true)
     @NotBlank(message = "Invalid name: name is blank")
     private String name;
 
@@ -26,7 +27,7 @@ public class Image {
     private String type;
 
     @Lob
-    @Column(nullable = false, length = 10000, columnDefinition = "BLOB")
+    @Column(nullable = false, length = 1_000_000, columnDefinition = "BLOB")
     @NotEmpty(message = "Invalid image: image is empty")
     private byte[] image;
 

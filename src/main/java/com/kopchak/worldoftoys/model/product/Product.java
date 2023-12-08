@@ -1,5 +1,6 @@
 package com.kopchak.worldoftoys.model.product;
 
+import com.github.slugify.Slugify;
 import com.kopchak.worldoftoys.model.image.Image;
 import com.kopchak.worldoftoys.model.order.details.OrderDetails;
 import com.kopchak.worldoftoys.model.product.category.AgeCategory;
@@ -15,7 +16,6 @@ import java.util.Set;
 
 @Getter
 @Setter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
@@ -53,11 +53,11 @@ public class Product {
     @Min(value = 0, message = "Invalid quantity: product quantity '${validatedValue}' must not be less than {value}")
     private BigInteger availableQuantity;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
     @JoinColumn(name = "image_id", referencedColumnName = "id")
     private Image mainImage;
 
-    @OneToMany(mappedBy = "product")
+    @OneToMany(mappedBy = "product", cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
     private Set<Image> images;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -68,6 +68,7 @@ public class Product {
     @JoinColumn(name = "brand_id", referencedColumnName = "id", nullable = false)
     private BrandCategory brandCategory;
 
+    @NotNull(message = "Invalid age categories: age categories is mandatory")
     @ManyToMany
     @JoinTable(
             name = "product_age_category",
@@ -77,4 +78,11 @@ public class Product {
 
     @OneToMany(mappedBy = "product")
     private Set<OrderDetails> orderDetails;
+
+    @PrePersist
+    @PreUpdate
+    public void setSlug() {
+        final Slugify slg = Slugify.builder().transliterator(true).build();
+        this.slug = slg.slugify(this.name);
+    }
 }

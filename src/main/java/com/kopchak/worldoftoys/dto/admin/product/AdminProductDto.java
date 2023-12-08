@@ -10,6 +10,7 @@ import java.util.List;
 
 @Builder
 public record AdminProductDto(Integer id, String name, String slug, String description, BigDecimal price,
-                              BigInteger availableQuantity, List<ImageDto> images, ProductCategoryDto originCategory,
-                              ProductCategoryDto brandCategory, List<ProductCategoryDto> ageCategories) {
+                              BigInteger availableQuantity, ImageDto mainImage, List<ImageDto> images,
+                              ProductCategoryDto originCategory, ProductCategoryDto brandCategory,
+                              List<ProductCategoryDto> ageCategories) {
 }
