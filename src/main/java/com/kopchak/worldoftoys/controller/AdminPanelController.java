@@ -2,6 +2,7 @@ package com.kopchak.worldoftoys.controller;
 
 import com.kopchak.worldoftoys.dto.admin.product.AdminFilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
+import com.kopchak.worldoftoys.dto.admin.product.UpdateProductDto;
 import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
@@ -12,13 +13,17 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
@@ -28,6 +33,7 @@ import java.util.Optional;
 @CrossOrigin
 @RequiredArgsConstructor
 @Tag(name = "admin-panel-controller", description = "")
+@SecurityRequirement(name = "Bearer Authentication")
 @Slf4j
 public class AdminPanelController {
 
@@ -74,5 +80,14 @@ public class AdminPanelController {
             throw new ProductNotFoundException(HttpStatus.NOT_FOUND, "Product doesn't exist");
         }
         return new ResponseEntity<>(productDtoOptional.get(), HttpStatus.OK);
+    }
+
+    @PutMapping("/products/{productId}")
+    public ResponseEntity<Void> updateProduct(@PathVariable(name = "productId") Integer productId,
+                                              @Valid @RequestPart("product") UpdateProductDto updateProductDto,
+                                              @RequestPart("image") MultipartFile mainImage,
+                                              @RequestPart("images") List<MultipartFile> images) throws IOException {
+        productService.updateProduct(productId, updateProductDto, mainImage, images);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 }

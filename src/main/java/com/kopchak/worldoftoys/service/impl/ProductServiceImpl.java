@@ -2,14 +2,18 @@ package com.kopchak.worldoftoys.service.impl;
 
 import com.kopchak.worldoftoys.dto.admin.product.AdminFilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
+import com.kopchak.worldoftoys.dto.admin.product.UpdateProductDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringProductCategoriesDto;
 import com.kopchak.worldoftoys.mapper.product.ProductMapper;
+import com.kopchak.worldoftoys.model.image.Image;
 import com.kopchak.worldoftoys.model.product.Product;
 import com.kopchak.worldoftoys.repository.product.ProductCategoryRepository;
 import com.kopchak.worldoftoys.repository.product.ProductRepository;
+import com.kopchak.worldoftoys.repository.product.image.ImageRepository;
 import com.kopchak.worldoftoys.repository.specifications.impl.ProductSpecificationsImpl;
+import com.kopchak.worldoftoys.service.ImageService;
 import com.kopchak.worldoftoys.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,10 +22,14 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +39,8 @@ public class ProductServiceImpl implements ProductService {
     private final ProductCategoryRepository productCategoryRepository;
     private final ProductSpecificationsImpl productSpecifications;
     private final ProductMapper productMapper;
+    private final ImageRepository imageRepository;
+    private final ImageService imageService;
 
     @Override
     public FilteredProductsPageDto getFilteredProducts(int page, int size, String productName, BigDecimal minPrice,
@@ -95,5 +105,21 @@ public class ProductServiceImpl implements ProductService {
                 page, size, productName, minPrice, maxPrice, originCategories, brandCategories, ageCategories,
                 priceSortOrder);
         return productPage;
+    }
+
+    public void updateProduct(Integer productId, UpdateProductDto updateProductDto, MultipartFile mainImage,
+                              List<MultipartFile> images) throws IOException {
+        Product product = productMapper.toProduct(updateProductDto, productCategoryRepository, mainImage, images,
+                imageRepository, imageService);
+        product.setId(productId);
+        try {
+            productRepository.save(product);
+            Set<Image> images1 = product.getImages();
+            images1.add(product.getMainImage());
+            Set<String> imageNames = images1.stream().map(Image::getName).collect(Collectors.toSet());
+            imageRepository.deleteImagesByProductIdNotInNames(productId, imageNames);
+        } catch (Exception e) {
+            log.error("error", e);
+        }
     }
 }
