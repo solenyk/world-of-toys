@@ -18,6 +18,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
@@ -34,6 +35,17 @@ public class ProductCategoryRepositoryImpl implements ProductCategoryRepository 
                 .brandCategories(findUniqueProductCategoryDtoList(spec, Product_.BRAND_CATEGORY))
                 .ageCategories(findUniqueProductCategoryDtoList(spec, Product_.AGE_CATEGORIES))
                 .build();
+    }
+
+    @Override
+    public Optional<ProductCategory> findById(Integer id, Class<? extends ProductCategory> productCategorySubType) {
+        try {
+            ProductCategory category = entityManager.find(productCategorySubType, id);
+            return Optional.of(category);
+        } catch (Exception ex) {
+            log.error("An error occurred while finding ProductCategory by id: {}", id, ex);
+            return Optional.empty();
+        }
     }
 
     private List<ProductCategoryDto> findUniqueProductCategoryDtoList(Specification<Product> spec,
