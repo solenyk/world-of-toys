@@ -2,6 +2,7 @@ package com.kopchak.worldoftoys.repository.product.impl;
 
 import com.kopchak.worldoftoys.dto.product.category.FilteringProductCategoriesDto;
 import com.kopchak.worldoftoys.dto.product.category.ProductCategoryDto;
+import com.kopchak.worldoftoys.exception.exception.CategoryNotFoundException;
 import com.kopchak.worldoftoys.mapper.product.ProductCategoryMapper;
 import com.kopchak.worldoftoys.model.product.Product;
 import com.kopchak.worldoftoys.model.product.Product_;
@@ -18,7 +19,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
@@ -38,15 +38,16 @@ public class ProductCategoryRepositoryImpl implements ProductCategoryRepository 
     }
 
     @Override
-    public Optional<ProductCategory> findById(Integer id, Class<? extends ProductCategory> productCategorySubType) {
-        try {
-            ProductCategory category = entityManager.find(productCategorySubType, id);
-            return Optional.of(category);
-        } catch (Exception ex) {
-            log.error("An error occurred while finding ProductCategory by id: {}", id, ex);
-            return Optional.empty();
+    public <T extends ProductCategory> T findById(Integer id, Class<T> productCategoryType)
+            throws CategoryNotFoundException {
+        T category = entityManager.find(productCategoryType, id);
+        if (category == null) {
+            throw new CategoryNotFoundException(productCategoryType.getSimpleName() + " with id " + id +
+                    " does not exist");
         }
+        return category;
     }
+
 
     private List<ProductCategoryDto> findUniqueProductCategoryDtoList(Specification<Product> spec,
                                                                       String productCategoryAttribute) {

@@ -4,6 +4,8 @@ import com.kopchak.worldoftoys.dto.image.ImageDto;
 import com.kopchak.worldoftoys.model.image.Image;
 import org.mapstruct.Mapper;
 
+import java.util.List;
+
 @Mapper(componentModel = "spring")
 public interface ImageMapper {
     ImageDto toImageDto(Image image);
