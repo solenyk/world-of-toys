@@ -7,6 +7,8 @@ import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.exception.ProductNotFoundException;
+import com.kopchak.worldoftoys.exception.exception.CategoryNotFoundException;
+import com.kopchak.worldoftoys.exception.exception.ImageException;
 import com.kopchak.worldoftoys.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -22,8 +24,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
@@ -85,9 +87,13 @@ public class AdminPanelController {
     @PutMapping("/products/{productId}")
     public ResponseEntity<Void> updateProduct(@PathVariable(name = "productId") Integer productId,
                                               @Valid @RequestPart("product") UpdateProductDto updateProductDto,
-                                              @RequestPart("image") MultipartFile mainImage,
-                                              @RequestPart("images") List<MultipartFile> images) throws IOException {
-        productService.updateProduct(productId, updateProductDto, mainImage, images);
+                                              @RequestPart("image") MultipartFile mainImageFile,
+                                              @RequestPart("images") List<MultipartFile> imageFilesList) {
+        try {
+            productService.updateProduct(productId, updateProductDto, mainImageFile, imageFilesList);
+        } catch (CategoryNotFoundException | ImageException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
         return new ResponseEntity<>(HttpStatus.OK);
     }
 }

@@ -12,7 +12,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.List;
 import java.util.Objects;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
@@ -22,6 +21,7 @@ import java.util.zip.Inflater;
 public class ImageServiceImpl implements ImageService {
     private final ImageRepository imageRepository;
 
+    @Override
     public Image convertMultipartFileToImage(MultipartFile multipartFile, Product product) throws ImageException {
         if (isNonImageFile(multipartFile)) {
             throw new ImageException(String.format("File with name: %s must have an image type",
@@ -40,20 +40,6 @@ public class ImageServiceImpl implements ImageService {
                 );
         image.setImage(compressImage(multipartFile));
         return image;
-    }
-
-    @Override
-    public boolean hasNonImageFiles(MultipartFile mainImage, List<MultipartFile> images) {
-        if (isNonImageFile(mainImage)) {
-            return true;
-        }
-
-        for (MultipartFile image : images) {
-            if (isNonImageFile(image)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     @Override

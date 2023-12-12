@@ -6,6 +6,8 @@ import com.kopchak.worldoftoys.dto.admin.product.UpdateProductDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringProductCategoriesDto;
+import com.kopchak.worldoftoys.exception.exception.CategoryNotFoundException;
+import com.kopchak.worldoftoys.exception.exception.ImageException;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -30,6 +32,6 @@ public interface ProductService {
 
     Optional<AdminProductDto> getAdminProductDtoById(Integer productId);
 
-    void updateProduct(Integer productId, UpdateProductDto updateProductDto, MultipartFile mainImage,
-                              List<MultipartFile> images) throws IOException;
+    void updateProduct(Integer productId, UpdateProductDto updateProductDto, MultipartFile mainImageFile,
+                              List<MultipartFile> imageFileList) throws CategoryNotFoundException, ImageException;
 }

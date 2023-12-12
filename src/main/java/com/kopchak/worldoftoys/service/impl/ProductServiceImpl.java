@@ -6,6 +6,8 @@ import com.kopchak.worldoftoys.dto.admin.product.UpdateProductDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringProductCategoriesDto;
+import com.kopchak.worldoftoys.exception.exception.CategoryNotFoundException;
+import com.kopchak.worldoftoys.exception.exception.ImageException;
 import com.kopchak.worldoftoys.mapper.product.ProductMapper;
 import com.kopchak.worldoftoys.model.image.Image;
 import com.kopchak.worldoftoys.model.product.Product;
@@ -24,7 +26,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
@@ -107,19 +108,14 @@ public class ProductServiceImpl implements ProductService {
         return productPage;
     }
 
-    public void updateProduct(Integer productId, UpdateProductDto updateProductDto, MultipartFile mainImage,
-                              List<MultipartFile> images) throws IOException {
-        Product product = productMapper.toProduct(updateProductDto, productCategoryRepository, mainImage, images,
-                imageRepository, imageService);
-        product.setId(productId);
-        try {
-            productRepository.save(product);
-            Set<Image> images1 = product.getImages();
-            images1.add(product.getMainImage());
-            Set<String> imageNames = images1.stream().map(Image::getName).collect(Collectors.toSet());
-            imageRepository.deleteImagesByProductIdNotInNames(productId, imageNames);
-        } catch (Exception e) {
-            log.error("error", e);
-        }
+    public void updateProduct(Integer productId, UpdateProductDto updateProductDto, MultipartFile mainImageFile,
+                              List<MultipartFile> imageFilesList) throws CategoryNotFoundException, ImageException {
+        Product product = productMapper.toProduct(updateProductDto, productId, productCategoryRepository,
+                mainImageFile, imageFilesList, imageService);
+        productRepository.save(product);
+        Set<Image> productImagesSet = product.getImages();
+        productImagesSet.add(product.getMainImage());
+        Set<String> imageNames = productImagesSet.stream().map(Image::getName).collect(Collectors.toSet());
+        imageRepository.deleteImagesByProductIdNotInNames(productId, imageNames);
     }
 }
