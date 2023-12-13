@@ -27,7 +27,7 @@ public class Image {
     private String type;
 
     @Lob
-    @Column(nullable = false, length = 1_000_000, columnDefinition = "BLOB")
+    @Column(nullable = false, length = 1_000_000_000, columnDefinition = "BLOB")
     @NotEmpty(message = "Invalid image: image is empty")
     private byte[] image;
 

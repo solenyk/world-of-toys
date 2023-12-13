@@ -9,6 +9,7 @@ import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.exception.ProductNotFoundException;
 import com.kopchak.worldoftoys.exception.exception.CategoryNotFoundException;
 import com.kopchak.worldoftoys.exception.exception.ImageException;
+import com.kopchak.worldoftoys.exception.exception.ProductException;
 import com.kopchak.worldoftoys.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -102,10 +103,35 @@ public class AdminPanelController {
                                               @RequestPart("images") List<MultipartFile> imageFilesList) {
         try {
             productService.updateProduct(productId, addUpdateProductDto, mainImageFile, imageFilesList);
-        } catch (CategoryNotFoundException | ImageException e) {
+        } catch (ProductException | CategoryNotFoundException | ImageException e) {
             log.error("The error: {} occurred while updating the product with id: {}", e.getMessage(), productId);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @Operation(summary = "Add product")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "Product was successfully created",
+                    content = @Content(schema = @Schema(hidden = true))),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid product data",
+                    content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class)))
+    })
+    @PostMapping("/products/add")
+    public ResponseEntity<Void> addProduct(@Valid @RequestPart("product") AddUpdateProductDto addUpdateProductDto,
+                                           @RequestPart("image") MultipartFile mainImageFile,
+                                           @RequestPart("images") List<MultipartFile> imageFilesList) {
+        try {
+            productService.addProduct(addUpdateProductDto, mainImageFile, imageFilesList);
+        } catch (ProductException | CategoryNotFoundException | ImageException e) {
+            log.error("The error: {} occurred while creating the product with name: {}",
+                    e.getMessage(), addUpdateProductDto.name());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
+        return new ResponseEntity<>(HttpStatus.CREATED);
     }
 }

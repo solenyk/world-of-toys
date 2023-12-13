@@ -8,6 +8,7 @@ import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringProductCategoriesDto;
 import com.kopchak.worldoftoys.exception.exception.CategoryNotFoundException;
 import com.kopchak.worldoftoys.exception.exception.ImageException;
+import com.kopchak.worldoftoys.exception.exception.ProductException;
 import com.kopchak.worldoftoys.mapper.product.ProductMapper;
 import com.kopchak.worldoftoys.model.image.Image;
 import com.kopchak.worldoftoys.model.product.Product;
@@ -109,7 +110,12 @@ public class ProductServiceImpl implements ProductService {
     }
 
     public void updateProduct(Integer productId, AddUpdateProductDto addUpdateProductDto, MultipartFile mainImageFile,
-                              List<MultipartFile> imageFilesList) throws CategoryNotFoundException, ImageException {
+                              List<MultipartFile> imageFilesList)
+            throws CategoryNotFoundException, ImageException, ProductException {
+        String productName = addUpdateProductDto.name();
+        if (productRepository.findByName(productName).isEmpty()) {
+            throw new ProductException(String.format("Product with name: %s is already exist", productName));
+        }
         Product product = productMapper.toProduct(addUpdateProductDto, productId, productCategoryRepository,
                 mainImageFile, imageFilesList, imageService);
         productRepository.save(product);
@@ -120,5 +126,18 @@ public class ProductServiceImpl implements ProductService {
         imageRepository.deleteImagesByProductIdNotInNames(productId, imageNames);
         log.info("Product photos that were missing during the update have been removed in " +
                 "the updated version of the product");
+    }
+
+    @Override
+    public void addProduct(AddUpdateProductDto addUpdateProductDto, MultipartFile mainImageFile,
+                           List<MultipartFile> imageFileList) throws CategoryNotFoundException, ImageException, ProductException {
+        String productName = addUpdateProductDto.name();
+        if (productRepository.findByName(productName).isEmpty()) {
+            throw new ProductException(String.format("Product with name: %s is already exist", productName));
+        }
+        Product product = productMapper.toProduct(addUpdateProductDto, productCategoryRepository,
+                mainImageFile, imageFileList, imageService);
+        productRepository.save(product);
+        log.info("The product with name: {} was successfully saved", product.getName());
     }
 }

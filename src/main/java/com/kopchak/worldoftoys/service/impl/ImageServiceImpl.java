@@ -30,17 +30,19 @@ public class ImageServiceImpl implements ImageService {
             log.error("File with name: {} must have an image type", fileName);
             throw new ImageException(String.format("File with name: %s must have an image type", fileName));
         }
-        Image image = imageRepository
-                .findByNameAndProduct_Id(multipartFile.getOriginalFilename(), product.getId())
-                .orElse(
-                        Image
-                                .builder()
-                                .name(Objects.requireNonNull(multipartFile.getOriginalFilename())
-                                        .concat(RandomStringUtils.randomAlphanumeric(4)))
-                                .type(multipartFile.getContentType())
-                                .product(product)
-                                .build()
-                );
+        String generatedName = Objects.requireNonNull(multipartFile.getOriginalFilename())
+                .concat(RandomStringUtils.randomAlphanumeric(4));
+        Image.ImageBuilder imageBuilder = Image.builder()
+                .name(generatedName)
+                .type(multipartFile.getContentType())
+                .product(product);
+        Image image;
+        if (product.getId() != null) {
+            image = imageRepository.findByNameAndProduct_Id(multipartFile.getOriginalFilename(), product.getId())
+                    .orElse(imageBuilder.build());
+        } else {
+            image = imageBuilder.build();
+        }
         image.setImage(compressImage(multipartFile));
         return image;
     }

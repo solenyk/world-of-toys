@@ -45,8 +45,10 @@ public record AddUpdateProductDto(
         ) BigDecimal price,
 
         @Schema(example = "185", requiredMode = Schema.RequiredMode.REQUIRED)
-        @Min(value = 0, message = "Invalid quantity: product quantity '${validatedValue}' must not be less than {value}")
-        BigInteger availableQuantity,
+        @Min(
+                value = 0,
+                message = "Invalid quantity: product quantity '${validatedValue}' must not be less than {value}"
+        ) BigInteger availableQuantity,
 
         @Valid
         @NotNull(message = "Invalid origin category: origin category is mandatory")

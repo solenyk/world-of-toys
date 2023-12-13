@@ -32,7 +32,7 @@ public abstract class ProductMapper {
     public abstract AdminProductDto toAdminProductDto(Product product);
 
     @Mapping(target = "id", source = "productId")
-    @Mapping(target = "name", source = "updateProductDto.name")
+    @Mapping(target = "name", source = "addUpdateProductDto.name")
     @Mapping(target = "originCategory", ignore = true)
     @Mapping(target = "brandCategory", ignore = true)
     @Mapping(target = "ageCategories", ignore = true)
@@ -40,6 +40,15 @@ public abstract class ProductMapper {
                                       @Context ProductCategoryRepository categoryRepository, MultipartFile mainImageFile,
                                       List<MultipartFile> imageFilesList, @Context ImageService imageService)
             throws ImageException, CategoryNotFoundException;
+
+    @Mapping(target = "name", source = "addUpdateProductDto.name")
+    @Mapping(target = "originCategory", ignore = true)
+    @Mapping(target = "brandCategory", ignore = true)
+    @Mapping(target = "ageCategories", ignore = true)
+    public abstract Product toProduct(AddUpdateProductDto addUpdateProductDto,
+                                      @Context ProductCategoryRepository categoryRepository,
+                                      MultipartFile mainImageFile, List<MultipartFile> imageFilesList,
+                                      @Context ImageService imageService) throws ImageException, CategoryNotFoundException;
 
     protected abstract List<FilteredProductDto> toFilteredProductDtoList(List<Product> products);
 
