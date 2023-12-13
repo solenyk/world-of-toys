@@ -2,8 +2,10 @@ package com.kopchak.worldoftoys.service.impl;
 
 import com.kopchak.worldoftoys.dto.order.OrderDto;
 import com.kopchak.worldoftoys.dto.order.OrderRecipientDto;
+import com.kopchak.worldoftoys.exception.exception.OrderException;
 import com.kopchak.worldoftoys.mapper.order.OrderMapper;
 import com.kopchak.worldoftoys.mapper.order.OrderRecipientMapper;
+import com.kopchak.worldoftoys.model.cart.CartItem;
 import com.kopchak.worldoftoys.model.order.Order;
 import com.kopchak.worldoftoys.model.order.OrderStatus;
 import com.kopchak.worldoftoys.model.order.recipient.OrderRecipient;
@@ -27,7 +29,12 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final OrderDetailsRepository orderDetailsRepository;
 
-    public void createOrder(OrderRecipientDto orderRecipientDto, AppUser user) {
+    public void createOrder(OrderRecipientDto orderRecipientDto, AppUser user) throws OrderException {
+        Set<CartItem> cartItems = cartItemRepository.deleteAllById_User(user);
+        if (cartItems.isEmpty()) {
+            throw new OrderException(String.format("Impossible to create an order for the user: %s " +
+                    "because he does not have any products in the cart.", user.getUsername()));
+        }
         OrderRecipient orderRecipient = orderRecipientMapper.toOrderRecipient(orderRecipientDto);
         Order order = Order
                 .builder()
@@ -37,7 +44,7 @@ public class OrderServiceImpl implements OrderService {
                 .user(user)
                 .build();
         order = orderRepository.save(order);
-        var orderDetails = orderMapper.toOrderDetails(cartItemRepository.deleteAllById_User(user), order);
+        var orderDetails = orderMapper.toOrderDetails(cartItems, order);
         orderDetailsRepository.saveAll(orderDetails);
     }
 
