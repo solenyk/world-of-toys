@@ -7,6 +7,5 @@ import org.springframework.web.multipart.MultipartFile;
 
 public interface ImageService {
     Image convertMultipartFileToImage(MultipartFile multipartFile, Product product) throws ImageException;
-    byte[] compressImage(MultipartFile multipartFile) throws ImageException;
     byte[] decompressImage(byte[] data);
 }

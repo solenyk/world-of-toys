@@ -113,9 +113,12 @@ public class ProductServiceImpl implements ProductService {
         Product product = productMapper.toProduct(updateProductDto, productId, productCategoryRepository,
                 mainImageFile, imageFilesList, imageService);
         productRepository.save(product);
+        log.info("The product with id: {} was successfully saved", productId);
         Set<Image> productImagesSet = product.getImages();
         productImagesSet.add(product.getMainImage());
         Set<String> imageNames = productImagesSet.stream().map(Image::getName).collect(Collectors.toSet());
         imageRepository.deleteImagesByProductIdNotInNames(productId, imageNames);
+        log.info("Product photos that were missing during the update have been removed in " +
+                "the updated version of the product");
     }
 }

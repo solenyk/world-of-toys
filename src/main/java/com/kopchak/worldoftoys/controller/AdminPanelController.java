@@ -84,6 +84,17 @@ public class AdminPanelController {
         return new ResponseEntity<>(productDtoOptional.get(), HttpStatus.OK);
     }
 
+    @Operation(summary = "Update product with id")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "204",
+                    description = "Product was successfully updated",
+                    content = @Content(schema = @Schema(hidden = true))),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid product update data",
+                    content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class)))
+    })
     @PutMapping("/products/{productId}")
     public ResponseEntity<Void> updateProduct(@PathVariable(name = "productId") Integer productId,
                                               @Valid @RequestPart("product") UpdateProductDto updateProductDto,
@@ -92,8 +103,9 @@ public class AdminPanelController {
         try {
             productService.updateProduct(productId, updateProductDto, mainImageFile, imageFilesList);
         } catch (CategoryNotFoundException | ImageException e) {
+            log.error("The error: {} occurred while updating the product with id: {}", e.getMessage(), productId);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
-        return new ResponseEntity<>(HttpStatus.OK);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }
