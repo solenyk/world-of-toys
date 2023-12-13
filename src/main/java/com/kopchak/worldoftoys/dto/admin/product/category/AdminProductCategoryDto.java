@@ -1,4 +1,15 @@
 package com.kopchak.worldoftoys.dto.admin.product.category;
 
-public record AdminProductCategoryDto(Integer id) {
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Min;
+
+@Schema(description = "Product category id")
+public record AdminProductCategoryDto(
+        @Schema(example = "1", requiredMode = Schema.RequiredMode.REQUIRED)
+        @Min(
+                value = 1,
+                message = "Invalid product category id: id '${validatedValue}' should not be less than {value}"
+        )Integer id
+) {
 }

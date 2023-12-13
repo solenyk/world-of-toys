@@ -1,8 +1,8 @@
 package com.kopchak.worldoftoys.service.impl;
 
+import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminFilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
-import com.kopchak.worldoftoys.dto.admin.product.UpdateProductDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringProductCategoriesDto;
@@ -108,9 +108,9 @@ public class ProductServiceImpl implements ProductService {
         return productPage;
     }
 
-    public void updateProduct(Integer productId, UpdateProductDto updateProductDto, MultipartFile mainImageFile,
+    public void updateProduct(Integer productId, AddUpdateProductDto addUpdateProductDto, MultipartFile mainImageFile,
                               List<MultipartFile> imageFilesList) throws CategoryNotFoundException, ImageException {
-        Product product = productMapper.toProduct(updateProductDto, productId, productCategoryRepository,
+        Product product = productMapper.toProduct(addUpdateProductDto, productId, productCategoryRepository,
                 mainImageFile, imageFilesList, imageService);
         productRepository.save(product);
         log.info("The product with id: {} was successfully saved", productId);

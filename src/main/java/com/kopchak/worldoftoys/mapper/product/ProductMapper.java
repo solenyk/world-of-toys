@@ -1,9 +1,9 @@
 package com.kopchak.worldoftoys.mapper.product;
 
+import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminFilteredProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminFilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
-import com.kopchak.worldoftoys.dto.admin.product.UpdateProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.category.AdminProductCategoryDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
@@ -36,7 +36,7 @@ public abstract class ProductMapper {
     @Mapping(target = "originCategory", ignore = true)
     @Mapping(target = "brandCategory", ignore = true)
     @Mapping(target = "ageCategories", ignore = true)
-    public abstract Product toProduct(UpdateProductDto updateProductDto, Integer productId,
+    public abstract Product toProduct(AddUpdateProductDto addUpdateProductDto, Integer productId,
                                       @Context ProductCategoryRepository categoryRepository, MultipartFile mainImageFile,
                                       List<MultipartFile> imageFilesList, @Context ImageService imageService)
             throws ImageException, CategoryNotFoundException;
@@ -57,24 +57,24 @@ public abstract class ProductMapper {
 
 
     @AfterMapping
-    protected void afterToProduct(@MappingTarget Product product, UpdateProductDto updateProductDto,
+    protected void afterToProduct(@MappingTarget Product product, AddUpdateProductDto addUpdateProductDto,
                                   @Context ProductCategoryRepository categoryRepository, MultipartFile mainImageFile,
                                   List<MultipartFile> imageFilesList, @Context ImageService imageService)
             throws CategoryNotFoundException, ImageException {
-        setProductCategories(product, updateProductDto, categoryRepository);
+        setProductCategories(product, addUpdateProductDto, categoryRepository);
         setProductImages(product, mainImageFile, imageFilesList, imageService);
     }
 
-    protected void setProductCategories(Product product, UpdateProductDto updateProductDto,
+    protected void setProductCategories(Product product, AddUpdateProductDto addUpdateProductDto,
                                         @Context ProductCategoryRepository categoryRepository)
             throws CategoryNotFoundException {
-        product.setBrandCategory(categoryRepository.findById(updateProductDto.brandCategory().id(),
+        product.setBrandCategory(categoryRepository.findById(addUpdateProductDto.brandCategory().id(),
                 BrandCategory.class));
-        product.setOriginCategory(categoryRepository.findById(updateProductDto.originCategory().id(),
+        product.setOriginCategory(categoryRepository.findById(addUpdateProductDto.originCategory().id(),
                 OriginCategory.class));
 
         Set<AgeCategory> ageCategories = new LinkedHashSet<>();
-        for (AdminProductCategoryDto ageCategory : updateProductDto.ageCategories()) {
+        for (AdminProductCategoryDto ageCategory : addUpdateProductDto.ageCategories()) {
             ageCategories.add(categoryRepository.findById(ageCategory.id(), AgeCategory.class));
         }
         product.setAgeCategories(ageCategories);

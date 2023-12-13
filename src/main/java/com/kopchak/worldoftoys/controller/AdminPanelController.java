@@ -1,8 +1,8 @@
 package com.kopchak.worldoftoys.controller;
 
+import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminFilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
-import com.kopchak.worldoftoys.dto.admin.product.UpdateProductDto;
 import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
@@ -97,11 +97,11 @@ public class AdminPanelController {
     })
     @PutMapping("/products/{productId}")
     public ResponseEntity<Void> updateProduct(@PathVariable(name = "productId") Integer productId,
-                                              @Valid @RequestPart("product") UpdateProductDto updateProductDto,
+                                              @Valid @RequestPart("product") AddUpdateProductDto addUpdateProductDto,
                                               @RequestPart("image") MultipartFile mainImageFile,
                                               @RequestPart("images") List<MultipartFile> imageFilesList) {
         try {
-            productService.updateProduct(productId, updateProductDto, mainImageFile, imageFilesList);
+            productService.updateProduct(productId, addUpdateProductDto, mainImageFile, imageFilesList);
         } catch (CategoryNotFoundException | ImageException e) {
             log.error("The error: {} occurred while updating the product with id: {}", e.getMessage(), productId);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());

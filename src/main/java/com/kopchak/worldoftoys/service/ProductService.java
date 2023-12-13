@@ -2,7 +2,7 @@ package com.kopchak.worldoftoys.service;
 
 import com.kopchak.worldoftoys.dto.admin.product.AdminFilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
-import com.kopchak.worldoftoys.dto.admin.product.UpdateProductDto;
+import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringProductCategoriesDto;
@@ -10,7 +10,6 @@ import com.kopchak.worldoftoys.exception.exception.CategoryNotFoundException;
 import com.kopchak.worldoftoys.exception.exception.ImageException;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
@@ -32,6 +31,6 @@ public interface ProductService {
 
     Optional<AdminProductDto> getAdminProductDtoById(Integer productId);
 
-    void updateProduct(Integer productId, UpdateProductDto updateProductDto, MultipartFile mainImageFile,
-                              List<MultipartFile> imageFileList) throws CategoryNotFoundException, ImageException;
+    void updateProduct(Integer productId, AddUpdateProductDto addUpdateProductDto, MultipartFile mainImageFile,
+                       List<MultipartFile> imageFileList) throws CategoryNotFoundException, ImageException;
 }
