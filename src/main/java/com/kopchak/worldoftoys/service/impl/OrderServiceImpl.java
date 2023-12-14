@@ -33,7 +33,7 @@ public class OrderServiceImpl implements OrderService {
         Set<CartItem> cartItems = cartItemRepository.deleteAllById_User(user);
         if (cartItems.isEmpty()) {
             throw new OrderException(String.format("Impossible to create an order for the user: %s " +
-                    "because he does not have any products in the cart.", user.getUsername()));
+                    "because there are no products in the user's cart.", user.getUsername()));
         }
         OrderRecipient orderRecipient = orderRecipientMapper.toOrderRecipient(orderRecipientDto);
         Order order = Order

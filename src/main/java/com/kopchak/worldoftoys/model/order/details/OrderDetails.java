@@ -6,6 +6,8 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @Getter
 @Setter
@@ -22,7 +24,8 @@ public class OrderDetails {
 
     @Id
     @ManyToOne(cascade = CascadeType.MERGE)
-    @JoinColumn(name = "product_id", nullable = false, referencedColumnName = "id")
+    @JoinColumn(name = "product_id", referencedColumnName = "id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Product product;
 
     @Column(columnDefinition = "integer default 1", nullable = false)

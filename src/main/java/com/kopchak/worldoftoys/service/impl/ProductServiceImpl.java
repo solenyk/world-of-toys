@@ -140,4 +140,9 @@ public class ProductServiceImpl implements ProductService {
         productRepository.save(product);
         log.info("The product with name: {} was successfully saved", product.getName());
     }
+
+    @Override
+    public void deleteProduct(Integer productId){
+        productRepository.deleteById(productId);
+    }
 }

@@ -8,7 +8,10 @@ import com.kopchak.worldoftoys.model.product.category.BrandCategory;
 import com.kopchak.worldoftoys.model.product.category.OriginCategory;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -76,7 +79,7 @@ public class Product {
             inverseJoinColumns = @JoinColumn(name = "age_category_id"))
     private Set<AgeCategory> ageCategories;
 
-    @OneToMany(mappedBy = "product")
+    @OneToMany(mappedBy = "product", cascade = CascadeType.REMOVE)
     private Set<OrderDetails> orderDetails;
 
     @PrePersist

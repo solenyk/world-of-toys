@@ -134,4 +134,15 @@ public class AdminPanelController {
         }
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
+
+    @Operation(summary = "Add product")
+    @ApiResponse(
+            responseCode = "204",
+            description = "Product was successfully created",
+            content = @Content(schema = @Schema(hidden = true)))
+    @DeleteMapping("/products/{productId}")
+    public ResponseEntity<Void> deleteProduct(@PathVariable(name = "productId") Integer productId) {
+        productService.deleteProduct(productId);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
 }

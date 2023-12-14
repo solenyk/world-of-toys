@@ -39,4 +39,6 @@ public interface ProductService {
     void addProduct(AddUpdateProductDto addUpdateProductDto, MultipartFile mainImageFile,
                     List<MultipartFile> imageFileList)
             throws CategoryNotFoundException, ImageException, ProductException;
+
+    void deleteProduct(Integer productId);
 }
