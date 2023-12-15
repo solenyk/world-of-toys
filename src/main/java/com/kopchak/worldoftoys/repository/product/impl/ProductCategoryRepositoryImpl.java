@@ -72,19 +72,6 @@ public class ProductCategoryRepositoryImpl implements ProductCategoryRepository 
         entityManager.createQuery(criteriaQuery).executeUpdate();
     }
 
-    public <T extends ProductCategory> boolean containsProductsInCategory(Class<T> productCategoryType, Integer id)
-            throws CategoryException {
-        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
-        CriteriaQuery<Product> criteriaQuery = criteriaBuilder.createQuery(Product.class);
-        Root<Product> root = criteriaQuery.from(Product.class);
-        String joinField = categoryTypeToJoinField(productCategoryType);
-        Join<Product, T> categoryJoin = root.join(joinField, JoinType.INNER);
-        criteriaQuery.select(root).where(criteriaBuilder.equal(categoryJoin.get(ProductCategory_.ID), id));
-        List<Product> products = entityManager.createQuery(criteriaQuery).getResultList();
-        return !products.isEmpty();
-    }
-
-
     private List<ProductCategoryDto> findUniqueProductCategoryDtoList(Specification<Product> spec,
                                                                       String productCategoryAttribute) {
 
@@ -111,6 +98,18 @@ public class ProductCategoryRepositoryImpl implements ProductCategoryRepository 
         List<ProductCategoryDto> productCategoryDtoList = productCategoryMapper.toProductCategoryDtoList(query.getResultList());
         log.info("Found {} unique product categories for category: {}", productCategoryDtoList.size(), productCategoryAttribute);
         return productCategoryDtoList;
+    }
+
+    private <T extends ProductCategory> boolean containsProductsInCategory(Class<T> productCategoryType, Integer id)
+            throws CategoryException {
+        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Product> criteriaQuery = criteriaBuilder.createQuery(Product.class);
+        Root<Product> root = criteriaQuery.from(Product.class);
+        String joinField = categoryTypeToJoinField(productCategoryType);
+        Join<Product, T> categoryJoin = root.join(joinField, JoinType.INNER);
+        criteriaQuery.select(root).where(criteriaBuilder.equal(categoryJoin.get(ProductCategory_.ID), id));
+        List<Product> products = entityManager.createQuery(criteriaQuery).getResultList();
+        return !products.isEmpty();
     }
 
     private <T extends ProductCategory> String categoryTypeToJoinField(Class<T> productCategoryType)

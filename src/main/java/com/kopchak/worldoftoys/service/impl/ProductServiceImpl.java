@@ -4,7 +4,7 @@ import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminFilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.category.AllAdminCategoriesDto;
-import com.kopchak.worldoftoys.dto.admin.product.category.CategoryType;
+import com.kopchak.worldoftoys.model.product.category.type.CategoryType;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringProductCategoriesDto;
@@ -161,5 +161,16 @@ public class ProductServiceImpl implements ProductService {
         var originCategories = productCategoryRepository.findAllCategories(OriginCategory.class);
         var ageCategories = productCategoryRepository.findAllCategories(AgeCategory.class);
         return productCategoryMapper.toAllAdminCategoriesDto(brandCategories, originCategories, ageCategories);
+    }
+
+    @Override
+    public void deleteCategory(String categoryType, Integer categoryId) throws CategoryException {
+        Class<? extends ProductCategory> categoryClass =
+                switch (CategoryType.findByValue(categoryType)) {
+                    case BRANDS -> BrandCategory.class;
+                    case ORIGINS -> OriginCategory.class;
+                    case AGES -> AgeCategory.class;
+                };
+        productCategoryRepository.deleteCategory(categoryClass, categoryId);
     }
 }

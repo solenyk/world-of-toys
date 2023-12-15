@@ -7,7 +7,7 @@ import com.kopchak.worldoftoys.dto.admin.product.category.AllAdminCategoriesDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringProductCategoriesDto;
-import com.kopchak.worldoftoys.exception.exception.CategoryNotFoundException;
+import com.kopchak.worldoftoys.exception.exception.CategoryException;
 import com.kopchak.worldoftoys.exception.exception.ImageException;
 import com.kopchak.worldoftoys.exception.exception.ProductException;
 import org.springframework.web.multipart.MultipartFile;
@@ -35,13 +35,14 @@ public interface ProductService {
 
     void updateProduct(Integer productId, AddUpdateProductDto addUpdateProductDto, MultipartFile mainImageFile,
                        List<MultipartFile> imageFileList)
-            throws CategoryNotFoundException, ImageException, ProductException;
+            throws CategoryException, ImageException, ProductException;
 
     void addProduct(AddUpdateProductDto addUpdateProductDto, MultipartFile mainImageFile,
                     List<MultipartFile> imageFileList)
-            throws CategoryNotFoundException, ImageException, ProductException;
+            throws CategoryException, ImageException, ProductException;
 
     void deleteProduct(Integer productId);
 
     AllAdminCategoriesDto getAdminProductCategories();
+    void deleteCategory(String category, Integer categoryId) throws CategoryException;
 }

@@ -8,7 +8,7 @@ import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.exception.ProductNotFoundException;
-import com.kopchak.worldoftoys.exception.exception.CategoryNotFoundException;
+import com.kopchak.worldoftoys.exception.exception.CategoryException;
 import com.kopchak.worldoftoys.exception.exception.ImageException;
 import com.kopchak.worldoftoys.exception.exception.ProductException;
 import com.kopchak.worldoftoys.service.ProductService;
@@ -104,7 +104,7 @@ public class AdminPanelController {
                                               @RequestPart("images") List<MultipartFile> imageFilesList) {
         try {
             productService.updateProduct(productId, addUpdateProductDto, mainImageFile, imageFilesList);
-        } catch (ProductException | CategoryNotFoundException | ImageException e) {
+        } catch (ProductException | CategoryException | ImageException e) {
             log.error("The error: {} occurred while updating the product with id: {}", e.getMessage(), productId);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
@@ -128,7 +128,7 @@ public class AdminPanelController {
                                            @RequestPart("images") List<MultipartFile> imageFilesList) {
         try {
             productService.addProduct(addUpdateProductDto, mainImageFile, imageFilesList);
-        } catch (ProductException | CategoryNotFoundException | ImageException e) {
+        } catch (ProductException | CategoryException | ImageException e) {
             log.error("The error: {} occurred while creating the product with name: {}",
                     e.getMessage(), addUpdateProductDto.name());
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
@@ -136,10 +136,10 @@ public class AdminPanelController {
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
-    @Operation(summary = "Add product")
+    @Operation(summary = "Delete product")
     @ApiResponse(
             responseCode = "204",
-            description = "Product was successfully created",
+            description = "Product was successfully deleted",
             content = @Content(schema = @Schema(hidden = true)))
     @DeleteMapping("/products/{productId}")
     public ResponseEntity<Void> deleteProduct(@PathVariable(name = "productId") Integer productId) {
@@ -155,5 +155,27 @@ public class AdminPanelController {
     @GetMapping("/categories")
     public ResponseEntity<AllAdminCategoriesDto> getProductCategories() {
         return new ResponseEntity<>(productService.getAdminProductCategories(), HttpStatus.OK);
+    }
+
+    @Operation(summary = "Delete product category")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "204",
+                    description = "Product category was successfully deleted",
+                    content = @Content(schema = @Schema(hidden = true))),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Product category is incorrect",
+                    content = @Content(schema = @Schema(hidden = true)))
+    })
+    @DeleteMapping("/categories/{categoryType}/{categoryId}")
+    public ResponseEntity<Void> deleteCategory(@PathVariable("categoryType") String categoryType,
+                                                    @PathVariable(name = "categoryId") Integer categoryId) {
+        try {
+            productService.deleteCategory(categoryType, categoryId);
+        } catch (CategoryException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }
