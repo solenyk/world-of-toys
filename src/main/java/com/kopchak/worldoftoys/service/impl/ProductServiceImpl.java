@@ -4,10 +4,11 @@ import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminFilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.category.AllAdminCategoriesDto;
+import com.kopchak.worldoftoys.dto.admin.product.category.CategoryType;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringProductCategoriesDto;
-import com.kopchak.worldoftoys.exception.exception.CategoryNotFoundException;
+import com.kopchak.worldoftoys.exception.exception.CategoryException;
 import com.kopchak.worldoftoys.exception.exception.ImageException;
 import com.kopchak.worldoftoys.exception.exception.ProductException;
 import com.kopchak.worldoftoys.mapper.product.ProductCategoryMapper;
@@ -17,6 +18,7 @@ import com.kopchak.worldoftoys.model.product.Product;
 import com.kopchak.worldoftoys.model.product.category.AgeCategory;
 import com.kopchak.worldoftoys.model.product.category.BrandCategory;
 import com.kopchak.worldoftoys.model.product.category.OriginCategory;
+import com.kopchak.worldoftoys.model.product.category.ProductCategory;
 import com.kopchak.worldoftoys.repository.product.ProductCategoryRepository;
 import com.kopchak.worldoftoys.repository.product.ProductRepository;
 import com.kopchak.worldoftoys.repository.product.image.ImageRepository;
@@ -117,15 +119,16 @@ public class ProductServiceImpl implements ProductService {
 
     public void updateProduct(Integer productId, AddUpdateProductDto addUpdateProductDto, MultipartFile mainImageFile,
                               List<MultipartFile> imageFilesList)
-            throws CategoryNotFoundException, ImageException, ProductException {
+            throws CategoryException, ImageException, ProductException {
         String productName = addUpdateProductDto.name();
-        if (productRepository.findByName(productName).isEmpty()) {
+        Optional<Product> productOptional = productRepository.findByName(productName);
+        if (productOptional.isPresent() && !productOptional.get().getId().equals(productId)) {
             throw new ProductException(String.format("Product with name: %s is already exist", productName));
         }
         Product product = productMapper.toProduct(addUpdateProductDto, productId, productCategoryRepository,
                 mainImageFile, imageFilesList, imageService);
         productRepository.save(product);
-        log.info("The product with id: {} was successfully saved", productId);
+        log.info("The product with id: {} was successfully updated", productId);
         Set<Image> productImagesSet = product.getImages();
         productImagesSet.add(product.getMainImage());
         Set<String> imageNames = productImagesSet.stream().map(Image::getName).collect(Collectors.toSet());
@@ -136,9 +139,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public void addProduct(AddUpdateProductDto addUpdateProductDto, MultipartFile mainImageFile,
-                           List<MultipartFile> imageFileList) throws CategoryNotFoundException, ImageException, ProductException {
+                           List<MultipartFile> imageFileList) throws CategoryException, ImageException, ProductException {
         String productName = addUpdateProductDto.name();
-        if (productRepository.findByName(productName).isEmpty()) {
+        if (productRepository.findByName(productName).isPresent()) {
             throw new ProductException(String.format("Product with name: %s is already exist", productName));
         }
         Product product = productMapper.toProduct(addUpdateProductDto, productCategoryRepository,
@@ -148,12 +151,12 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public void deleteProduct(Integer productId){
+    public void deleteProduct(Integer productId) {
         productRepository.deleteById(productId);
     }
 
     @Override
-    public AllAdminCategoriesDto getAdminProductCategories(){
+    public AllAdminCategoriesDto getAdminProductCategories() {
         var brandCategories = productCategoryRepository.findAllCategories(BrandCategory.class);
         var originCategories = productCategoryRepository.findAllCategories(OriginCategory.class);
         var ageCategories = productCategoryRepository.findAllCategories(AgeCategory.class);
