@@ -18,7 +18,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 @Repository
 @RequiredArgsConstructor
@@ -42,10 +44,20 @@ public class ProductCategoryRepositoryImpl implements ProductCategoryRepository 
             throws CategoryNotFoundException {
         T category = entityManager.find(productCategoryType, id);
         if (category == null) {
-            throw new CategoryNotFoundException(productCategoryType.getSimpleName() + " with id " + id +
-                    " does not exist");
+            throw new CategoryNotFoundException(String.format("%s with id: %d does not exist",
+                    productCategoryType.getSimpleName(), id));
         }
         return category;
+    }
+
+    @Override
+    public <T extends ProductCategory> Set<T> findAllCategories(Class<T> productCategoryType) {
+        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+        CriteriaQuery<T> criteriaQuery = criteriaBuilder.createQuery(productCategoryType);
+        Root<T> root = criteriaQuery.from(productCategoryType);
+        criteriaQuery.select(root);
+        TypedQuery<T> query = entityManager.createQuery(criteriaQuery);
+        return new LinkedHashSet<>(query.getResultList());
     }
 
 
