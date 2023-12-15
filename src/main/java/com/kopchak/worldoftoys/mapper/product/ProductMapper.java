@@ -4,7 +4,7 @@ import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminFilteredProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminFilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
-import com.kopchak.worldoftoys.dto.admin.product.category.AdminProductCategoryDto;
+import com.kopchak.worldoftoys.dto.admin.product.category.AdminProductCategoryIdDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
@@ -83,7 +83,7 @@ public abstract class ProductMapper {
                 OriginCategory.class));
 
         Set<AgeCategory> ageCategories = new LinkedHashSet<>();
-        for (AdminProductCategoryDto ageCategory : addUpdateProductDto.ageCategories()) {
+        for (AdminProductCategoryIdDto ageCategory : addUpdateProductDto.ageCategories()) {
             ageCategories.add(categoryRepository.findById(ageCategory.id(), AgeCategory.class));
         }
         product.setAgeCategories(ageCategories);
