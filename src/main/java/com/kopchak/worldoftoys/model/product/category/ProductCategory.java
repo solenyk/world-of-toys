@@ -14,11 +14,12 @@ public class ProductCategory {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @Column(length = 60, nullable = false, unique = true)
     @NotBlank(message = "Name is mandatory")
     @Size(min = 3, max = 60, message = "Name must be up to 60 characters long")
     private String name;
 
-    @Column(length = 80, nullable = false)
+    @Column(length = 80, nullable = false, unique = true)
     @NotBlank(message = "Slug is mandatory")
     @Size(min = 3, max = 80, message = "Slug must be up to 80 characters long")
     private String slug;
