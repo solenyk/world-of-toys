@@ -3,6 +3,7 @@ package com.kopchak.worldoftoys.controller;
 import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminFilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
+import com.kopchak.worldoftoys.dto.admin.product.category.AllAdminCategoriesDto;
 import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
@@ -144,5 +145,15 @@ public class AdminPanelController {
     public ResponseEntity<Void> deleteProduct(@PathVariable(name = "productId") Integer productId) {
         productService.deleteProduct(productId);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @Operation(summary = "Get all categories")
+    @ApiResponse(
+            responseCode = "200",
+            description = "Product categories were successfully fetched",
+            content = @Content(schema = @Schema(implementation = AllAdminCategoriesDto.class)))
+    @GetMapping("/categories")
+    public ResponseEntity<AllAdminCategoriesDto> getProductCategories() {
+        return new ResponseEntity<>(productService.getAdminProductCategories(), HttpStatus.OK);
     }
 }

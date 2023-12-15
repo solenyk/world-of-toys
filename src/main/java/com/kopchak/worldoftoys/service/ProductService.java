@@ -3,6 +3,7 @@ package com.kopchak.worldoftoys.service;
 import com.kopchak.worldoftoys.dto.admin.product.AdminFilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
+import com.kopchak.worldoftoys.dto.admin.product.category.AllAdminCategoriesDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringProductCategoriesDto;
@@ -41,4 +42,6 @@ public interface ProductService {
             throws CategoryNotFoundException, ImageException, ProductException;
 
     void deleteProduct(Integer productId);
+
+    AllAdminCategoriesDto getAdminProductCategories();
 }

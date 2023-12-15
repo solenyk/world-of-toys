@@ -3,15 +3,20 @@ package com.kopchak.worldoftoys.service.impl;
 import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminFilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
+import com.kopchak.worldoftoys.dto.admin.product.category.AllAdminCategoriesDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringProductCategoriesDto;
 import com.kopchak.worldoftoys.exception.exception.CategoryNotFoundException;
 import com.kopchak.worldoftoys.exception.exception.ImageException;
 import com.kopchak.worldoftoys.exception.exception.ProductException;
+import com.kopchak.worldoftoys.mapper.product.ProductCategoryMapper;
 import com.kopchak.worldoftoys.mapper.product.ProductMapper;
 import com.kopchak.worldoftoys.model.image.Image;
 import com.kopchak.worldoftoys.model.product.Product;
+import com.kopchak.worldoftoys.model.product.category.AgeCategory;
+import com.kopchak.worldoftoys.model.product.category.BrandCategory;
+import com.kopchak.worldoftoys.model.product.category.OriginCategory;
 import com.kopchak.worldoftoys.repository.product.ProductCategoryRepository;
 import com.kopchak.worldoftoys.repository.product.ProductRepository;
 import com.kopchak.worldoftoys.repository.product.image.ImageRepository;
@@ -40,6 +45,7 @@ public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
     private final ProductCategoryRepository productCategoryRepository;
     private final ProductSpecificationsImpl productSpecifications;
+    private final ProductCategoryMapper productCategoryMapper;
     private final ProductMapper productMapper;
     private final ImageRepository imageRepository;
     private final ImageService imageService;
@@ -144,5 +150,13 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public void deleteProduct(Integer productId){
         productRepository.deleteById(productId);
+    }
+
+    @Override
+    public AllAdminCategoriesDto getAdminProductCategories(){
+        var brandCategories = productCategoryRepository.findAllCategories(BrandCategory.class);
+        var originCategories = productCategoryRepository.findAllCategories(OriginCategory.class);
+        var ageCategories = productCategoryRepository.findAllCategories(AgeCategory.class);
+        return productCategoryMapper.toAllAdminCategoriesDto(brandCategories, originCategories, ageCategories);
     }
 }
