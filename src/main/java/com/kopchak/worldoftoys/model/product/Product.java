@@ -56,11 +56,13 @@ public class Product {
     @Min(value = 0, message = "Invalid quantity: product quantity '${validatedValue}' must not be less than {value}")
     private BigInteger availableQuantity;
 
-    @OneToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
+    @OneToOne(fetch = FetchType.LAZY,
+            cascade = {CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.MERGE, CascadeType.REMOVE})
     @JoinColumn(name = "image_id", referencedColumnName = "id")
     private Image mainImage;
 
-    @OneToMany(mappedBy = "product", cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
+    @OneToMany(mappedBy = "product",
+            cascade = {CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.MERGE, CascadeType.REMOVE})
     private Set<Image> images;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -79,7 +81,7 @@ public class Product {
             inverseJoinColumns = @JoinColumn(name = "age_category_id"))
     private Set<AgeCategory> ageCategories;
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "product", cascade = {CascadeType.REFRESH, CascadeType.MERGE, CascadeType.REMOVE})
     private Set<OrderDetails> orderDetails;
 
     @PrePersist
