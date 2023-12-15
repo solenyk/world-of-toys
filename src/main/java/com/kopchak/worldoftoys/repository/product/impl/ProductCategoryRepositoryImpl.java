@@ -115,9 +115,9 @@ public class ProductCategoryRepositoryImpl implements ProductCategoryRepository 
     private <T extends ProductCategory> String categoryTypeToJoinField(Class<T> productCategoryType)
             throws CategoryException {
         Map<Class<?>, String> categoryTypeToJoinField = new HashMap<>() {{
-            put(Product_.brandCategory.getType().getClass(), Product_.BRAND_CATEGORY);
-            put(Product_.originCategory.getType().getClass(), Product_.ORIGIN_CATEGORY);
-            put(Product_.ageCategories.getCollectionType().getClass(), Product_.AGE_CATEGORIES);
+            put(Product_.brandCategory.getJavaType(), Product_.BRAND_CATEGORY);
+            put(Product_.originCategory.getJavaType(), Product_.ORIGIN_CATEGORY);
+            put(Product_.ageCategories.getJavaType(), Product_.AGE_CATEGORIES);
         }};
         if (categoryTypeToJoinField.containsKey(productCategoryType)) {
             return categoryTypeToJoinField.get(productCategoryType);
