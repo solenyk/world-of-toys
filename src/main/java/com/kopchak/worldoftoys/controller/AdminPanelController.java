@@ -3,7 +3,7 @@ package com.kopchak.worldoftoys.controller;
 import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminFilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
-import com.kopchak.worldoftoys.dto.admin.product.category.AllAdminCategoriesDto;
+import com.kopchak.worldoftoys.dto.admin.product.category.AdminProductCategoryDto;
 import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
@@ -13,6 +13,7 @@ import com.kopchak.worldoftoys.exception.exception.ImageException;
 import com.kopchak.worldoftoys.exception.exception.ProductException;
 import com.kopchak.worldoftoys.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -31,6 +32,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/v1/admin")
@@ -148,13 +150,31 @@ public class AdminPanelController {
     }
 
     @Operation(summary = "Get all categories")
-    @ApiResponse(
-            responseCode = "200",
-            description = "Product categories were successfully fetched",
-            content = @Content(schema = @Schema(implementation = AllAdminCategoriesDto.class)))
-    @GetMapping("/categories")
-    public ResponseEntity<AllAdminCategoriesDto> getProductCategories() {
-        return new ResponseEntity<>(productService.getAdminProductCategories(), HttpStatus.OK);
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Product categories were successfully fetched",
+                    content = {
+                            @Content(
+                                    mediaType = "application/json",
+                                    array = @ArraySchema(
+                                            schema = @Schema(implementation = AdminProductCategoryDto.class))
+                            )
+                    }),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Category type is invalid",
+                    content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class)))
+    })
+    @GetMapping("/categories/{categoryType}")
+    public ResponseEntity<Set<AdminProductCategoryDto>> getProductCategories(
+            @PathVariable("categoryType") String categoryType) {
+        try {
+            Set<AdminProductCategoryDto> categoryDtoSet = productService.getAdminProductCategories(categoryType);
+            return new ResponseEntity<>(categoryDtoSet, HttpStatus.OK);
+        } catch (CategoryException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
     }
 
     @Operation(summary = "Delete product category")
@@ -170,7 +190,7 @@ public class AdminPanelController {
     })
     @DeleteMapping("/categories/{categoryType}/{categoryId}")
     public ResponseEntity<Void> deleteCategory(@PathVariable("categoryType") String categoryType,
-                                                    @PathVariable(name = "categoryId") Integer categoryId) {
+                                               @PathVariable(name = "categoryId") Integer categoryId) {
         try {
             productService.deleteCategory(categoryType, categoryId);
         } catch (CategoryException e) {

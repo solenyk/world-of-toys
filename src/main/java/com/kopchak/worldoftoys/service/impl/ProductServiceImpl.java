@@ -3,8 +3,7 @@ package com.kopchak.worldoftoys.service.impl;
 import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminFilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
-import com.kopchak.worldoftoys.dto.admin.product.category.AllAdminCategoriesDto;
-import com.kopchak.worldoftoys.model.product.category.type.CategoryType;
+import com.kopchak.worldoftoys.dto.admin.product.category.AdminProductCategoryDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringProductCategoriesDto;
@@ -19,6 +18,7 @@ import com.kopchak.worldoftoys.model.product.category.AgeCategory;
 import com.kopchak.worldoftoys.model.product.category.BrandCategory;
 import com.kopchak.worldoftoys.model.product.category.OriginCategory;
 import com.kopchak.worldoftoys.model.product.category.ProductCategory;
+import com.kopchak.worldoftoys.model.product.category.type.CategoryType;
 import com.kopchak.worldoftoys.repository.product.ProductCategoryRepository;
 import com.kopchak.worldoftoys.repository.product.ProductRepository;
 import com.kopchak.worldoftoys.repository.product.image.ImageRepository;
@@ -156,21 +156,23 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public AllAdminCategoriesDto getAdminProductCategories() {
-        var brandCategories = productCategoryRepository.findAllCategories(BrandCategory.class);
-        var originCategories = productCategoryRepository.findAllCategories(OriginCategory.class);
-        var ageCategories = productCategoryRepository.findAllCategories(AgeCategory.class);
-        return productCategoryMapper.toAllAdminCategoriesDto(brandCategories, originCategories, ageCategories);
+    public Set<AdminProductCategoryDto> getAdminProductCategories(String categoryType) throws CategoryException {
+        Class<? extends ProductCategory> categoryClass = getCategoryByCategoryType(categoryType);
+        var categories = productCategoryRepository.findAllCategories(categoryClass);
+        return productCategoryMapper.toAdminProductCategoryDtoSet(categories);
     }
 
     @Override
     public void deleteCategory(String categoryType, Integer categoryId) throws CategoryException {
-        Class<? extends ProductCategory> categoryClass =
-                switch (CategoryType.findByValue(categoryType)) {
-                    case BRANDS -> BrandCategory.class;
-                    case ORIGINS -> OriginCategory.class;
-                    case AGES -> AgeCategory.class;
-                };
+        Class<? extends ProductCategory> categoryClass = getCategoryByCategoryType(categoryType);
         productCategoryRepository.deleteCategory(categoryClass, categoryId);
+    }
+
+    private Class<? extends ProductCategory> getCategoryByCategoryType(String categoryType) throws CategoryException {
+        return switch (CategoryType.findByValue(categoryType)) {
+            case BRANDS -> BrandCategory.class;
+            case ORIGINS -> OriginCategory.class;
+            case AGES -> AgeCategory.class;
+        };
     }
 }

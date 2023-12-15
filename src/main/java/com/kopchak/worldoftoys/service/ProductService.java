@@ -1,9 +1,9 @@
 package com.kopchak.worldoftoys.service;
 
+import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminFilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
-import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
-import com.kopchak.worldoftoys.dto.admin.product.category.AllAdminCategoriesDto;
+import com.kopchak.worldoftoys.dto.admin.product.category.AdminProductCategoryDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringProductCategoriesDto;
@@ -15,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface ProductService {
     FilteredProductsPageDto getFilteredProducts(int page, int size, String productName, BigDecimal minPrice, BigDecimal maxPrice,
@@ -43,6 +44,6 @@ public interface ProductService {
 
     void deleteProduct(Integer productId);
 
-    AllAdminCategoriesDto getAdminProductCategories();
+    Set<AdminProductCategoryDto> getAdminProductCategories(String categoryType) throws CategoryException;
     void deleteCategory(String category, Integer categoryId) throws CategoryException;
 }
