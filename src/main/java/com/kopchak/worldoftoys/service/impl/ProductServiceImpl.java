@@ -4,6 +4,7 @@ import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminFilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.category.AdminProductCategoryDto;
+import com.kopchak.worldoftoys.dto.admin.product.category.AdminProductCategoryNameDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringProductCategoriesDto;
@@ -166,6 +167,13 @@ public class ProductServiceImpl implements ProductService {
     public void deleteCategory(String categoryType, Integer categoryId) throws CategoryException {
         Class<? extends ProductCategory> categoryClass = getCategoryByCategoryType(categoryType);
         productCategoryRepository.deleteCategory(categoryClass, categoryId);
+    }
+
+    @Override
+    public void updateCategory(String categoryType, Integer categoryId, AdminProductCategoryNameDto categoryNameDto)
+            throws CategoryException {
+        Class<? extends ProductCategory> categoryClass = getCategoryByCategoryType(categoryType);
+        productCategoryRepository.updateCategory(categoryClass, categoryId, categoryNameDto.name());
     }
 
     private Class<? extends ProductCategory> getCategoryByCategoryType(String categoryType) throws CategoryException {

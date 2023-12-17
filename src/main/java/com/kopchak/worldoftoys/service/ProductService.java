@@ -4,6 +4,7 @@ import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminFilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.category.AdminProductCategoryDto;
+import com.kopchak.worldoftoys.dto.admin.product.category.AdminProductCategoryNameDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringProductCategoriesDto;
@@ -45,5 +46,9 @@ public interface ProductService {
     void deleteProduct(Integer productId);
 
     Set<AdminProductCategoryDto> getAdminProductCategories(String categoryType) throws CategoryException;
+
     void deleteCategory(String category, Integer categoryId) throws CategoryException;
+
+    void updateCategory(String categoryType, Integer categoryId, AdminProductCategoryNameDto categoryNameDto)
+            throws CategoryException;
 }

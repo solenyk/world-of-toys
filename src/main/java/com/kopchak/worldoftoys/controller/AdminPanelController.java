@@ -4,6 +4,7 @@ import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminFilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.category.AdminProductCategoryDto;
+import com.kopchak.worldoftoys.dto.admin.product.category.AdminProductCategoryNameDto;
 import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
@@ -88,7 +89,7 @@ public class AdminPanelController {
         return new ResponseEntity<>(productDtoOptional.get(), HttpStatus.OK);
     }
 
-    @Operation(summary = "Update product with id")
+    @Operation(summary = "Update product")
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "204",
@@ -193,6 +194,18 @@ public class AdminPanelController {
                                                @PathVariable(name = "categoryId") Integer categoryId) {
         try {
             productService.deleteCategory(categoryType, categoryId);
+        } catch (CategoryException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @PutMapping("/categories/{categoryType}/{categoryId}")
+    public ResponseEntity<Void> updateCategory(@PathVariable("categoryType") String categoryType,
+                                               @PathVariable(name = "categoryId") Integer categoryId,
+                                               @Valid @RequestBody AdminProductCategoryNameDto categoryNameDto) {
+        try {
+            productService.updateCategory(categoryType, categoryId, categoryNameDto);
         } catch (CategoryException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
