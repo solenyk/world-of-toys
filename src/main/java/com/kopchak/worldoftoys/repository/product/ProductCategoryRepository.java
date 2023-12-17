@@ -17,4 +17,7 @@ public interface ProductCategoryRepository {
 
     <T extends ProductCategory> void deleteCategory(Class<T> productCategoryType, Integer id)
             throws CategoryException;
+
+    <T extends ProductCategory> void updateCategory(Class<T> categoryType, Integer id, String name)
+            throws CategoryException;
 }

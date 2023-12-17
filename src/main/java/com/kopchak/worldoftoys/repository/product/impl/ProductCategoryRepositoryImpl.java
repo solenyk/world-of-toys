@@ -11,8 +11,10 @@ import com.kopchak.worldoftoys.model.product.category.ProductCategory;
 import com.kopchak.worldoftoys.model.product.category.ProductCategory_;
 import com.kopchak.worldoftoys.repository.product.ProductCategoryRepository;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.NoResultException;
 import jakarta.persistence.TypedQuery;
 import jakarta.persistence.criteria.*;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.domain.Specification;
@@ -59,6 +61,7 @@ public class ProductCategoryRepositoryImpl implements ProductCategoryRepository 
     }
 
     @Override
+    @Transactional
     public <T extends ProductCategory> void deleteCategory(Class<T> productCategoryType, Integer id)
             throws CategoryException {
         if (containsProductsInCategory(productCategoryType, id)) {
@@ -70,6 +73,21 @@ public class ProductCategoryRepositoryImpl implements ProductCategoryRepository 
         Root<T> root = criteriaQuery.from(productCategoryType);
         criteriaQuery.where(criteriaBuilder.equal(root.get(ProductCategory_.ID), id));
         entityManager.createQuery(criteriaQuery).executeUpdate();
+    }
+
+    @Override
+    @Transactional
+    public <T extends ProductCategory> void updateCategory(Class<T> categoryType, Integer id, String name)
+            throws CategoryException {
+        if (isCategoryWithNameExists(categoryType, name)) {
+            throw new CategoryException(String.format("Category with name: %s already exist", name));
+        }
+        T entityToUpdate = entityManager.find(categoryType, id);
+        if (entityToUpdate == null) {
+            throw new CategoryException(String.format("Category with id: %d doesn't exist", id));
+        }
+        entityToUpdate.setName(name);
+        entityManager.merge(entityToUpdate);
     }
 
     private List<ProductCategoryDto> findUniqueProductCategoryDtoList(Specification<Product> spec,
@@ -95,17 +113,19 @@ public class ProductCategoryRepositoryImpl implements ProductCategoryRepository 
         }
 
         TypedQuery<ProductCategory> query = entityManager.createQuery(criteriaQuery);
-        List<ProductCategoryDto> productCategoryDtoList = productCategoryMapper.toProductCategoryDtoList(query.getResultList());
-        log.info("Found {} unique product categories for category: {}", productCategoryDtoList.size(), productCategoryAttribute);
+        List<ProductCategoryDto> productCategoryDtoList = productCategoryMapper
+                .toProductCategoryDtoList(query.getResultList());
+        log.info("Found {} unique product categories for category: {}", productCategoryDtoList.size(),
+                productCategoryAttribute);
         return productCategoryDtoList;
     }
 
-    private <T extends ProductCategory> boolean containsProductsInCategory(Class<T> productCategoryType, Integer id)
+    private <T extends ProductCategory> boolean containsProductsInCategory(Class<T> categoryType, Integer id)
             throws CategoryException {
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
         CriteriaQuery<Product> criteriaQuery = criteriaBuilder.createQuery(Product.class);
         Root<Product> root = criteriaQuery.from(Product.class);
-        String joinField = categoryTypeToJoinField(productCategoryType);
+        String joinField = categoryTypeToJoinField(categoryType);
         Join<Product, T> categoryJoin = root.join(joinField, JoinType.INNER);
         criteriaQuery.select(root).where(criteriaBuilder.equal(categoryJoin.get(ProductCategory_.ID), id));
         List<Product> products = entityManager.createQuery(criteriaQuery).getResultList();
@@ -124,5 +144,18 @@ public class ProductCategoryRepositoryImpl implements ProductCategoryRepository 
         }
         throw new CategoryException(String.format("Product category type: %s is incorrect",
                 productCategoryType.getSimpleName()));
+    }
+
+    private <T extends ProductCategory> boolean isCategoryWithNameExists(Class<T> productCategoryType, String name) {
+        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+        CriteriaQuery<T> criteriaQuery = criteriaBuilder.createQuery(productCategoryType);
+        Root<T> root = criteriaQuery.from(productCategoryType);
+        criteriaQuery.where(criteriaBuilder.equal(root.get(ProductCategory_.NAME), name));
+        try {
+            entityManager.createQuery(criteriaQuery).getSingleResult();
+            return true;
+        } catch (NoResultException e) {
+            return false;
+        }
     }
 }
