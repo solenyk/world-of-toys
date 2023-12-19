@@ -1,6 +1,6 @@
 package com.kopchak.worldoftoys.model.order;
 
-public enum OrderStatus {
+public enum OrderStatus implements StatusProvider {
     AWAITING_PAYMENT("Awaiting payment"),
     AWAITING_FULFILMENT("Awaiting  fulfilment"),
     AWAITING_SHIPPING("Awaiting  shipping"),
@@ -12,5 +12,10 @@ public enum OrderStatus {
 
     OrderStatus(String status) {
         this.status = status;
+    }
+
+    @Override
+    public String getStatus() {
+        return this.status;
     }
 }

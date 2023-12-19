@@ -7,6 +7,7 @@ import com.kopchak.worldoftoys.mapper.order.OrderMapper;
 import com.kopchak.worldoftoys.model.cart.CartItem;
 import com.kopchak.worldoftoys.model.order.Order;
 import com.kopchak.worldoftoys.model.order.OrderStatus;
+import com.kopchak.worldoftoys.model.order.StatusProvider;
 import com.kopchak.worldoftoys.model.order.details.OrderDetails;
 import com.kopchak.worldoftoys.model.order.payment.Payment;
 import com.kopchak.worldoftoys.model.order.payment.PaymentStatus;
@@ -55,14 +56,13 @@ public class OrderMapperImpl implements OrderMapper {
     @Override
     public FilteringOrderOptionsDto toFilteringOrderOptionsDto(Set<OrderStatus> orderStatusSet,
                                                                Set<PaymentStatus> paymentStatusesSet) {
-        return new FilteringOrderOptionsDto(toStatusDtoSet(orderStatusSet),
-                toStatusDtoSet(paymentStatusesSet));
+        return new FilteringOrderOptionsDto(toStatusDtoSet(orderStatusSet), toStatusDtoSet(paymentStatusesSet));
     }
 
-    private <E extends Enum<E>> Set<StatusDto> toStatusDtoSet(Set<E> statusSet) {
-        return statusSet.stream()
+    private <T extends Enum<T> & StatusProvider> Set<StatusDto> toStatusDtoSet(Set<T> statuses) {
+        return statuses.stream()
                 .filter(Objects::nonNull)
-                .map(e -> new StatusDto(e.name()))
+                .map(status -> new StatusDto(status.name(), status.getStatus()))
                 .collect(Collectors.toSet());
     }
 
