@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 @Repository
@@ -88,6 +89,23 @@ public class ProductCategoryRepositoryImpl implements ProductCategoryRepository 
         }
         entityToUpdate.setName(name);
         entityManager.merge(entityToUpdate);
+    }
+
+    @Override
+    @Transactional
+    public <T extends ProductCategory> void addCategory(Class<T> categoryType, String name) throws CategoryException {
+        if (isCategoryWithNameExists(categoryType, name)) {
+            throw new CategoryException(String.format("Category with name: %s already exist", name));
+        }
+        try {
+            T newCategory = categoryType.getDeclaredConstructor().newInstance();
+            newCategory.setName(name);
+            entityManager.persist(newCategory);
+        } catch (InstantiationException | IllegalAccessException | NoSuchMethodException |
+                 InvocationTargetException e) {
+            throw new CategoryException(String.format("Failed to save category with name: %s. " +
+                    "Error: %s. Please try a different name or contact support.", name, e.getMessage()));
+        }
     }
 
     private List<ProductCategoryDto> findUniqueProductCategoryDtoList(Specification<Product> spec,

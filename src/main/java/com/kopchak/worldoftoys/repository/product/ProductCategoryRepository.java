@@ -20,4 +20,6 @@ public interface ProductCategoryRepository {
 
     <T extends ProductCategory> void updateCategory(Class<T> categoryType, Integer id, String name)
             throws CategoryException;
+
+    <T extends ProductCategory> void addCategory(Class<T> categoryType, String name) throws CategoryException;
 }
