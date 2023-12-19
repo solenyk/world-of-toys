@@ -46,4 +46,10 @@ public class Order {
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     private Set<OrderDetails> orderDetails;
+
+    @PrePersist
+    private void setDateTime(){
+        this.dateTime = LocalDateTime.now();
+        this.orderStatus = OrderStatus.AWAITING_PAYMENT;
+    }
 }

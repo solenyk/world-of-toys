@@ -86,7 +86,7 @@ public class Product {
 
     @PrePersist
     @PreUpdate
-    public void setSlug() {
+    private void setSlug() {
         final Slugify slg = Slugify.builder().transliterator(true).build();
         this.slug = slg.slugify(this.name);
     }
