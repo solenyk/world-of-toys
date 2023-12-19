@@ -176,6 +176,12 @@ public class ProductServiceImpl implements ProductService {
         productCategoryRepository.updateCategory(categoryClass, categoryId, categoryNameDto.name());
     }
 
+    @Override
+    public void addCategory(String categoryType, AdminProductCategoryNameDto categoryNameDto) throws CategoryException {
+        Class<? extends ProductCategory> categoryClass = getCategoryByCategoryType(categoryType);
+        productCategoryRepository.addCategory(categoryClass, categoryNameDto.name());
+    }
+
     private Class<? extends ProductCategory> getCategoryByCategoryType(String categoryType) throws CategoryException {
         return switch (CategoryType.findByValue(categoryType)) {
             case BRANDS -> BrandCategory.class;

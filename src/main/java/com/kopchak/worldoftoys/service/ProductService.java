@@ -51,4 +51,6 @@ public interface ProductService {
 
     void updateCategory(String categoryType, Integer categoryId, AdminProductCategoryNameDto categoryNameDto)
             throws CategoryException;
+
+    void addCategory(String categoryType, AdminProductCategoryNameDto categoryNameDto) throws CategoryException;
 }

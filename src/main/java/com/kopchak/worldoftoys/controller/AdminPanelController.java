@@ -211,4 +211,15 @@ public class AdminPanelController {
         }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
+
+    @PostMapping("/categories/{categoryType}/add")
+    public ResponseEntity<Void> addCategory(@PathVariable("categoryType") String categoryType,
+                                            @Valid @RequestBody AdminProductCategoryNameDto categoryNameDto) {
+        try {
+            productService.addCategory(categoryType, categoryNameDto);
+        } catch (CategoryException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
+        return new ResponseEntity<>(HttpStatus.CREATED);
+    }
 }
