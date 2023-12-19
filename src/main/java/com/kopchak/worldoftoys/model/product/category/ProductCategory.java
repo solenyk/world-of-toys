@@ -27,7 +27,7 @@ public class ProductCategory {
 
     @PrePersist
     @PreUpdate
-    public void setSlug() {
+    private void setSlug() {
         System.out.println("call");
         final Slugify slg = Slugify.builder().transliterator(true).build();
         this.slug = slg.slugify(this.name);

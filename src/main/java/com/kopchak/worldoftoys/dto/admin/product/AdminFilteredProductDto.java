@@ -7,6 +7,6 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 
 @Builder
-public record AdminFilteredProductDto(Integer id, String name, String slug, BigDecimal price,
-                                      BigInteger availableQuantity, ImageDto mainImage) {
+public record AdminFilteredProductDto(Integer id, String name, BigDecimal price, BigInteger availableQuantity,
+                                      ImageDto mainImage) {
 }
