@@ -5,6 +5,8 @@ import com.kopchak.worldoftoys.dto.admin.product.AdminFilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.category.AdminProductCategoryDto;
 import com.kopchak.worldoftoys.dto.admin.product.category.AdminProductCategoryNameDto;
+import com.kopchak.worldoftoys.dto.admin.product.order.FilteredOrdersPageDto;
+import com.kopchak.worldoftoys.dto.admin.product.order.FilteringOrderOptionsDto;
 import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
@@ -12,6 +14,9 @@ import com.kopchak.worldoftoys.exception.ProductNotFoundException;
 import com.kopchak.worldoftoys.exception.exception.CategoryException;
 import com.kopchak.worldoftoys.exception.exception.ImageException;
 import com.kopchak.worldoftoys.exception.exception.ProductException;
+import com.kopchak.worldoftoys.model.order.OrderStatus;
+import com.kopchak.worldoftoys.model.order.payment.PaymentStatus;
+import com.kopchak.worldoftoys.service.OrderService;
 import com.kopchak.worldoftoys.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -45,6 +50,7 @@ import java.util.Set;
 public class AdminPanelController {
 
     private final ProductService productService;
+    private final OrderService orderService;
 
     @Operation(summary = "Fetch filtered products")
     @ApiResponse(
@@ -221,5 +227,23 @@ public class AdminPanelController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
         return new ResponseEntity<>(HttpStatus.CREATED);
+    }
+
+    @GetMapping("/orders/filtering-options")
+    public ResponseEntity<FilteringOrderOptionsDto> getOrderFilteringOptions() {
+        return new ResponseEntity<>(orderService.getOrderFilteringOptions(), HttpStatus.OK);
+    }
+
+    @GetMapping("/orders")
+    public ResponseEntity<FilteredOrdersPageDto> filterOrdersByStatusesAndDate(
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size,
+            @RequestParam(name = "order-status", required = false) List<OrderStatus> orderStatuses,
+            @RequestParam(name = "payment-status", required = false) List<PaymentStatus> paymentStatuses,
+            @RequestParam(name = "date-sort", required = false) String dateSortOrder
+    ) {
+        FilteredOrdersPageDto filteredOrdersPageDto =
+                orderService.filterOrdersByStatusesAndDate(page, size, orderStatuses, paymentStatuses, dateSortOrder);
+        return new ResponseEntity<>(filteredOrdersPageDto, HttpStatus.OK);
     }
 }
