@@ -9,7 +9,7 @@ public record AdminProductCategoryIdDto(
         @Schema(example = "1", requiredMode = Schema.RequiredMode.REQUIRED)
         @Min(
                 value = 1,
-                message = "Invalid product category id: id '${validatedValue}' should not be less than {value}"
+                message = "Invalid product category id: id '${validatedValue}' should not be less than {status}"
         )Integer id
 ) {
 }

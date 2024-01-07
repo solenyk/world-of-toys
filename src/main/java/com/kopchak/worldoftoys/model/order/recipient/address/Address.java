@@ -41,11 +41,11 @@ public class Address {
 
     @Column(nullable = false)
     @NotNull(message =  "Invalid house: house is mandatory")
-    @Min(value = 1, message = "Invalid house number: house number '${validatedValue}' should not be less than {value}")
+    @Min(value = 1, message = "Invalid house number: house number '${validatedValue}' should not be less than {status}")
     private Integer house;
 
     @Min(value = 1,
-            message = "Invalid apartment number: apartment number '${validatedValue}' should not be less than {value}")
+            message = "Invalid apartment number: apartment number '${validatedValue}' should not be less than {status}")
     private Integer apartment;
 
     @OneToMany(mappedBy = "address")

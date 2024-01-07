@@ -7,12 +7,14 @@ import com.kopchak.worldoftoys.dto.admin.product.category.AdminProductCategoryDt
 import com.kopchak.worldoftoys.dto.admin.product.category.AdminProductCategoryNameDto;
 import com.kopchak.worldoftoys.dto.admin.product.order.FilteredOrdersPageDto;
 import com.kopchak.worldoftoys.dto.admin.product.order.FilteringOrderOptionsDto;
+import com.kopchak.worldoftoys.dto.admin.product.order.StatusDto;
 import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.exception.ProductNotFoundException;
 import com.kopchak.worldoftoys.exception.exception.CategoryException;
 import com.kopchak.worldoftoys.exception.exception.ImageException;
+import com.kopchak.worldoftoys.exception.exception.OrderException;
 import com.kopchak.worldoftoys.exception.exception.ProductException;
 import com.kopchak.worldoftoys.model.order.OrderStatus;
 import com.kopchak.worldoftoys.model.order.payment.PaymentStatus;
@@ -245,5 +247,17 @@ public class AdminPanelController {
         FilteredOrdersPageDto filteredOrdersPageDto =
                 orderService.filterOrdersByStatusesAndDate(page, size, orderStatuses, paymentStatuses, dateSortOrder);
         return new ResponseEntity<>(filteredOrdersPageDto, HttpStatus.OK);
+    }
+
+    //ToDo: add method which return all OrderStatuses
+    @PatchMapping("/orders/{orderId}")
+    public ResponseEntity<Void> updateOrderStatus(@PathVariable(name = "orderId") String orderId,
+                                                  @RequestBody StatusDto statusDto) {
+        try {
+            orderService.updateOrderStatus(orderId, statusDto);
+        } catch (OrderException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

@@ -3,6 +3,7 @@ package com.kopchak.worldoftoys.mapper.order.impl;
 import com.kopchak.worldoftoys.dto.admin.product.order.*;
 import com.kopchak.worldoftoys.dto.order.OrderDto;
 import com.kopchak.worldoftoys.dto.order.OrderProductDto;
+import com.kopchak.worldoftoys.exception.exception.OrderException;
 import com.kopchak.worldoftoys.mapper.order.OrderMapper;
 import com.kopchak.worldoftoys.model.cart.CartItem;
 import com.kopchak.worldoftoys.model.order.Order;
@@ -59,10 +60,27 @@ public class OrderMapperImpl implements OrderMapper {
         return new FilteringOrderOptionsDto(toStatusDtoSet(orderStatusSet), toStatusDtoSet(paymentStatusesSet));
     }
 
+    @Override
+    public OrderStatus toOrderStatus(StatusDto statusDto) throws OrderException {
+        try {
+            return OrderStatus.valueOf(statusDto.name());
+        } catch (IllegalArgumentException e) {
+            throw new OrderException(String.format("Order status with name: %s doesn't exist!", statusDto.status()));
+        }
+    }
+
+    @Override
+    public Set<StatusDto> toStatusDtoSet(List<OrderStatus> orderStatuses) {
+        return orderStatuses
+                .stream()
+                .map(orderStatus -> new StatusDto(orderStatus.name(), orderStatus.getStatus()))
+                .collect(Collectors.toSet());
+    }
+
     private <T extends Enum<T> & StatusProvider> Set<StatusDto> toStatusDtoSet(Set<T> statuses) {
         return statuses.stream()
                 .filter(Objects::nonNull)
-                .map(status -> new StatusDto(status.name(), status.getStatus()))
+                .map(status -> new StatusDto(status.getStatus(), status.name()))
                 .collect(Collectors.toSet());
     }
 

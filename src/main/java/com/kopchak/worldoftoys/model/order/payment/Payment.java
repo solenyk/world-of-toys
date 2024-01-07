@@ -22,7 +22,7 @@ public class Payment {
     @Column(nullable = false, scale = 2)
     @NotNull(message = "Invalid price: price is mandatory")
     @DecimalMin(value = "0.0", inclusive = false,
-            message = "Invalid price: price '${formatter.format('%1$.2f', validatedValue)}' must not be greater than {value}")
+            message = "Invalid price: price '${formatter.format('%1$.2f', validatedValue)}' must not be greater than {status}")
     private BigDecimal price;
 
     @Column(nullable = false)

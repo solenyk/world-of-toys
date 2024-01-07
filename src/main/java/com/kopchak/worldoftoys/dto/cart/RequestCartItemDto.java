@@ -21,6 +21,6 @@ public record RequestCartItemDto(
         @Schema(description = "Quantity of product in the cart", example = "1")
         @Min(
                 value = 1,
-                message = "Invalid quantity: quantity '${validatedValue}' must be greater than or equal to {value}"
+                message = "Invalid quantity: quantity '${validatedValue}' must be greater than or equal to {status}"
         ) Integer quantity) {
 }

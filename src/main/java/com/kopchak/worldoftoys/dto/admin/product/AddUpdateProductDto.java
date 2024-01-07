@@ -40,14 +40,14 @@ public record AddUpdateProductDto(
         @NotNull(message = "Invalid price: price is mandatory")
         @DecimalMin(
                 value = "0.0", inclusive = false,
-                message = "Invalid price: price '${formatter.format('%1$.2f', validatedValue)}' must not be greater than {value}",
+                message = "Invalid price: price '${formatter.format('%1$.2f', validatedValue)}' must not be greater than {status}",
                 groups = ValidationStepTwo.class
         ) BigDecimal price,
 
         @Schema(example = "185", requiredMode = Schema.RequiredMode.REQUIRED)
         @Min(
                 value = 0,
-                message = "Invalid quantity: product quantity '${validatedValue}' must not be less than {value}"
+                message = "Invalid quantity: product quantity '${validatedValue}' must not be less than {status}"
         ) BigInteger availableQuantity,
 
         @Valid

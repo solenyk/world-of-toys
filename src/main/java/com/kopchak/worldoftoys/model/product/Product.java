@@ -48,12 +48,12 @@ public class Product {
     @Column(nullable = false, scale = 2)
     @NotNull(message = "Invalid price: price is mandatory")
     @DecimalMin(value = "0.0", inclusive = false,
-            message = "Invalid price: price '${formatter.format('%1$.2f', validatedValue)}' must not be greater than {value}")
+            message = "Invalid price: price '${formatter.format('%1$.2f', validatedValue)}' must not be greater than {status}")
     private BigDecimal price;
 
     @Column(nullable = false)
     @NotNull(message = "Invalid quantity: product quantity is mandatory")
-    @Min(value = 0, message = "Invalid quantity: product quantity '${validatedValue}' must not be less than {value}")
+    @Min(value = 0, message = "Invalid quantity: product quantity '${validatedValue}' must not be less than {status}")
     private BigInteger availableQuantity;
 
     @OneToOne(fetch = FetchType.LAZY,

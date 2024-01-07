@@ -31,6 +31,6 @@ public class OrderDetails {
     @Column(columnDefinition = "integer default 1", nullable = false)
     @NotNull(message = "Invalid cart item quantity: quantity is null")
     @Min(value = 1,
-            message = "Invalid cart item quantity: quantity '${validatedValue}' must be greater than or equal to {value}")
+            message = "Invalid cart item quantity: quantity '${validatedValue}' must be greater than or equal to {status}")
     private Integer quantity = 1;
 }
