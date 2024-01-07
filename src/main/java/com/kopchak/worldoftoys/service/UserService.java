@@ -1,10 +1,11 @@
 package com.kopchak.worldoftoys.service;
 
 import com.kopchak.worldoftoys.dto.user.UserRegistrationDto;
+import com.kopchak.worldoftoys.exception.exception.UsernameAlreadyExistException;
 import com.kopchak.worldoftoys.model.user.AppUser;
 
 public interface UserService {
-    void registerUser(UserRegistrationDto userRegistrationDto);
+    void registerUser(UserRegistrationDto userRegistrationDto) throws UsernameAlreadyExistException;
     boolean isUserRegistered(String email);
     boolean isUserActivated(String email);
     boolean isNewPasswordMatchOldPassword(String resetPasswordToken, String newPassword);

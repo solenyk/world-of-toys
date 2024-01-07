@@ -1,8 +1,8 @@
 package com.kopchak.worldoftoys.service.impl;
 
 import com.kopchak.worldoftoys.dto.user.UserRegistrationDto;
-import com.kopchak.worldoftoys.exception.InvalidConfirmationTokenException;
-import com.kopchak.worldoftoys.exception.UserNotFoundException;
+import com.kopchak.worldoftoys.exception.InvalidConfirmationTokenException1;
+import com.kopchak.worldoftoys.exception.UserNotFoundException1;
 import com.kopchak.worldoftoys.model.token.ConfirmationToken;
 import com.kopchak.worldoftoys.model.user.AppUser;
 import com.kopchak.worldoftoys.repository.token.ConfirmTokenRepository;
@@ -89,7 +89,7 @@ class UserServiceImplTest {
 
     @Test
     public void isUserActivated_NonExistingUser_ThrowsUserNotFoundException() {
-        assertResponseStatusException(UserNotFoundException.class, userNotFoundExceptionMsg, HttpStatus.NOT_FOUND, () ->
+        assertResponseStatusException(UserNotFoundException1.class, userNotFoundExceptionMsg, HttpStatus.NOT_FOUND, () ->
                 userService.isUserActivated(userEmail));
     }
 
@@ -109,7 +109,7 @@ class UserServiceImplTest {
     public void isNewPasswordMatchOldPassword_NonExistingConfirmToken_ThrowsInvalidConfirmationTokenException() {
         String  invalidConfirmationTokenExceptionMsg = "This confirmation token is invalid!";
 
-        assertResponseStatusException(InvalidConfirmationTokenException.class, invalidConfirmationTokenExceptionMsg,
+        assertResponseStatusException(InvalidConfirmationTokenException1.class, invalidConfirmationTokenExceptionMsg,
                 HttpStatus.BAD_REQUEST, () -> userService.isNewPasswordMatchOldPassword(confirmToken, userPassword));
     }
 
@@ -125,7 +125,7 @@ class UserServiceImplTest {
 
     @Test
     public void isPasswordsMatch_NonExistingUser_ThrowsUserNotFoundException() {
-        assertResponseStatusException(UserNotFoundException.class, userNotFoundExceptionMsg, HttpStatus.NOT_FOUND, () ->
+        assertResponseStatusException(UserNotFoundException1.class, userNotFoundExceptionMsg, HttpStatus.NOT_FOUND, () ->
                 userService.isPasswordsMatch(userEmail, userPassword));
     }
 

@@ -1,6 +1,6 @@
 package com.kopchak.worldoftoys.service.impl;
 
-import com.kopchak.worldoftoys.exception.UserNotFoundException;
+import com.kopchak.worldoftoys.exception.UserNotFoundException1;
 import com.kopchak.worldoftoys.model.token.ConfirmationTokenType;
 import com.kopchak.worldoftoys.model.user.AppUser;
 import com.kopchak.worldoftoys.repository.user.UserRepository;
@@ -113,7 +113,7 @@ class EmailSenderServiceImplTest {
 
     @Test
     public void sendEmail_ResetPasswordToken_ThrowsUserNotFoundException(){
-        ResponseStatusException exception = assertThrows(UserNotFoundException.class, () ->
+        ResponseStatusException exception = assertThrows(UserNotFoundException1.class, () ->
                 emailSenderService.sendEmail(userEmail, confirmToken, resetPasswordTokenType));
 
         String expectedMessage = "User with this username does not exist!";

@@ -1,6 +1,6 @@
 package com.kopchak.worldoftoys.service.impl;
 
-import com.kopchak.worldoftoys.exception.UserNotFoundException;
+import com.kopchak.worldoftoys.exception.exception.UserNotFoundException;
 import com.kopchak.worldoftoys.model.order.StatusProvider;
 import com.kopchak.worldoftoys.model.order.payment.PaymentStatus;
 import com.kopchak.worldoftoys.model.token.ConfirmationTokenType;
@@ -13,7 +13,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
@@ -74,17 +73,19 @@ public class EmailSenderServiceImpl implements EmailSenderService {
     }
 
     @Override
-    public void sendEmail(String userEmail, String confirmToken, ConfirmationTokenType tokenType) {
+    public void sendEmail(String userEmail, String confirmToken, ConfirmationTokenType tokenType) throws UserNotFoundException {
         String emailContent;
-        AppUser user = userRepository.findByEmail(userEmail).orElseThrow(() ->
-                new UserNotFoundException(HttpStatus.NOT_FOUND, "User with this username does not exist!"));
-        String fullName = user.getFirstname() + " " + user.getLastname();
+        AppUser user = userRepository.findByEmail(userEmail).orElseThrow(() ->{
+            log.error("User with username: {} does not exist!", userEmail);
+            return new UserNotFoundException(String.format("User with username: %s does not exist!", userEmail));
+        });
+        String userFirstname = user.getFirstname();
         if (tokenType == ConfirmationTokenType.ACTIVATION) {
-            emailContent = buildEmail(ACCOUNT_ACTIVATION_TITLE, fullName, ACCOUNT_ACTIVATION_MSG,
+            emailContent = buildEmail(ACCOUNT_ACTIVATION_TITLE, userFirstname, ACCOUNT_ACTIVATION_MSG,
                     getBaseUrl() + ACCOUNT_ACTIVATION_LINK + confirmToken, ACCOUNT_ACTIVATION_LINK_NAME);
             send(userEmail, emailContent, ACCOUNT_ACTIVATION_SUBJECT);
         } else {
-            emailContent = buildEmail(PASSWORD_RESET_TITLE, fullName, PASSWORD_RESET_MSG,
+            emailContent = buildEmail(PASSWORD_RESET_TITLE, userFirstname, PASSWORD_RESET_MSG,
                     getBaseUrl() + PASSWORD_RESET_LINK + confirmToken, PASSWORD_RESET_LINK_NAME);
             send(userEmail, emailContent, PASSWORD_RESET_SUBJECT);
         }
@@ -93,7 +94,7 @@ public class EmailSenderServiceImpl implements EmailSenderService {
     @Override
     public <T extends Enum<T> & StatusProvider> void sendEmail(String userEmail, String userFirstname,
                                                                String orderId, T status) {
-        if(status instanceof PaymentStatus){
+        if (status instanceof PaymentStatus) {
             String msg = String.format(PAYMENT_STATUS_MSG, orderId, status.getStatus());
             String emailContent = buildEmail(PAYMENT_STATUS_TITLE, userFirstname, msg, getBaseUrl() + LOGIN_LINK,
                     PAYMENT_STATUS_LINK_NAME);

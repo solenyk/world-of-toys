@@ -3,7 +3,7 @@ package com.kopchak.worldoftoys.service.impl;
 import com.kopchak.worldoftoys.dto.token.AccessAndRefreshTokensDto;
 import com.kopchak.worldoftoys.dto.token.AuthTokenDto;
 import com.kopchak.worldoftoys.exception.InvalidRefreshTokenException;
-import com.kopchak.worldoftoys.exception.UserNotFoundException;
+import com.kopchak.worldoftoys.exception.UserNotFoundException1;
 import com.kopchak.worldoftoys.model.token.AuthTokenType;
 import com.kopchak.worldoftoys.model.token.AuthenticationToken;
 import com.kopchak.worldoftoys.model.user.AppUser;
@@ -143,7 +143,7 @@ class JwtTokenServiceImplTest {
 
     @Test
     public void generateAuthTokens_UsernameOfNonExistingUser_ThrowsUserNotFoundException() {
-        assertResponseStatusException(UserNotFoundException.class, userNotFoundExceptionMsg, HttpStatus.NOT_FOUND, () ->
+        assertResponseStatusException(UserNotFoundException1.class, userNotFoundExceptionMsg, HttpStatus.NOT_FOUND, () ->
                 jwtTokenService.generateAuthTokens(username));
     }
 
@@ -168,7 +168,7 @@ class JwtTokenServiceImplTest {
 
     @Test
     public void refreshAccessToken_ValidAuthTokenDtoWithNonExistingUser_ThrowsUserNotFoundException() {
-        assertResponseStatusException(UserNotFoundException.class, userNotFoundExceptionMsg, HttpStatus.NOT_FOUND,() ->
+        assertResponseStatusException(UserNotFoundException1.class, userNotFoundExceptionMsg, HttpStatus.NOT_FOUND,() ->
                 jwtTokenService.refreshAccessToken(validAuthTokenDto));
     }
 
@@ -193,7 +193,7 @@ class JwtTokenServiceImplTest {
 
     @Test
     public void revokeAllUserAuthTokens_UsernameOfNonExistingUser_ThrowsUserNotFoundException() {
-        assertResponseStatusException(UserNotFoundException.class, userNotFoundExceptionMsg, HttpStatus.NOT_FOUND, () ->
+        assertResponseStatusException(UserNotFoundException1.class, userNotFoundExceptionMsg, HttpStatus.NOT_FOUND, () ->
                 jwtTokenService.revokeAllUserAuthTokens(username));
     }
 

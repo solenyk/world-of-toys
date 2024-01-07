@@ -3,13 +3,15 @@ package com.kopchak.worldoftoys.controller;
 import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
 import com.kopchak.worldoftoys.dto.token.AccessAndRefreshTokensDto;
 import com.kopchak.worldoftoys.dto.token.AuthTokenDto;
-import com.kopchak.worldoftoys.dto.token.ConfirmTokenDto;
 import com.kopchak.worldoftoys.dto.user.ResetPasswordDto;
 import com.kopchak.worldoftoys.dto.user.UserAuthDto;
 import com.kopchak.worldoftoys.dto.user.UserRegistrationDto;
 import com.kopchak.worldoftoys.dto.user.UsernameDto;
 import com.kopchak.worldoftoys.exception.*;
+import com.kopchak.worldoftoys.exception.exception.InvalidConfirmationTokenException;
 import com.kopchak.worldoftoys.exception.exception.JwtTokenException;
+import com.kopchak.worldoftoys.exception.exception.UserNotFoundException;
+import com.kopchak.worldoftoys.exception.exception.UsernameAlreadyExistException;
 import com.kopchak.worldoftoys.model.token.AuthTokenType;
 import com.kopchak.worldoftoys.model.token.ConfirmationTokenType;
 import com.kopchak.worldoftoys.service.ConfirmationTokenService;
@@ -31,6 +33,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -42,7 +45,7 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 public class AuthenticationController {
     private final UserService userService;
-    private final ConfirmationTokenService confirmationTokenService;
+    private final ConfirmationTokenService confirmTokenService;
     private final EmailSenderService emailSenderService;
     private final JwtTokenService jwtTokenService;
     private final AuthenticationManager authenticationManager;
@@ -57,19 +60,25 @@ public class AuthenticationController {
                     description = "Username already exist",
                     content = @Content(
                             mediaType = "application/json",
+                            schema = @Schema(implementation = ResponseStatusExceptionDto.class))),
+            @ApiResponse(responseCode = "404",
+                    description = "User is not found",
+                    content = @Content(
+                            mediaType = "application/json",
                             schema = @Schema(implementation = ResponseStatusExceptionDto.class)))
     })
     @PostMapping("/register")
     public ResponseEntity<Void> registerUser(@Valid @RequestBody UserRegistrationDto userRegistrationDto) {
-        if (userService.isUserRegistered(userRegistrationDto.email())) {
-            log.error("User with username: {} already exist!", userRegistrationDto.email());
-            throw new UsernameAlreadyExistException(HttpStatus.BAD_REQUEST, "This username already exist!");
-        }
         String username = userRegistrationDto.email();
-        userService.registerUser(userRegistrationDto);
-        ConfirmTokenDto confirmationToken = confirmationTokenService.createConfirmationToken(username,
-                ConfirmationTokenType.ACTIVATION);
-        emailSenderService.sendEmail(username, confirmationToken.token(), ConfirmationTokenType.ACTIVATION);
+        try {
+            userService.registerUser(userRegistrationDto);
+            var confirmToken = confirmTokenService.createConfirmationToken(username, ConfirmationTokenType.ACTIVATION);
+            emailSenderService.sendEmail(username, confirmToken.token(), ConfirmationTokenType.ACTIVATION);
+        } catch (UsernameAlreadyExistException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        } catch (UserNotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+        }
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
@@ -88,11 +97,11 @@ public class AuthenticationController {
     @GetMapping(path = "/confirm")
     public ResponseEntity<Void> activateAccount(@Parameter(description = "User account activation token",
             required = true) @RequestParam("token") String token) {
-        if (confirmationTokenService.isConfirmationTokenInvalid(token, ConfirmationTokenType.ACTIVATION)) {
-            log.error("Confirmation token is invalid!");
-            throw new InvalidConfirmationTokenException(HttpStatus.BAD_REQUEST, "This confirmation token is invalid!");
+        try {
+            confirmTokenService.activateAccountUsingActivationToken(token);
+        } catch (InvalidConfirmationTokenException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
-        confirmationTokenService.activateAccountUsingActivationToken(token);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
@@ -120,14 +129,14 @@ public class AuthenticationController {
         String email = username.email();
         if (!userService.isUserRegistered(email)) {
             log.error("User with username: {} does not exist!", email);
-            throw new UserNotFoundException(HttpStatus.NOT_FOUND, "User with this username does not exist!");
+            throw new UserNotFoundException1(HttpStatus.NOT_FOUND, "User with this username does not exist!");
         }
         if (userService.isUserActivated(email)) {
             log.error("Account of user: {} is already activated!", email);
             throw new AccountIsAlreadyActivatedException(HttpStatus.CONFLICT, "Account is already activated!");
         }
-        if (confirmationTokenService.isNoActiveConfirmationToken(email, ConfirmationTokenType.ACTIVATION)) {
-            var confirmationToken = confirmationTokenService.createConfirmationToken(email,
+        if (confirmTokenService.isNoActiveConfirmationToken(email, ConfirmationTokenType.ACTIVATION)) {
+            var confirmationToken = confirmTokenService.createConfirmationToken(email,
                     ConfirmationTokenType.ACTIVATION);
             emailSenderService.sendEmail(email, confirmationToken.token(), ConfirmationTokenType.ACTIVATION);
         }
@@ -153,10 +162,10 @@ public class AuthenticationController {
         String email = username.email();
         if (!userService.isUserRegistered(email)) {
             log.error("User with username: {} does not exist!", email);
-            throw new UserNotFoundException(HttpStatus.NOT_FOUND, "User with this username does not exist!");
+            throw new UserNotFoundException1(HttpStatus.NOT_FOUND, "User with this username does not exist!");
         }
-        if (confirmationTokenService.isNoActiveConfirmationToken(email, ConfirmationTokenType.RESET_PASSWORD)) {
-            var confirmationToken = confirmationTokenService.createConfirmationToken(email,
+        if (confirmTokenService.isNoActiveConfirmationToken(email, ConfirmationTokenType.RESET_PASSWORD)) {
+            var confirmationToken = confirmTokenService.createConfirmationToken(email,
                     ConfirmationTokenType.RESET_PASSWORD);
             emailSenderService.sendEmail(email, confirmationToken.token(), ConfirmationTokenType.RESET_PASSWORD);
         }
@@ -179,15 +188,15 @@ public class AuthenticationController {
     public ResponseEntity<Void> changePassword(
             @Parameter(description = "Token to change the user's password", required = true)
             @Valid @RequestParam("token") String token, @Valid @RequestBody ResetPasswordDto newPassword) {
-        if (confirmationTokenService.isConfirmationTokenInvalid(token, ConfirmationTokenType.RESET_PASSWORD)) {
+        if (confirmTokenService.isConfirmationTokenInvalid(token, ConfirmationTokenType.RESET_PASSWORD)) {
             log.error("Confirmation token is invalid!");
-            throw new InvalidConfirmationTokenException(HttpStatus.BAD_REQUEST, "This confirmation token is invalid!");
+            throw new InvalidConfirmationTokenException1(HttpStatus.BAD_REQUEST, "This confirmation token is invalid!");
         }
         if (userService.isNewPasswordMatchOldPassword(token, newPassword.password())) {
             log.error("New password matches old password!");
             throw new InvalidPasswordException(HttpStatus.BAD_REQUEST, "New password matches old password!");
         }
-        confirmationTokenService.changePasswordUsingResetToken(token, newPassword);
+        confirmTokenService.changePasswordUsingResetToken(token, newPassword);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
@@ -211,11 +220,11 @@ public class AuthenticationController {
         String username = userAuthDto.email();
         if (!userService.isUserRegistered(username) || !userService.isPasswordsMatch(username, userAuthDto.password())) {
             log.error("Bad user credentials!");
-            throw new UserNotFoundException(HttpStatus.UNAUTHORIZED, "Bad user credentials!");
+            throw new UserNotFoundException1(HttpStatus.UNAUTHORIZED, "Bad user credentials!");
         }
         if (!userService.isUserActivated(username)) {
             log.error("Account with username: {} is not activated!", username);
-            throw new UserNotFoundException(HttpStatus.FORBIDDEN, "Account is not activated!");
+            throw new UserNotFoundException1(HttpStatus.FORBIDDEN, "Account is not activated!");
         }
         String email = userAuthDto.email();
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, userAuthDto.password()));

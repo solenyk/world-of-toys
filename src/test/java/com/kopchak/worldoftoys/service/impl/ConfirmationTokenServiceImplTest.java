@@ -2,8 +2,8 @@ package com.kopchak.worldoftoys.service.impl;
 
 import com.kopchak.worldoftoys.dto.token.ConfirmTokenDto;
 import com.kopchak.worldoftoys.dto.user.ResetPasswordDto;
-import com.kopchak.worldoftoys.exception.InvalidConfirmationTokenException;
-import com.kopchak.worldoftoys.exception.UserNotFoundException;
+import com.kopchak.worldoftoys.exception.InvalidConfirmationTokenException1;
+import com.kopchak.worldoftoys.exception.UserNotFoundException1;
 import com.kopchak.worldoftoys.model.token.ConfirmationToken;
 import com.kopchak.worldoftoys.model.token.ConfirmationTokenType;
 import com.kopchak.worldoftoys.model.user.AppUser;
@@ -85,7 +85,7 @@ class ConfirmationTokenServiceImplTest {
     public void createConfirmationToken_UsernameOfNonExistingUserAndTokenType_ThrowsUserNotFoundException() {
         String userNotFoundExceptionMsg = "User with this username does not exist!";
 
-        assertResponseStatusException(UserNotFoundException.class, userNotFoundExceptionMsg, HttpStatus.NOT_FOUND, () ->
+        assertResponseStatusException(UserNotFoundException1.class, userNotFoundExceptionMsg, HttpStatus.NOT_FOUND, () ->
                 confirmationTokenService.createConfirmationToken(username, activationTokenType));
     }
 
@@ -118,7 +118,7 @@ class ConfirmationTokenServiceImplTest {
 
     @Test
     public void activateAccountUsingActivationToken_NonExistingToken_ThrowsInvalidConfirmationTokenException() {
-        assertResponseStatusException(InvalidConfirmationTokenException.class, invalidConfirmationTokenExceptionMsg,
+        assertResponseStatusException(InvalidConfirmationTokenException1.class, invalidConfirmationTokenExceptionMsg,
                 HttpStatus.BAD_REQUEST, () -> confirmationTokenService.activateAccountUsingActivationToken(token));
     }
 
@@ -146,7 +146,7 @@ class ConfirmationTokenServiceImplTest {
 
     @Test
     public void changePasswordUsingResetToken_NonExistingToken_ThrowsInvalidConfirmationTokenException() {
-        assertResponseStatusException(InvalidConfirmationTokenException.class, invalidConfirmationTokenExceptionMsg,
+        assertResponseStatusException(InvalidConfirmationTokenException1.class, invalidConfirmationTokenExceptionMsg,
                 HttpStatus.BAD_REQUEST, () -> confirmationTokenService.changePasswordUsingResetToken(token, newPassword));
     }
 
