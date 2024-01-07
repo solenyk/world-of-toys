@@ -4,6 +4,7 @@ import com.kopchak.worldoftoys.dto.token.AccessAndRefreshTokensDto;
 import com.kopchak.worldoftoys.dto.token.AuthTokenDto;
 import com.kopchak.worldoftoys.exception.InvalidRefreshTokenException;
 import com.kopchak.worldoftoys.exception.UserNotFoundException;
+import com.kopchak.worldoftoys.exception.exception.JwtTokenException;
 import com.kopchak.worldoftoys.model.token.AuthTokenType;
 import com.kopchak.worldoftoys.model.token.AuthenticationToken;
 import com.kopchak.worldoftoys.model.user.AppUser;
@@ -42,18 +43,19 @@ public class JwtTokenServiceImpl implements JwtTokenService {
     private final AuthTokenRepository authTokenRepository;
 
     @Override
-    public Optional<String> extractUsername(String token) {
+    public Optional<String> extractUsername(String token) throws JwtTokenException {
         try {
             Claims claims = extractAllClaims(token);
             return Optional.ofNullable(claims.getSubject());
         } catch (JwtException e) {
-            log.error("Error extracting username from token: {}", e.getMessage());
-            return Optional.empty();
+            log.error("Failed to extract username from token: {}", e.getMessage());
+            throw new JwtTokenException(String.format("Failed to extract expiration date from token: %s",
+                    e.getMessage()));
         }
     }
 
     @Override
-    public boolean isAuthTokenValid(String token, AuthTokenType tokenType) {
+    public boolean isAuthTokenValid(String token, AuthTokenType tokenType) throws JwtTokenException {
         Optional<AuthenticationToken> authToken = authTokenRepository.findByToken(token);
         if (authToken.isPresent()) {
             Optional<String> username = extractUsername(token);
@@ -80,13 +82,13 @@ public class JwtTokenServiceImpl implements JwtTokenService {
     }
 
     @Override
-    public boolean isActiveAuthTokenExists(String authToken, AuthTokenType tokenType) {
+    public boolean isActiveAuthTokenExists(String authToken, AuthTokenType tokenType) throws JwtTokenException {
         Optional<String> username = extractUsername(authToken);
         return username.isPresent() && authTokenRepository.isActiveAuthTokenExists(username.get(), tokenType);
     }
 
     @Override
-    public AuthTokenDto refreshAccessToken(AuthTokenDto refreshTokenDto) {
+    public AuthTokenDto refreshAccessToken(AuthTokenDto refreshTokenDto) throws JwtTokenException {
         String refreshToken = refreshTokenDto.token();
         Optional<String> username = extractUsername(refreshToken);
         if(username.isPresent()){
@@ -128,13 +130,14 @@ public class JwtTokenServiceImpl implements JwtTokenService {
                 .compact();
     }
 
-    private boolean isTokenExpired(String token) {
+    private boolean isTokenExpired(String token) throws JwtTokenException {
         try {
             Claims claims = extractAllClaims(token);
             return claims.getExpiration().before(new Date());
         } catch (JwtException e) {
-            log.error("Error extracting expiration date from token: {}", e.getMessage());
-            return true;
+            log.error("Failed to extract expiration date from token: {}", e.getMessage());
+            throw new JwtTokenException(String.format("Failed to extract expiration date from token: %s",
+                    e.getMessage()));
         }
     }
 

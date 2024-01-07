@@ -1,7 +1,8 @@
 package com.kopchak.worldoftoys.exception.handler;
 
-import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
 import com.kopchak.worldoftoys.dto.error.MethodArgumentNotValidExceptionDto;
+import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
+import com.kopchak.worldoftoys.exception.exception.JwtTokenException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -17,12 +18,18 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     @ExceptionHandler(ResponseStatusException.class)
-    public ResponseEntity<ResponseStatusExceptionDto> handleResponseStatusException(ResponseStatusException ex) {
+    public ResponseEntity<ResponseStatusExceptionDto> handleJwtTokenException(ResponseStatusException ex) {
         int statusCode = ex.getStatusCode().value();
         HttpStatus httpStatus = HttpStatus.valueOf(statusCode);
-        ResponseStatusExceptionDto errorResponse = new ResponseStatusExceptionDto(statusCode, httpStatus.name(),
-                ex.getReason());
+        var errorResponse = new ResponseStatusExceptionDto(statusCode, httpStatus.name(), ex.getReason());
         return ResponseEntity.status(statusCode).body(errorResponse);
+    }
+
+    @ExceptionHandler(JwtTokenException.class)
+    public ResponseEntity<ResponseStatusExceptionDto> handleJwtTokenException(JwtTokenException ex) {
+        HttpStatus httpStatus = HttpStatus.BAD_REQUEST;
+        var errorResponse = new ResponseStatusExceptionDto(httpStatus.value(), httpStatus.name(), ex.getMessage());
+        return ResponseEntity.status(httpStatus).body(errorResponse);
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
