@@ -2,6 +2,7 @@ package com.kopchak.worldoftoys.service;
 
 import com.kopchak.worldoftoys.dto.admin.product.order.FilteredOrdersPageDto;
 import com.kopchak.worldoftoys.dto.admin.product.order.FilteringOrderOptionsDto;
+import com.kopchak.worldoftoys.dto.admin.product.order.StatusDto;
 import com.kopchak.worldoftoys.dto.order.OrderDto;
 import com.kopchak.worldoftoys.dto.order.OrderRecipientDto;
 import com.kopchak.worldoftoys.exception.exception.OrderException;
@@ -21,4 +22,7 @@ public interface OrderService {
 
     FilteredOrdersPageDto filterOrdersByStatusesAndDate(int pageNumber, int pageSize, List<OrderStatus> orderStatuses,
                                                         List<PaymentStatus> paymentStatuses, String dateSortOrder);
+    void updateOrderStatus(String orderId, StatusDto statusDto) throws OrderException;
+
+    Set<StatusDto> getAllOrderStatuses();
 }

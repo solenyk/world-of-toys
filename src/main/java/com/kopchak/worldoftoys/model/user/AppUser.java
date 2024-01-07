@@ -57,11 +57,11 @@ public class AppUser implements UserDetails {
     private Role role;
 
     @Column(nullable = false)
-    @NotNull(message = "Invalid locked value: locked value is NULL")
+    @NotNull(message = "Invalid locked status: locked status is NULL")
     private Boolean locked = false;
 
     @Column(nullable = false)
-    @NotNull(message = "Invalid enabled value: enabled value is NULL")
+    @NotNull(message = "Invalid enabled status: enabled status is NULL")
     private Boolean enabled = false;
 
     @OneToMany(mappedBy = "user", cascade = {CascadeType.MERGE, CascadeType.REMOVE})

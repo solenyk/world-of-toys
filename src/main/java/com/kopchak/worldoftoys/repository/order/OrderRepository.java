@@ -22,7 +22,8 @@ public interface OrderRepository extends JpaRepository<Order, String>, JpaSpecif
     @EntityGraph(type = EntityGraph.EntityGraphType.FETCH, attributePaths = "orderDetails.product")
     Set<Order> findAllByUser(AppUser user);
 
-    @EntityGraph(type = EntityGraph.EntityGraphType.FETCH, attributePaths = {"orderDetails.product", "payments"})
+    @EntityGraph(type = EntityGraph.EntityGraphType.FETCH, attributePaths = {"orderDetails.product", "payments",
+            "user"})
     @NotNull Optional<Order> findById(@NotNull String id);
 
     @EntityGraph(type = EntityGraph.EntityGraphType.FETCH, attributePaths = {"orderDetails.product", "payments"})

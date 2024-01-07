@@ -41,13 +41,13 @@ public record AddressDto(
         @NotNull(message =  "Invalid house: house is mandatory")
         @Min(
                 value = 1,
-                message = "Invalid house number: house number '${validatedValue}' should not be less than {value}",
+                message = "Invalid house number: house number '${validatedValue}' should not be less than {status}",
                 groups = ValidationStepTwo.class
         ) Integer house,
 
         @Schema(example = "8", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
         @Min(
                 value = 1,
-                message = "Invalid apartment number: apartment number '${validatedValue}' should not be less than {value}"
+                message = "Invalid apartment number: apartment number '${validatedValue}' should not be less than {status}"
         ) Integer apartment) {
 }

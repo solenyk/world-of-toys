@@ -8,7 +8,9 @@ import com.kopchak.worldoftoys.model.order.details.OrderDetails;
 import com.kopchak.worldoftoys.model.order.payment.Currency;
 import com.kopchak.worldoftoys.model.order.payment.Payment;
 import com.kopchak.worldoftoys.model.order.payment.PaymentStatus;
+import com.kopchak.worldoftoys.model.user.AppUser;
 import com.kopchak.worldoftoys.repository.order.OrderRepository;
+import com.kopchak.worldoftoys.service.EmailSenderService;
 import com.kopchak.worldoftoys.service.PaymentService;
 import com.stripe.Stripe;
 import com.stripe.exception.EventDataObjectDeserializationException;
@@ -49,7 +51,7 @@ public class PaymentServiceImpl implements PaymentService {
     private String WEBHOOK_SECRET_KEY;
 
     private final OrderRepository orderRepository;
-
+    private final EmailSenderService emailSenderService;
     @PostConstruct
     public void init() {
         Stripe.apiKey = STRIPE_API_KEY;
@@ -72,11 +74,13 @@ public class PaymentServiceImpl implements PaymentService {
         return session.getUrl();
     }
 
+    @Override
     public boolean isNonExistentOrPaidOrder(String orderId) {
         Optional<Order> order = orderRepository.findById(orderId);
         return order.isEmpty() || !order.get().getOrderStatus().equals(OrderStatus.AWAITING_PAYMENT);
     }
 
+    @Override
     public void handlePaymentWebhook(String sigHeader, String requestBody) throws StripeException {
         Event event = Webhook.constructEvent(requestBody, sigHeader, WEBHOOK_SECRET_KEY);
 
@@ -144,7 +148,7 @@ public class PaymentServiceImpl implements PaymentService {
 
     private void buildPayment(String orderId, String eventType, String paymentId, String sessionPaymentStatus,
                               Long orderTotalAmount) {
-        Order paidOrder = orderRepository.findById(orderId).orElseThrow();
+        Order order = orderRepository.findById(orderId).orElseThrow();
 
         PaymentStatus paymentStatus;
         OrderStatus orderStatus;
@@ -167,10 +171,12 @@ public class PaymentServiceImpl implements PaymentService {
                 .dateTime(LocalDateTime.now())
                 .status(paymentStatus)
                 .price(BigDecimal.valueOf(orderTotalAmount, 2))
-                .order(paidOrder)
+                .order(order)
                 .build();
-        paidOrder.getPayments().add(payment);
-        paidOrder.setOrderStatus(orderStatus);
-        orderRepository.save(paidOrder);
+        order.getPayments().add(payment);
+        order.setOrderStatus(orderStatus);
+        orderRepository.save(order);
+        AppUser user = order.getUser();
+        emailSenderService.sendEmail(user.getEmail(), user.getFirstname(), orderId, paymentStatus);
     }
 }

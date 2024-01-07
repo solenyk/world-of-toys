@@ -1,6 +1,8 @@
 package com.kopchak.worldoftoys.service.impl;
 
 import com.kopchak.worldoftoys.exception.UserNotFoundException;
+import com.kopchak.worldoftoys.model.order.StatusProvider;
+import com.kopchak.worldoftoys.model.order.payment.PaymentStatus;
 import com.kopchak.worldoftoys.model.token.ConfirmationTokenType;
 import com.kopchak.worldoftoys.model.user.AppUser;
 import com.kopchak.worldoftoys.repository.user.UserRepository;
@@ -26,16 +28,28 @@ public class EmailSenderServiceImpl implements EmailSenderService {
     private final static String SENDER_EMAIL = "worldoftoys@gmail.com";
     private final static String ACCOUNT_ACTIVATION_TITLE = "Account activation";
     private final static String PASSWORD_RESET_TITLE = "Password reset";
+    private final static String PAYMENT_STATUS_TITLE = "Order payment";
+    private final static String ORDER_STATUS_TITLE = "Order status";
     private final static String ACCOUNT_ACTIVATION_SUBJECT = "Confirm your email";
     private final static String PASSWORD_RESET_SUBJECT = "Reset your password";
+    private final static String PAYMENT_STATUS_SUBJECT = "Order payment status";
+    private final static String ORDER_STATUS_SUBJECT = "Order status";
     private final static String ACCOUNT_ACTIVATION_LINK = "/api/v1/auth/confirm?token=";
     private final static String PASSWORD_RESET_LINK = "/api/v1/auth/reset-password?token=";
+    private final static String LOGIN_LINK = "/api/v1/auth/login";
     private final static String ACCOUNT_ACTIVATION_LINK_NAME = "Activate Now";
     private final static String PASSWORD_RESET_LINK_NAME = "Reset password";
+    private final static String PAYMENT_STATUS_LINK_NAME = "Check order payment status";
+    private final static String ORDER_STATUS_LINK_NAME = "Check current order status";
     private final static String ACCOUNT_ACTIVATION_MSG =
-            "Thank you for registering. Please click on the below link to activate your account:";
-    private final static String PASSWORD_RESET_MSG =
-            "Thank you for using our website. Please click on the below link to reset your password:";
+            "Thank you for registering. Please click on the below link to activate your account. " +
+                    "Link will expire in 15 minutes.";
+    private final static String PASSWORD_RESET_MSG = "Thank you for using our website. " +
+            "Please click on the below link to reset your password. Link will expire in 15 minutes.";
+    private final static String PAYMENT_STATUS_MSG = "Order №%s payment status is %s. For more information, " +
+            "visit our website:";
+    private final static String ORDER_STATUS_MSG = "Order №%s status is %s. For more information, " +
+            "visit our website:";
     private final JavaMailSender mailSender;
     private final UserRepository userRepository;
     private ITemplateEngine templateEngine;
@@ -76,6 +90,22 @@ public class EmailSenderServiceImpl implements EmailSenderService {
         }
     }
 
+    @Override
+    public <T extends Enum<T> & StatusProvider> void sendEmail(String userEmail, String userFirstname,
+                                                               String orderId, T status) {
+        if(status instanceof PaymentStatus){
+            String msg = String.format(PAYMENT_STATUS_MSG, orderId, status.getStatus());
+            String emailContent = buildEmail(PAYMENT_STATUS_TITLE, userFirstname, msg, getBaseUrl() + LOGIN_LINK,
+                    PAYMENT_STATUS_LINK_NAME);
+            send(userEmail, emailContent, PAYMENT_STATUS_SUBJECT);
+        } else {
+            String msg = String.format(ORDER_STATUS_MSG, orderId, status.getStatus());
+            String emailContent = buildEmail(ORDER_STATUS_TITLE, userFirstname, msg, getBaseUrl() + LOGIN_LINK,
+                    ORDER_STATUS_LINK_NAME);
+            send(userEmail, emailContent, ORDER_STATUS_SUBJECT);
+        }
+    }
+
     private String buildEmail(String title, String name, String message, String link, String linkName) {
         Context context = new Context();
         context.setVariable("title", title);
@@ -83,7 +113,7 @@ public class EmailSenderServiceImpl implements EmailSenderService {
         context.setVariable("message", message);
         context.setVariable("link", link);
         context.setVariable("linkName", linkName);
-        return templateEngine.process("email-template", context);
+        return templateEngine.process("email", context);
     }
 
     private @NotNull String getBaseUrl() {

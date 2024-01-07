@@ -2,6 +2,7 @@ package com.kopchak.worldoftoys.service.impl;
 
 import com.kopchak.worldoftoys.dto.admin.product.order.FilteredOrdersPageDto;
 import com.kopchak.worldoftoys.dto.admin.product.order.FilteringOrderOptionsDto;
+import com.kopchak.worldoftoys.dto.admin.product.order.StatusDto;
 import com.kopchak.worldoftoys.dto.order.OrderDto;
 import com.kopchak.worldoftoys.dto.order.OrderRecipientDto;
 import com.kopchak.worldoftoys.exception.exception.OrderException;
@@ -25,6 +26,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -77,5 +79,25 @@ public class OrderServiceImpl implements OrderService {
                 dateSortOrder);
         Page<Order> orderPage = orderRepository.findAll(spec, pageable);
         return orderMapper.toFilteredOrdersPageDto(orderPage);
+    }
+
+    @Override
+    public void updateOrderStatus(String orderId, StatusDto statusDto) throws OrderException {
+        Order order = orderRepository.findById(orderId).orElseThrow(() ->
+                new OrderException(String.format("Order with id: %s doesn't exist!", orderId)));
+        OrderStatus orderStatus = orderMapper.toOrderStatus(statusDto);
+        if (!order.getOrderStatus().equals(orderStatus)) {
+            throw new OrderException(String.format("The status: %s of the order with id: %s " +
+                    "is the same as the current status", statusDto.status(), orderId));
+        }
+        order.setOrderStatus(orderStatus);
+        orderRepository.save(order);
+        AppUser user = order.getUser();
+        //ToDo:send email
+    }
+
+    @Override
+    public Set<StatusDto> getAllOrderStatuses(){
+        return orderMapper.toStatusDtoSet(Arrays.asList(OrderStatus.values()));
     }
 }
