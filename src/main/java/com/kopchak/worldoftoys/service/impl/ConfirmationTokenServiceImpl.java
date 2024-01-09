@@ -31,7 +31,7 @@ public class ConfirmationTokenServiceImpl implements ConfirmationTokenService {
 
     @Override
     public ConfirmTokenDto createConfirmationToken(String username, ConfirmationTokenType tokenType)
-            throws UserNotFoundException, ConfirmTokenAlreadyExistException, AccountActivationException {
+            throws UserNotFoundException, TokenAlreadyExistException, AccountActivationException {
         AppUser user = userRepository.findByEmail(username).orElseThrow(() -> {
             log.error("User with username: {} does not exist!", username);
             return new UserNotFoundException(String.format("User with username: %s does not exist!", username));
@@ -42,7 +42,7 @@ public class ConfirmationTokenServiceImpl implements ConfirmationTokenService {
                     username));
         }
         if (!isNoActiveConfirmationToken(username, tokenType)) {
-            throw new ConfirmTokenAlreadyExistException(
+            throw new TokenAlreadyExistException(
                     String.format("Valid confirmation token for user wih username: %s already exits!", username));
         }
         String token = UUID.randomUUID().toString();
@@ -95,16 +95,12 @@ public class ConfirmationTokenServiceImpl implements ConfirmationTokenService {
             log.error("Reset password token: {} is invalid!", token);
             throw new InvalidConfirmationTokenException(String.format("Reset password token: %s is invalid!", token));
         }
-        if (userService.isNewPasswordMatchOldPassword(token, newPassword.password())) {
-            log.error("New password matches old password!");
-            throw new InvalidPasswordException("New password matches old password!");
-        }
         ConfirmationToken confirmationToken = confirmTokenRepository.findByToken(token).get();
         confirmationToken.setConfirmedAt(LocalDateTime.now());
         AppUser user = confirmationToken.getUser();
         userService.changeUserPassword(user, newPassword.password());
         confirmTokenRepository.save(confirmationToken);
-        jwtTokenService.revokeAllUserAuthTokens(user.getUsername());
+        jwtTokenService.revokeAllUserAuthTokens(user);
         log.info("Changed password for user: {}", user.getUsername());
     }
 }

@@ -2,9 +2,8 @@ package com.kopchak.worldoftoys.service.impl;
 
 import com.kopchak.worldoftoys.dto.token.AccessAndRefreshTokensDto;
 import com.kopchak.worldoftoys.dto.token.AuthTokenDto;
-import com.kopchak.worldoftoys.exception.InvalidRefreshTokenException;
-import com.kopchak.worldoftoys.exception.UserNotFoundException1;
 import com.kopchak.worldoftoys.exception.exception.JwtTokenException;
+import com.kopchak.worldoftoys.exception.exception.TokenAlreadyExistException;
 import com.kopchak.worldoftoys.model.token.AuthTokenType;
 import com.kopchak.worldoftoys.model.token.AuthenticationToken;
 import com.kopchak.worldoftoys.model.user.AppUser;
@@ -20,7 +19,6 @@ import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,10 +41,10 @@ public class JwtTokenServiceImpl implements JwtTokenService {
     private final AuthTokenRepository authTokenRepository;
 
     @Override
-    public Optional<String> extractUsername(String token) throws JwtTokenException {
+    public String extractUsername(String token) throws JwtTokenException {
         try {
             Claims claims = extractAllClaims(token);
-            return Optional.ofNullable(claims.getSubject());
+            return claims.getSubject();
         } catch (JwtException e) {
             log.error("Failed to extract username from token: {}", e.getMessage());
             throw new JwtTokenException(String.format("Failed to extract expiration date from token: %s",
@@ -58,8 +56,8 @@ public class JwtTokenServiceImpl implements JwtTokenService {
     public boolean isAuthTokenValid(String token, AuthTokenType tokenType) throws JwtTokenException {
         Optional<AuthenticationToken> authToken = authTokenRepository.findByToken(token);
         if (authToken.isPresent()) {
-            Optional<String> username = extractUsername(token);
-            return username.isPresent() && userRepository.findByEmail(username.get()).isPresent() &&
+            String username = extractUsername(token);
+            return username != null && userRepository.findByEmail(username).isPresent() &&
                     !isTokenExpired(token) && !authToken.get().isRevoked() &&
                     authToken.get().getTokenType().equals(tokenType);
         }
@@ -67,9 +65,8 @@ public class JwtTokenServiceImpl implements JwtTokenService {
     }
 
     @Override
-    public AccessAndRefreshTokensDto generateAuthTokens(String email) {
-        AppUser user = userRepository.findByEmail(email).orElseThrow(() ->
-                new UserNotFoundException1(HttpStatus.NOT_FOUND, "User with this username does not exist!"));
+    public AccessAndRefreshTokensDto generateAuthTokens(AppUser user) {
+        String email = user.getEmail();
         String accessToken = generateJwtToken(email, AuthTokenType.ACCESS);
         String refreshToken = generateJwtToken(email, AuthTokenType.REFRESH);
         saveUserAuthToken(user, accessToken, AuthTokenType.ACCESS);
@@ -82,34 +79,29 @@ public class JwtTokenServiceImpl implements JwtTokenService {
     }
 
     @Override
-    public boolean isActiveAuthTokenExists(String authToken, AuthTokenType tokenType) throws JwtTokenException {
-        Optional<String> username = extractUsername(authToken);
-        return username.isPresent() && authTokenRepository.isActiveAuthTokenExists(username.get(), tokenType);
-    }
-
-    @Override
-    public AuthTokenDto refreshAccessToken(AuthTokenDto refreshTokenDto) throws JwtTokenException {
+    public AuthTokenDto refreshAccessToken(AuthTokenDto refreshTokenDto) throws JwtTokenException, TokenAlreadyExistException {
         String refreshToken = refreshTokenDto.token();
-        Optional<String> username = extractUsername(refreshToken);
-        if(username.isPresent()){
-            AppUser user = userRepository.findByEmail(username.get()).orElseThrow(() ->
-                    new UserNotFoundException1(HttpStatus.NOT_FOUND, "User with this username does not exist!"));
-            String accessToken = generateJwtToken(username.get(), AuthTokenType.ACCESS);
-            saveUserAuthToken(user, accessToken, AuthTokenType.ACCESS);
-            log.info("Authentication token have been successfully saved for the user: {}", username);
-            return new AuthTokenDto(accessToken);
+        if (!isAuthTokenValid(refreshToken, AuthTokenType.REFRESH)) {
+            log.error("Refresh token is invalid!");
+            throw new JwtTokenException("Refresh token is invalid!");
         }
-        log.error("Fail to generate access token for the user: {} because refresh token is invalid", username);
-        throw new InvalidRefreshTokenException(HttpStatus.BAD_REQUEST, "This refresh token is invalid!");
+        String username = extractUsername(refreshToken);
+        if (authTokenRepository.isActiveAuthTokenExists(username, AuthTokenType.ACCESS)) {
+            log.error("There is valid access token!");
+            throw new TokenAlreadyExistException("There is valid access token!");
+        }
+        AppUser user = userRepository.findByEmail(username).get();
+        String accessToken = generateJwtToken(username, AuthTokenType.ACCESS);
+        saveUserAuthToken(user, accessToken, AuthTokenType.ACCESS);
+        log.info("Authentication token have been successfully saved for the user with username: {}", username);
+        return new AuthTokenDto(accessToken);
     }
 
     @Override
     @Transactional
-    public void revokeAllUserAuthTokens(String username) {
-        AppUser user = userRepository.findByEmail(username).orElseThrow(() ->
-                new UserNotFoundException1(HttpStatus.NOT_FOUND, "User with this username does not exist!"));
+    public void revokeAllUserAuthTokens(AppUser user) {
         authTokenRepository.revokeActiveUserAuthTokens(user);
-        log.info("Authentication tokens have been successfully revoked for the user: {}", username);
+        log.info("Authentication tokens have been successfully revoked for the user: {}", user.getEmail());
     }
 
     private String generateJwtToken(String username, AuthTokenType tokenType) {
@@ -141,7 +133,7 @@ public class JwtTokenServiceImpl implements JwtTokenService {
         }
     }
 
-    private Claims extractAllClaims(String token) throws JwtException{
+    private Claims extractAllClaims(String token) throws JwtException {
         return Jwts
                 .parserBuilder()
                 .setSigningKey(getSignInKey())

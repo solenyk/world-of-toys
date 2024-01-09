@@ -6,7 +6,7 @@ import com.kopchak.worldoftoys.exception.exception.*;
 import com.kopchak.worldoftoys.model.token.ConfirmationTokenType;
 
 public interface ConfirmationTokenService {
-    ConfirmTokenDto createConfirmationToken(String username, ConfirmationTokenType tokenType) throws UserNotFoundException, ConfirmTokenAlreadyExistException, AccountActivationException;
+    ConfirmTokenDto createConfirmationToken(String username, ConfirmationTokenType tokenType) throws UserNotFoundException, TokenAlreadyExistException, AccountActivationException;
     boolean isConfirmationTokenInvalid(String token, ConfirmationTokenType tokenType);
     void activateAccountUsingActivationToken(String token) throws InvalidConfirmationTokenException;
     //ToDo: private + revert

@@ -7,10 +7,7 @@ import com.kopchak.worldoftoys.dto.user.ResetPasswordDto;
 import com.kopchak.worldoftoys.dto.user.UserAuthDto;
 import com.kopchak.worldoftoys.dto.user.UserRegistrationDto;
 import com.kopchak.worldoftoys.dto.user.UsernameDto;
-import com.kopchak.worldoftoys.exception.AccessTokenAlreadyExistsException;
-import com.kopchak.worldoftoys.exception.InvalidRefreshTokenException;
 import com.kopchak.worldoftoys.exception.exception.*;
-import com.kopchak.worldoftoys.model.token.AuthTokenType;
 import com.kopchak.worldoftoys.model.token.ConfirmationTokenType;
 import com.kopchak.worldoftoys.service.ConfirmationTokenService;
 import com.kopchak.worldoftoys.service.EmailSenderService;
@@ -69,7 +66,7 @@ public class AuthenticationController {
             userService.registerUser(userRegistrationDto);
             var confirmToken = confirmTokenService.createConfirmationToken(username, ConfirmationTokenType.ACTIVATION);
             emailSenderService.sendEmail(username, confirmToken.token(), ConfirmationTokenType.ACTIVATION);
-        } catch (UsernameAlreadyExistException | ConfirmTokenAlreadyExistException | AccountActivationException e) {
+        } catch (UsernameAlreadyExistException | TokenAlreadyExistException | AccountActivationException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         } catch (UserNotFoundException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
@@ -127,7 +124,7 @@ public class AuthenticationController {
             emailSenderService.sendEmail(email, confirmToken.token(), ConfirmationTokenType.ACTIVATION);
         } catch (UserNotFoundException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
-        } catch (ConfirmTokenAlreadyExistException | AccountActivationException e) {
+        } catch (TokenAlreadyExistException | AccountActivationException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -155,7 +152,7 @@ public class AuthenticationController {
             emailSenderService.sendEmail(email, confirmationToken.token(), ConfirmationTokenType.RESET_PASSWORD);
         } catch (UserNotFoundException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
-        } catch (ConfirmTokenAlreadyExistException | AccountActivationException e) {
+        } catch (TokenAlreadyExistException | AccountActivationException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -222,16 +219,12 @@ public class AuthenticationController {
                     content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class)))
     })
     @PostMapping("/refresh-token")
-    public ResponseEntity<AuthTokenDto> refreshToken(@Valid @RequestBody AuthTokenDto refreshTokenDto) throws JwtTokenException {
-        String refreshToken = refreshTokenDto.token();
-        if (!jwtTokenService.isAuthTokenValid(refreshToken, AuthTokenType.REFRESH)) {
-            log.error("Refresh token is invalid!");
-            throw new InvalidRefreshTokenException(HttpStatus.BAD_REQUEST, "This refresh token is invalid!");
+    public ResponseEntity<AuthTokenDto> refreshToken(@Valid @RequestBody AuthTokenDto refreshTokenDto) {
+        try {
+            AuthTokenDto authTokenDto = jwtTokenService.refreshAccessToken(refreshTokenDto);
+            return ResponseEntity.status(HttpStatus.CREATED).body(authTokenDto);
+        } catch (TokenAlreadyExistException | JwtTokenException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
-        if (jwtTokenService.isActiveAuthTokenExists(refreshToken, AuthTokenType.ACCESS)) {
-            log.error("There is valid access token!");
-            throw new AccessTokenAlreadyExistsException(HttpStatus.BAD_REQUEST, "There is valid access token!");
-        }
-        return ResponseEntity.status(HttpStatus.CREATED).body(jwtTokenService.refreshAccessToken(refreshTokenDto));
     }
 }
