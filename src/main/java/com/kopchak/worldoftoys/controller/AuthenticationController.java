@@ -46,15 +46,20 @@ public class AuthenticationController {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "201",
-                    description = "User has been successfully registered",
+                    description = "The user has been successfully registered",
                     content = @Content(schema = @Schema(hidden = true))),
             @ApiResponse(responseCode = "400",
-                    description = "Username already exist",
+                    description = "The username already exists",
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = ResponseStatusExceptionDto.class))),
             @ApiResponse(responseCode = "404",
-                    description = "User is not found",
+                    description = "The user is not found",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ResponseStatusExceptionDto.class))),
+            @ApiResponse(responseCode = "503",
+                    description = "It is not possible to send a message, the service is not unavailable",
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = ResponseStatusExceptionDto.class)))
@@ -80,10 +85,10 @@ public class AuthenticationController {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "204",
-                    description = "Account activated",
+                    description = "The account is activated",
                     content = @Content(schema = @Schema(hidden = true))),
             @ApiResponse(responseCode = "400",
-                    description = "Confirmation token is invalid",
+                    description = "The confirmation token is invalid",
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = ResponseStatusExceptionDto.class)))
@@ -103,15 +108,20 @@ public class AuthenticationController {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "204",
-                    description = "Verification email has been successfully sent",
+                    description = "The verification email has been successfully sent",
                     content = @Content(schema = @Schema(hidden = true))),
             @ApiResponse(responseCode = "400",
-                    description = "Account is already activated",
+                    description = "The account is already activated",
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = ResponseStatusExceptionDto.class))),
             @ApiResponse(responseCode = "404",
-                    description = "User not found",
+                    description = "The user is not found",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ResponseStatusExceptionDto.class))),
+            @ApiResponse(responseCode = "503",
+                    description = "It is not possible to send a message, the service is not unavailable",
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = ResponseStatusExceptionDto.class)))
@@ -138,10 +148,20 @@ public class AuthenticationController {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "204",
-                    description = "Reset password email has been successfully sent",
+                    description = "The reset password email has been successfully sent",
                     content = @Content(schema = @Schema(hidden = true))),
+            @ApiResponse(responseCode = "400",
+                    description = "The valid reset password already exists",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ResponseStatusExceptionDto.class))),
             @ApiResponse(responseCode = "404",
-                    description = "User not found",
+                    description = "The user is not found",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ResponseStatusExceptionDto.class))),
+            @ApiResponse(responseCode = "503",
+                    description = "It is not possible to send a message, the service is not unavailable",
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = ResponseStatusExceptionDto.class)))
@@ -168,11 +188,11 @@ public class AuthenticationController {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "204",
-                    description = "Password changed successfully",
+                    description = "The password changed successfully",
                     content = @Content(schema = @Schema(hidden = true))),
             @ApiResponse(
                     responseCode = "400",
-                    description = "Confirmation token is invalid or new password matches old password",
+                    description = "The confirmation token is invalid or new password matches old password",
                     content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class
                     )))
     })
@@ -192,16 +212,12 @@ public class AuthenticationController {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "User is successfully authenticated",
+                    description = "The user is successfully authenticated",
                     content = @Content(schema = @Schema(implementation = AccessAndRefreshTokensDto.class))),
             @ApiResponse(
-                    responseCode = "401",
-                    description = "Bad user credentials",
-                    content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class))),
-            @ApiResponse(
-                    responseCode = "403",
-                    description = "Account is not activated",
-                    content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class))),
+                    responseCode = "400",
+                    description = "Еhe user account is not activated or the login data is invalid",
+                    content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class)))
     })
     @PostMapping("/login")
     public ResponseEntity<AccessAndRefreshTokensDto> authenticate(@Valid @RequestBody UserAuthDto userAuthDto) {
@@ -217,11 +233,11 @@ public class AuthenticationController {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "201",
-                    description = "Access token is successfully generated",
+                    description = "The access token is successfully generated",
                     content = @Content(schema = @Schema(implementation = AccessAndRefreshTokensDto.class))),
             @ApiResponse(
                     responseCode = "400",
-                    description = "Refresh token is invalid or valid access token already exists",
+                    description = "The refresh token is invalid or the valid access token already exists",
                     content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class)))
     })
     @PostMapping("/refresh-token")

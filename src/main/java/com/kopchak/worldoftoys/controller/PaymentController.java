@@ -4,6 +4,7 @@ import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
 import com.kopchak.worldoftoys.dto.payment.StripeCredentialsDto;
 import com.kopchak.worldoftoys.exception.AppStripeException;
 import com.kopchak.worldoftoys.exception.InvalidOrderException;
+import com.kopchak.worldoftoys.exception.exception.MessageSendingException;
 import com.kopchak.worldoftoys.service.PaymentService;
 import com.stripe.exception.StripeException;
 import io.swagger.v3.oas.annotations.Operation;
@@ -21,6 +22,7 @@ import org.apache.commons.io.IOUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.net.URI;
@@ -75,6 +77,11 @@ public class PaymentController {
                     responseCode = "400",
                     description = "Unable to read the request body or a Stripe error occurred while handling the webhook",
                     content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class
+                    ))),
+            @ApiResponse(
+                    responseCode = "503",
+                    description = "Service Unavailable",
+                    content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class
                     )))
     })
     @PostMapping("/webhook")
@@ -87,6 +94,8 @@ public class PaymentController {
         } catch (IOException | StripeException e) {
             log.error("Stripe error: {}", e.getMessage());
             throw new AppStripeException(HttpStatus.BAD_REQUEST, e.getMessage());
+        } catch (MessageSendingException e) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, e.getMessage());
         }
     }
 }

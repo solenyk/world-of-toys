@@ -2,6 +2,7 @@ package com.kopchak.worldoftoys.service.impl;
 
 import com.kopchak.worldoftoys.dto.payment.StripeCredentialsDto;
 import com.kopchak.worldoftoys.exception.InvalidOrderException;
+import com.kopchak.worldoftoys.exception.exception.MessageSendingException;
 import com.kopchak.worldoftoys.model.order.Order;
 import com.kopchak.worldoftoys.model.order.OrderStatus;
 import com.kopchak.worldoftoys.model.order.details.OrderDetails;
@@ -52,6 +53,7 @@ public class PaymentServiceImpl implements PaymentService {
 
     private final OrderRepository orderRepository;
     private final EmailSenderService emailSenderService;
+
     @PostConstruct
     public void init() {
         Stripe.apiKey = STRIPE_API_KEY;
@@ -81,7 +83,8 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public void handlePaymentWebhook(String sigHeader, String requestBody) throws StripeException {
+    public void handlePaymentWebhook(String sigHeader, String requestBody)
+            throws StripeException, MessageSendingException {
         Event event = Webhook.constructEvent(requestBody, sigHeader, WEBHOOK_SECRET_KEY);
 
         String eventType = event.getType();
@@ -147,7 +150,7 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     private void buildPayment(String orderId, String eventType, String paymentId, String sessionPaymentStatus,
-                              Long orderTotalAmount) {
+                              Long orderTotalAmount) throws MessageSendingException {
         Order order = orderRepository.findById(orderId).orElseThrow();
 
         PaymentStatus paymentStatus;
