@@ -83,7 +83,6 @@ public class JwtTokenServiceImpl implements JwtTokenService {
     public AuthTokenDto refreshAccessToken(AuthTokenDto refreshTokenDto) throws JwtTokenException, TokenAlreadyExistException {
         String refreshToken = refreshTokenDto.token();
         if (!isAuthTokenValid(refreshToken, AuthTokenType.REFRESH)) {
-            log.error("Refresh token is invalid!");
             throw new JwtTokenException("Refresh token is invalid!");
         }
         String username = extractUsername(refreshToken);

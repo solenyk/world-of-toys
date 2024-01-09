@@ -74,7 +74,8 @@ public class ConfirmationTokenServiceImpl implements ConfirmationTokenService {
     }
 
     @Override
-    public void changePasswordUsingResetToken(String token, ResetPasswordDto newPassword) throws InvalidConfirmationTokenException, InvalidPasswordException {
+    public void changePasswordUsingResetToken(String token, ResetPasswordDto newPassword)
+            throws InvalidConfirmationTokenException, InvalidPasswordException {
         if (isConfirmationTokenInvalid(token, ConfirmationTokenType.RESET_PASSWORD)) {
             throw new InvalidConfirmationTokenException("Reset password token is invalid!");
         }

@@ -56,7 +56,6 @@ public class UserServiceImpl implements UserService {
         String username = userAuthDto.email();
         Optional<AppUser> userOptional = userRepository.findByEmail(username);
         if (userOptional.isEmpty() || !passwordEncoder.matches(userAuthDto.password(), userOptional.get().getPassword())) {
-            log.error("Authentication failed: bad user credentials");
             throw new UserNotFoundException("Bad user credentials!");
         }
         AppUser user = userOptional.get();
