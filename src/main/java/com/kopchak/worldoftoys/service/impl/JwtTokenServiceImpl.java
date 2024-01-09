@@ -82,13 +82,13 @@ public class JwtTokenServiceImpl implements JwtTokenService {
     }
 
     @Override
-    public boolean isActiveAuthTokenExists(String authToken, AuthTokenType tokenType) {
+    public boolean isActiveAuthTokenExists(String authToken, AuthTokenType tokenType) throws JwtTokenException {
         Optional<String> username = extractUsername(authToken);
         return username.isPresent() && authTokenRepository.isActiveAuthTokenExists(username.get(), tokenType);
     }
 
     @Override
-    public AuthTokenDto refreshAccessToken(AuthTokenDto refreshTokenDto) {
+    public AuthTokenDto refreshAccessToken(AuthTokenDto refreshTokenDto) throws JwtTokenException {
         String refreshToken = refreshTokenDto.token();
         Optional<String> username = extractUsername(refreshToken);
         if(username.isPresent()){

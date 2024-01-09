@@ -2,9 +2,7 @@ package com.kopchak.worldoftoys.service.impl;
 
 import com.kopchak.worldoftoys.dto.token.ConfirmTokenDto;
 import com.kopchak.worldoftoys.dto.user.ResetPasswordDto;
-import com.kopchak.worldoftoys.exception.InvalidConfirmationTokenException1;
-import com.kopchak.worldoftoys.exception.exception.InvalidConfirmationTokenException;
-import com.kopchak.worldoftoys.exception.exception.UserNotFoundException;
+import com.kopchak.worldoftoys.exception.exception.*;
 import com.kopchak.worldoftoys.model.token.ConfirmationToken;
 import com.kopchak.worldoftoys.model.token.ConfirmationTokenType;
 import com.kopchak.worldoftoys.model.user.AppUser;
@@ -15,7 +13,6 @@ import com.kopchak.worldoftoys.service.JwtTokenService;
 import com.kopchak.worldoftoys.service.UserService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -33,11 +30,21 @@ public class ConfirmationTokenServiceImpl implements ConfirmationTokenService {
     private static final int TOKEN_EXPIRATION_TIME_IN_MINUTES = 15;
 
     @Override
-    public ConfirmTokenDto createConfirmationToken(String username, ConfirmationTokenType tokenType) throws UserNotFoundException {
+    public ConfirmTokenDto createConfirmationToken(String username, ConfirmationTokenType tokenType)
+            throws UserNotFoundException, ConfirmTokenAlreadyExistException, AccountActivationException {
         AppUser user = userRepository.findByEmail(username).orElseThrow(() -> {
             log.error("User with username: {} does not exist!", username);
             return new UserNotFoundException(String.format("User with username: %s does not exist!", username));
         });
+        if (user.isEnabled() && tokenType.equals(ConfirmationTokenType.ACTIVATION)) {
+            log.error("Account with username: {} is already activated!", username);
+            throw new AccountActivationException(String.format("Account with username: %s is already activated!",
+                    username));
+        }
+        if (!isNoActiveConfirmationToken(username, tokenType)) {
+            throw new ConfirmTokenAlreadyExistException(
+                    String.format("Valid confirmation token for user wih username: %s already exits!", username));
+        }
         String token = UUID.randomUUID().toString();
         ConfirmationToken confirmationToken = ConfirmationToken
                 .builder()
@@ -83,9 +90,16 @@ public class ConfirmationTokenServiceImpl implements ConfirmationTokenService {
     }
 
     @Override
-    public void changePasswordUsingResetToken(String token, ResetPasswordDto newPassword) {
-        ConfirmationToken confirmationToken = confirmTokenRepository.findByToken(token).orElseThrow(() ->
-                new InvalidConfirmationTokenException1(HttpStatus.BAD_REQUEST, "This confirmation token is invalid!"));
+    public void changePasswordUsingResetToken(String token, ResetPasswordDto newPassword) throws InvalidConfirmationTokenException, InvalidPasswordException {
+        if (isConfirmationTokenInvalid(token, ConfirmationTokenType.RESET_PASSWORD)) {
+            log.error("Reset password token: {} is invalid!", token);
+            throw new InvalidConfirmationTokenException(String.format("Reset password token: %s is invalid!", token));
+        }
+        if (userService.isNewPasswordMatchOldPassword(token, newPassword.password())) {
+            log.error("New password matches old password!");
+            throw new InvalidPasswordException("New password matches old password!");
+        }
+        ConfirmationToken confirmationToken = confirmTokenRepository.findByToken(token).get();
         confirmationToken.setConfirmedAt(LocalDateTime.now());
         AppUser user = confirmationToken.getUser();
         userService.changeUserPassword(user, newPassword.password());

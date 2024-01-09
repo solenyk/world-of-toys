@@ -1,20 +1,29 @@
 package com.kopchak.worldoftoys.service.impl;
 
+import com.kopchak.worldoftoys.dto.token.AccessAndRefreshTokensDto;
+import com.kopchak.worldoftoys.dto.user.UserAuthDto;
 import com.kopchak.worldoftoys.dto.user.UserRegistrationDto;
 import com.kopchak.worldoftoys.exception.InvalidConfirmationTokenException1;
 import com.kopchak.worldoftoys.exception.UserNotFoundException1;
+import com.kopchak.worldoftoys.exception.exception.AccountActivationException;
+import com.kopchak.worldoftoys.exception.exception.UserNotFoundException;
 import com.kopchak.worldoftoys.exception.exception.UsernameAlreadyExistException;
 import com.kopchak.worldoftoys.model.token.ConfirmationToken;
 import com.kopchak.worldoftoys.model.user.AppUser;
 import com.kopchak.worldoftoys.model.user.Role;
 import com.kopchak.worldoftoys.repository.token.ConfirmTokenRepository;
 import com.kopchak.worldoftoys.repository.user.UserRepository;
+import com.kopchak.worldoftoys.service.JwtTokenService;
 import com.kopchak.worldoftoys.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +32,8 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final ConfirmTokenRepository confirmationTokenRepository;
+    private final JwtTokenService jwtTokenService;
+    private final AuthenticationManager authenticationManager;
 
     @Override
     public void registerUser(UserRegistrationDto userRegistrationDto) throws UsernameAlreadyExistException {
@@ -49,10 +60,29 @@ public class UserServiceImpl implements UserService {
         return userRepository.findByEmail(email).isPresent();
     }
 
+    public AccessAndRefreshTokensDto authenticateUser(UserAuthDto userAuthDto) throws UserNotFoundException, AccountActivationException {
+        String username = userAuthDto.email();
+        Optional<AppUser> user = userRepository.findByEmail(username);
+        if (user.isEmpty() || !isPasswordsMatch(username, userAuthDto.password())) {
+            log.error("Bad user credentials!");
+            throw new UserNotFoundException("Bad user credentials!");
+        }
+        if (!user.get().isEnabled()) {
+            log.error("Account with username: {} is not activated!", username);
+            throw new AccountActivationException("Account is not activated!");
+        }
+        String email = userAuthDto.email();
+        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, userAuthDto.password()));
+        jwtTokenService.revokeAllUserAuthTokens(email);
+        return jwtTokenService.generateAuthTokens(email);
+    }
+
     @Override
-    public boolean isUserActivated(String email) {
-        AppUser user = userRepository.findByEmail(email).orElseThrow(() ->
-                new UserNotFoundException1(HttpStatus.NOT_FOUND, "User with this username does not exist!"));
+    public boolean isUserActivated(String email) throws UserNotFoundException {
+        AppUser user = userRepository.findByEmail(email).orElseThrow(() -> {
+            log.error("User with username: {} does not exist!", email);
+            return new UserNotFoundException(String.format("User with username: %s does not exist!", email));
+        });
         return user.getEnabled();
     }
 
