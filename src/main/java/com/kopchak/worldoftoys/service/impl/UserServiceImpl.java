@@ -34,8 +34,9 @@ public class UserServiceImpl implements UserService {
     public void registerUser(UserRegistrationDto userRegistrationDto) throws UsernameAlreadyExistException {
         String email = userRegistrationDto.email();
         if (userRepository.findByEmail(email).isPresent()) {
-            log.error("User with username: {} already exist!", email);
-            throw new UsernameAlreadyExistException(String.format("User with username: %s already exist!", email));
+            String errMsg = String.format("User with username: %s already exist!", email);
+            log.error(errMsg);
+            throw new UsernameAlreadyExistException(errMsg);
         }
         AppUser user = AppUser.builder()
                 .firstname(userRegistrationDto.firstname())
@@ -50,32 +51,28 @@ public class UserServiceImpl implements UserService {
         log.info("User: {} has been successfully saved", email);
     }
 
+    @Override
     public AccessAndRefreshTokensDto authenticateUser(UserAuthDto userAuthDto) throws UserNotFoundException, AccountActivationException {
         String username = userAuthDto.email();
-        Optional<AppUser> user = userRepository.findByEmail(username);
-        if (user.isEmpty() || !passwordEncoder.matches(user.get().getPassword(), userAuthDto.password())) {
-            log.error("Bad user credentials!");
+        Optional<AppUser> userOptional = userRepository.findByEmail(username);
+        if (userOptional.isEmpty() || !passwordEncoder.matches(userAuthDto.password(), userOptional.get().getPassword())) {
+            log.error("Authentication failed: bad user credentials");
             throw new UserNotFoundException("Bad user credentials!");
         }
-        if (!user.get().isEnabled()) {
+        AppUser user = userOptional.get();
+        if (!user.isEnabled()) {
             log.error("Account with username: {} is not activated!", username);
             throw new AccountActivationException("Account is not activated!");
         }
-        String email = userAuthDto.email();
-        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, userAuthDto.password()));
-        jwtTokenService.revokeAllUserAuthTokens(user.get());
-        return jwtTokenService.generateAuthTokens(user.get());
-    }
-
-    @Override
-    public void activateUserAccount(AppUser user) {
-        user.setEnabled(true);
-        userRepository.save(user);
+        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, userAuthDto.password()));
+        jwtTokenService.revokeAllUserAuthTokens(user);
+        return jwtTokenService.generateAuthTokens(user);
     }
 
     @Override
     public void changeUserPassword(AppUser user, String newPassword) throws InvalidPasswordException {
-        if(passwordEncoder.matches(newPassword, user.getPassword())){
+        if (passwordEncoder.matches(newPassword, user.getPassword())) {
+            log.error("New password matches old password for user with username: {}", user.getUsername());
             throw new InvalidPasswordException("New password matches old password!");
         }
         user.setPassword(passwordEncoder.encode(newPassword));

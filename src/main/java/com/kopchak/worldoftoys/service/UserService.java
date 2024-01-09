@@ -11,10 +11,6 @@ import com.kopchak.worldoftoys.model.user.AppUser;
 
 public interface UserService {
     void registerUser(UserRegistrationDto userRegistrationDto) throws UsernameAlreadyExistException;
-
-    void activateUserAccount(AppUser user);
-
     void changeUserPassword(AppUser user, String newPassword) throws InvalidPasswordException;
-
     AccessAndRefreshTokensDto authenticateUser(UserAuthDto userAuthDto) throws UserNotFoundException, AccountActivationException;
 }

@@ -1,5 +1,6 @@
 package com.kopchak.worldoftoys.service.impl;
 
+import com.kopchak.worldoftoys.exception.exception.MessageSendingException;
 import com.kopchak.worldoftoys.exception.exception.UserNotFoundException;
 import com.kopchak.worldoftoys.model.order.StatusProvider;
 import com.kopchak.worldoftoys.model.order.payment.PaymentStatus;
@@ -56,7 +57,7 @@ public class EmailSenderServiceImpl implements EmailSenderService {
 
     @Override
     @Async
-    public void send(String emailRecipient, String emailContent, String msgSubject) {
+    public void send(String emailRecipient, String emailContent, String msgSubject) throws MessageSendingException {
         try {
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "utf-8");
@@ -67,15 +68,15 @@ public class EmailSenderServiceImpl implements EmailSenderService {
             mailSender.send(mimeMessage);
             log.info("Email sent to: {}", emailRecipient);
         } catch (MessagingException e) {
-            log.error("Failed to send email to: {} with subject: {}", emailRecipient, msgSubject, e);
-            throw new IllegalStateException("Failed to send email");
+            log.error("Failed to send the email to the user with username: {}", emailRecipient);
+            throw new MessageSendingException(String.format("Failed to send the email: %s", e.getMessage()));
         }
     }
 
     @Override
-    public void sendEmail(String userEmail, String confirmToken, ConfirmationTokenType tokenType) throws UserNotFoundException {
+    public void sendEmail(String userEmail, String confirmToken, ConfirmationTokenType tokenType) throws UserNotFoundException, MessageSendingException {
         String emailContent;
-        AppUser user = userRepository.findByEmail(userEmail).orElseThrow(() ->{
+        AppUser user = userRepository.findByEmail(userEmail).orElseThrow(() -> {
             log.error("User with username: {} does not exist!", userEmail);
             return new UserNotFoundException(String.format("User with username: %s does not exist!", userEmail));
         });
@@ -92,8 +93,8 @@ public class EmailSenderServiceImpl implements EmailSenderService {
     }
 
     @Override
-    public <T extends Enum<T> & StatusProvider> void sendEmail(String userEmail, String userFirstname,
-                                                               String orderId, T status) {
+    public <T extends Enum<T> & StatusProvider> void sendEmail(String userEmail, String userFirstname, String orderId,
+                                                               T status) throws MessageSendingException {
         if (status instanceof PaymentStatus) {
             String msg = String.format(PAYMENT_STATUS_MSG, orderId, status.getStatus());
             String emailContent = buildEmail(PAYMENT_STATUS_TITLE, userFirstname, msg, getBaseUrl() + LOGIN_LINK,

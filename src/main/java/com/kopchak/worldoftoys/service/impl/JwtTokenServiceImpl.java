@@ -46,9 +46,9 @@ public class JwtTokenServiceImpl implements JwtTokenService {
             Claims claims = extractAllClaims(token);
             return claims.getSubject();
         } catch (JwtException e) {
-            log.error("Failed to extract username from token: {}", e.getMessage());
-            throw new JwtTokenException(String.format("Failed to extract expiration date from token: %s",
-                    e.getMessage()));
+            String errorMsg = String.format("Failed to extract expiration date from token: %s", e.getMessage());
+            log.error(errorMsg);
+            throw new JwtTokenException(errorMsg);
         }
     }
 
@@ -71,7 +71,8 @@ public class JwtTokenServiceImpl implements JwtTokenService {
         String refreshToken = generateJwtToken(email, AuthTokenType.REFRESH);
         saveUserAuthToken(user, accessToken, AuthTokenType.ACCESS);
         saveUserAuthToken(user, refreshToken, AuthTokenType.REFRESH);
-        log.info("Authentication tokens have been successfully generated and saved for the user: {}", email);
+        log.info("Authentication tokens have been successfully generated and " +
+                "saved for the user with the username: {}", email);
         return AccessAndRefreshTokensDto.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
@@ -87,13 +88,13 @@ public class JwtTokenServiceImpl implements JwtTokenService {
         }
         String username = extractUsername(refreshToken);
         if (authTokenRepository.isActiveAuthTokenExists(username, AuthTokenType.ACCESS)) {
-            log.error("There is valid access token!");
+            log.error("There is valid access token for the user with the username: {}!", username);
             throw new TokenAlreadyExistException("There is valid access token!");
         }
         AppUser user = userRepository.findByEmail(username).get();
         String accessToken = generateJwtToken(username, AuthTokenType.ACCESS);
         saveUserAuthToken(user, accessToken, AuthTokenType.ACCESS);
-        log.info("Authentication token have been successfully saved for the user with username: {}", username);
+        log.info("The authentication token has been successfully saved for the user with the username: {}", username);
         return new AuthTokenDto(accessToken);
     }
 
@@ -101,7 +102,8 @@ public class JwtTokenServiceImpl implements JwtTokenService {
     @Transactional
     public void revokeAllUserAuthTokens(AppUser user) {
         authTokenRepository.revokeActiveUserAuthTokens(user);
-        log.info("Authentication tokens have been successfully revoked for the user: {}", user.getEmail());
+        log.info("Authentication tokens have been successfully revoked for the user with " +
+                "the username: {}", user.getEmail());
     }
 
     private String generateJwtToken(String username, AuthTokenType tokenType) {
@@ -127,9 +129,9 @@ public class JwtTokenServiceImpl implements JwtTokenService {
             Claims claims = extractAllClaims(token);
             return claims.getExpiration().before(new Date());
         } catch (JwtException e) {
-            log.error("Failed to extract expiration date from token: {}", e.getMessage());
-            throw new JwtTokenException(String.format("Failed to extract expiration date from token: %s",
-                    e.getMessage()));
+            String errorMsg = String.format("Failed to extract expiration date from token: %s", e.getMessage());
+            log.error(errorMsg);
+            throw new JwtTokenException(errorMsg);
         }
     }
 
