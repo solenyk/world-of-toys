@@ -77,11 +77,11 @@ public class ShopController {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "Product was successfully fetched",
+                    description = "The product was successfully fetched",
                     content = @Content(schema = @Schema(implementation = ProductDto.class))),
             @ApiResponse(
                     responseCode = "404",
-                    description = "Product with this slug is not found",
+                    description = "The product with this slug is not found",
                     content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class)))
     })
     @GetMapping("/{productSlug}")

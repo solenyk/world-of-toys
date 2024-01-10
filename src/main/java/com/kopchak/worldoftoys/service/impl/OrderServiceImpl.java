@@ -20,6 +20,7 @@ import com.kopchak.worldoftoys.repository.order.OrderRepository;
 import com.kopchak.worldoftoys.repository.specifications.OrderSpecifications;
 import com.kopchak.worldoftoys.service.OrderService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -32,6 +33,7 @@ import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class OrderServiceImpl implements OrderService {
     private final OrderRecipientMapper orderRecipientMapper;
     private final OrderMapper orderMapper;
@@ -43,9 +45,12 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public void createOrder(OrderRecipientDto orderRecipientDto, AppUser user) throws OrderException {
         Set<CartItem> cartItems = cartItemRepository.deleteAllById_User(user);
+        String username = user.getUsername();
         if (cartItems.isEmpty()) {
-            throw new OrderException(String.format("Impossible to create an order for the user: %s " +
-                    "because there are no products in the user's cart.", user.getUsername()));
+            String errMg = String.format("It is impossible to create an order for the user: %s " +
+                    "because there are no products in the user's cart.", username);
+            log.error(errMg);
+            throw new OrderException(errMg);
         }
         OrderRecipient orderRecipient = orderRecipientMapper.toOrderRecipient(orderRecipientDto);
         Order order = Order
@@ -56,6 +61,7 @@ public class OrderServiceImpl implements OrderService {
         order = orderRepository.save(order);
         var orderDetails = orderMapper.toOrderDetails(cartItems, order);
         orderDetailsRepository.saveAll(orderDetails);
+        log.info("The order for user with username: {} has been successfully created.", username);
     }
 
     @Override
@@ -97,7 +103,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Set<StatusDto> getAllOrderStatuses(){
+    public Set<StatusDto> getAllOrderStatuses() {
         return orderMapper.toStatusDtoSet(Arrays.asList(OrderStatus.values()));
     }
 }

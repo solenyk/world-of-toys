@@ -37,12 +37,12 @@ public class CartController {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "201",
-                    description = "Product was successfully added to the cart",
+                    description = "The product was successfully added to the cart",
                     content = @Content(schema = @Schema(hidden = true))
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "Product with this slug is not found",
+                    description = "The product with this slug is not found",
                     content = @Content(schema = @Schema(implementation = ResponseStatusException.class))
             )
     })
@@ -60,7 +60,7 @@ public class CartController {
     @Operation(summary = "Retrieve the contents of the shopping cart for the user")
     @ApiResponse(
             responseCode = "200",
-            description = "The contents of the shopping cart were successfully fetched",
+            description = "Contents of the shopping cart were successfully fetched",
             content = @Content(schema = @Schema(hidden = true))
     )
     @GetMapping
@@ -77,7 +77,7 @@ public class CartController {
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "Product with this slug is not found",
+                    description = "The product with this slug is not found",
                     content = @Content(schema = @Schema(implementation = ResponseStatusException.class))
             )
     })
@@ -96,12 +96,12 @@ public class CartController {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "204",
-                    description = "Product was successfully deleted from the cart",
+                    description = "The product was successfully deleted from the cart",
                     content = @Content(schema = @Schema(hidden = true))
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "Product with this slug is not found",
+                    description = "The product with this slug is not found",
                     content = @Content(schema = @Schema(implementation = ResponseStatusException.class))
             )
     })

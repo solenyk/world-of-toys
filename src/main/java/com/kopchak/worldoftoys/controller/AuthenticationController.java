@@ -216,7 +216,7 @@ public class AuthenticationController {
                     content = @Content(schema = @Schema(implementation = AccessAndRefreshTokensDto.class))),
             @ApiResponse(
                     responseCode = "400",
-                    description = "Еhe user account is not activated or the login data is invalid",
+                    description = "The user account is not activated or the login data is invalid",
                     content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class)))
     })
     @PostMapping("/login")

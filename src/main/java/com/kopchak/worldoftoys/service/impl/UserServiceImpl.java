@@ -34,7 +34,7 @@ public class UserServiceImpl implements UserService {
     public void registerUser(UserRegistrationDto userRegistrationDto) throws UsernameAlreadyExistException {
         String email = userRegistrationDto.email();
         if (userRepository.findByEmail(email).isPresent()) {
-            String errMsg = String.format("User with username: %s already exist!", email);
+            String errMsg = String.format("The user with the username: %s already exist!", email);
             log.error(errMsg);
             throw new UsernameAlreadyExistException(errMsg);
         }
@@ -48,7 +48,7 @@ public class UserServiceImpl implements UserService {
                 .locked(false)
                 .build();
         userRepository.save(user);
-        log.info("User: {} has been successfully saved", email);
+        log.info("The user with the username: {} has been successfully saved", email);
     }
 
     @Override
@@ -60,8 +60,8 @@ public class UserServiceImpl implements UserService {
         }
         AppUser user = userOptional.get();
         if (!user.isEnabled()) {
-            log.error("Account with username: {} is not activated!", username);
-            throw new AccountActivationException("Account is not activated!");
+            log.error("The account with the username: {} is not activated!", username);
+            throw new AccountActivationException("The account is not activated!");
         }
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, userAuthDto.password()));
         jwtTokenService.revokeAllUserAuthTokens(user);
@@ -71,8 +71,8 @@ public class UserServiceImpl implements UserService {
     @Override
     public void changeUserPassword(AppUser user, String newPassword) throws InvalidPasswordException {
         if (passwordEncoder.matches(newPassword, user.getPassword())) {
-            log.error("New password matches old password for user with username: {}", user.getUsername());
-            throw new InvalidPasswordException("New password matches old password!");
+            log.error("The new password matches the old password for user with username: {}", user.getUsername());
+            throw new InvalidPasswordException("The new password matches old password!");
         }
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);

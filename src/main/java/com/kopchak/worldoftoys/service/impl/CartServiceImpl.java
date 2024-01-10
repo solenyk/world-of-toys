@@ -41,7 +41,7 @@ public class CartServiceImpl implements CartService {
             cartItem = new CartItem(cartItemId, cartItemQuantity);
         }
         cartItemRepository.save(cartItem);
-        log.info("The product with slug: {} has been added to the cart of a user with username: {} in quantity: {}.",
+        log.info("The product with the slug: {} has been added to the cart of a user with username: {} in quantity: {}.",
                 productSlug, user.getUsername(), cartItemQuantity);
     }
 
