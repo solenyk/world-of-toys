@@ -5,7 +5,7 @@ import com.kopchak.worldoftoys.dto.admin.product.order.FilteringOrderOptionsDto;
 import com.kopchak.worldoftoys.dto.admin.product.order.StatusDto;
 import com.kopchak.worldoftoys.dto.order.OrderDto;
 import com.kopchak.worldoftoys.dto.order.OrderRecipientDto;
-import com.kopchak.worldoftoys.exception.exception.OrderException;
+import com.kopchak.worldoftoys.exception.exception.OrderCreationException;
 import com.kopchak.worldoftoys.mapper.order.OrderMapper;
 import com.kopchak.worldoftoys.mapper.order.OrderRecipientMapper;
 import com.kopchak.worldoftoys.model.cart.CartItem;
@@ -43,14 +43,14 @@ public class OrderServiceImpl implements OrderService {
     private final OrderSpecifications orderSpecifications;
 
     @Override
-    public void createOrder(OrderRecipientDto orderRecipientDto, AppUser user) throws OrderException {
+    public void createOrder(OrderRecipientDto orderRecipientDto, AppUser user) throws OrderCreationException {
         Set<CartItem> cartItems = cartItemRepository.deleteAllById_User(user);
         String username = user.getUsername();
         if (cartItems.isEmpty()) {
-            String errMg = String.format("It is impossible to create an order for the user: %s " +
+            log.error("It is impossible to create an order for the user with username: {} " +
                     "because there are no products in the user's cart.", username);
-            log.error(errMg);
-            throw new OrderException(errMg);
+            throw new OrderCreationException("It is impossible to create an order for the user " +
+                    "because there are no products in the user's cart.");
         }
         OrderRecipient orderRecipient = orderRecipientMapper.toOrderRecipient(orderRecipientDto);
         Order order = Order
@@ -88,12 +88,12 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public void updateOrderStatus(String orderId, StatusDto statusDto) throws OrderException {
+    public void updateOrderStatus(String orderId, StatusDto statusDto) throws OrderCreationException {
         Order order = orderRepository.findById(orderId).orElseThrow(() ->
-                new OrderException(String.format("Order with id: %s doesn't exist!", orderId)));
+                new OrderCreationException(String.format("Order with id: %s doesn't exist!", orderId)));
         OrderStatus orderStatus = orderMapper.toOrderStatus(statusDto);
         if (!order.getOrderStatus().equals(orderStatus)) {
-            throw new OrderException(String.format("The status: %s of the order with id: %s " +
+            throw new OrderCreationException(String.format("The status: %s of the order with id: %s " +
                     "is the same as the current status", statusDto.status(), orderId));
         }
         order.setOrderStatus(orderStatus);

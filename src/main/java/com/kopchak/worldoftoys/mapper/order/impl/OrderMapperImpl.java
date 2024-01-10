@@ -3,7 +3,7 @@ package com.kopchak.worldoftoys.mapper.order.impl;
 import com.kopchak.worldoftoys.dto.admin.product.order.*;
 import com.kopchak.worldoftoys.dto.order.OrderDto;
 import com.kopchak.worldoftoys.dto.order.OrderProductDto;
-import com.kopchak.worldoftoys.exception.exception.OrderException;
+import com.kopchak.worldoftoys.exception.exception.OrderCreationException;
 import com.kopchak.worldoftoys.mapper.order.OrderMapper;
 import com.kopchak.worldoftoys.model.cart.CartItem;
 import com.kopchak.worldoftoys.model.order.Order;
@@ -61,11 +61,11 @@ public class OrderMapperImpl implements OrderMapper {
     }
 
     @Override
-    public OrderStatus toOrderStatus(StatusDto statusDto) throws OrderException {
+    public OrderStatus toOrderStatus(StatusDto statusDto) throws OrderCreationException {
         try {
             return OrderStatus.valueOf(statusDto.name());
         } catch (IllegalArgumentException e) {
-            throw new OrderException(String.format("Order status with name: %s doesn't exist!", statusDto.status()));
+            throw new OrderCreationException(String.format("Order status with name: %s doesn't exist!", statusDto.status()));
         }
     }
 

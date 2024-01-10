@@ -2,7 +2,7 @@ package com.kopchak.worldoftoys.controller;
 
 import com.kopchak.worldoftoys.dto.order.OrderDto;
 import com.kopchak.worldoftoys.dto.order.OrderRecipientDto;
-import com.kopchak.worldoftoys.exception.exception.OrderException;
+import com.kopchak.worldoftoys.exception.exception.OrderCreationException;
 import com.kopchak.worldoftoys.model.user.AppUser;
 import com.kopchak.worldoftoys.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -34,16 +35,23 @@ public class OrderController {
     private final OrderService orderService;
 
     @Operation(summary = "Create order")
-    @ApiResponse(
-            responseCode = "200",
-            description = "Order has been successfully created",
-            content = @Content(schema = @Schema(hidden = true)))
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Order has been successfully created",
+                    content = @Content(schema = @Schema(hidden = true))),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "It is impossible to create an order for the user because there " +
+                            "are no products in the user's cart.",
+                    content = @Content(schema = @Schema(implementation = ResponseStatusException.class)))
+    })
     @PostMapping
     public ResponseEntity<Void> createOrder(@Valid @RequestBody OrderRecipientDto orderRecipientDto,
                                             @AuthenticationPrincipal AppUser user) {
-        try{
+        try {
             orderService.createOrder(orderRecipientDto, user);
-        }catch (OrderException e){
+        } catch (OrderCreationException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
         return new ResponseEntity<>(HttpStatus.CREATED);

@@ -13,7 +13,7 @@ import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.exception.exception.CategoryException;
 import com.kopchak.worldoftoys.exception.exception.ImageException;
-import com.kopchak.worldoftoys.exception.exception.OrderException;
+import com.kopchak.worldoftoys.exception.exception.OrderCreationException;
 import com.kopchak.worldoftoys.exception.exception.ProductNotFoundException;
 import com.kopchak.worldoftoys.model.order.OrderStatus;
 import com.kopchak.worldoftoys.model.order.payment.PaymentStatus;
@@ -254,7 +254,7 @@ public class AdminPanelController {
                                                   @RequestBody StatusDto statusDto) {
         try {
             orderService.updateOrderStatus(orderId, statusDto);
-        } catch (OrderException e) {
+        } catch (OrderCreationException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
