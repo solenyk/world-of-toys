@@ -2,12 +2,14 @@ package com.kopchak.worldoftoys.controller;
 
 import com.kopchak.worldoftoys.dto.cart.RequestCartItemDto;
 import com.kopchak.worldoftoys.dto.cart.UserCartDetailsDto;
+import com.kopchak.worldoftoys.exception.exception.ProductNotFoundException;
 import com.kopchak.worldoftoys.model.user.AppUser;
 import com.kopchak.worldoftoys.service.CartService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -17,6 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/v1/cart")
@@ -31,15 +34,26 @@ public class CartController {
     private final CartService cartService;
 
     @Operation(summary = "Add the product to the cart")
-    @ApiResponse(
-            responseCode = "201",
-            description = "Product was successfully added to the cart",
-            content = @Content(schema = @Schema(hidden = true))
-    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "Product was successfully added to the cart",
+                    content = @Content(schema = @Schema(hidden = true))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Product with this slug is not found",
+                    content = @Content(schema = @Schema(implementation = ResponseStatusException.class))
+            )
+    })
     @PostMapping(value = "/add-product")
     public ResponseEntity<Void> addProductToCart(@Valid @RequestBody RequestCartItemDto requestCartItemDto,
-                                              @AuthenticationPrincipal AppUser user) {
-        cartService.addProductToCart(requestCartItemDto, user);
+                                                 @AuthenticationPrincipal AppUser user) {
+        try {
+            cartService.addProductToCart(requestCartItemDto, user);
+        } catch (ProductNotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+        }
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
@@ -55,28 +69,50 @@ public class CartController {
     }
 
     @Operation(summary = "Update cart item quantity")
-    @ApiResponse(
-            responseCode = "204",
-            description = "Cart item quantity was successfully updated",
-            content = @Content(schema = @Schema(hidden = true))
-    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "204",
+                    description = "Cart item quantity was successfully updated",
+                    content = @Content(schema = @Schema(hidden = true))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Product with this slug is not found",
+                    content = @Content(schema = @Schema(implementation = ResponseStatusException.class))
+            )
+    })
     @PatchMapping
     public ResponseEntity<Void> updateUserCartItem(@Valid @RequestBody RequestCartItemDto requestCartItemDto,
-                                                @AuthenticationPrincipal AppUser user) {
-        cartService.updateUserCartItem(requestCartItemDto, user);
+                                                   @AuthenticationPrincipal AppUser user) {
+        try {
+            cartService.updateUserCartItem(requestCartItemDto, user);
+        } catch (ProductNotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+        }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     @Operation(summary = "Delete product from the cart")
-    @ApiResponse(
-            responseCode = "204",
-            description = "Product was successfully deleted from the cart",
-            content = @Content(schema = @Schema(hidden = true))
-    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "204",
+                    description = "Product was successfully deleted from the cart",
+                    content = @Content(schema = @Schema(hidden = true))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Product with this slug is not found",
+                    content = @Content(schema = @Schema(implementation = ResponseStatusException.class))
+            )
+    })
     @DeleteMapping
     public ResponseEntity<Void> deleteUserCartItem(@Valid @RequestBody RequestCartItemDto requestCartItemDto,
-                                                @AuthenticationPrincipal AppUser user) {
-        cartService.deleteUserCartItem(requestCartItemDto, user);
+                                                   @AuthenticationPrincipal AppUser user) {
+        try {
+            cartService.deleteUserCartItem(requestCartItemDto, user);
+        } catch (ProductNotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+        }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

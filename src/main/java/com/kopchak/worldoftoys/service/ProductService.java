@@ -29,9 +29,10 @@ public interface ProductService {
                                                                 List<String> originCategories, List<String> brandCategories,
                                                                 List<String> ageCategories);
 
-    AdminFilteredProductsPageDto getAdminFilteredProducts(int page, int size, String productName, BigDecimal minPrice, BigDecimal maxPrice,
-                                                          List<String> originCategories, List<String> brandCategories,
-                                                          List<String> ageCategories, String priceSortOrder);
+    AdminFilteredProductsPageDto getAdminFilteredProducts(int page, int size, String productName, BigDecimal minPrice,
+                                                          BigDecimal maxPrice, List<String> originCategories,
+                                                          List<String> brandCategories, List<String> ageCategories,
+                                                          String priceSortOrder);
 
     Optional<AdminProductDto> getAdminProductDtoById(Integer productId);
 
