@@ -4,7 +4,7 @@ import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringProductCategoriesDto;
-import com.kopchak.worldoftoys.exception.ProductNotFoundException;
+import com.kopchak.worldoftoys.exception.exception.ProductNotFoundException;
 import com.kopchak.worldoftoys.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -17,10 +17,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/products")
@@ -86,11 +86,11 @@ public class ShopController {
     })
     @GetMapping("/{productSlug}")
     public ResponseEntity<ProductDto> getProductBySlug(@PathVariable(name = "productSlug") String productSlug) {
-        Optional<ProductDto> productDtoOptional = productService.getProductDtoBySlug(productSlug);
-        if (productDtoOptional.isEmpty()) {
-            log.error("Product with slug: '{}' is not found.", productSlug);
-            throw new ProductNotFoundException(HttpStatus.NOT_FOUND, "Product doesn't exist");
+        try {
+            var productDto = productService.getProductDtoBySlug(productSlug);
+            return new ResponseEntity<>(productDto, HttpStatus.OK);
+        } catch (ProductNotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         }
-        return new ResponseEntity<>(productDtoOptional.get(), HttpStatus.OK);
     }
 }

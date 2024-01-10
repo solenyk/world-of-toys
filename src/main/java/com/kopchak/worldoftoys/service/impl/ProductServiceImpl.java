@@ -10,7 +10,7 @@ import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringProductCategoriesDto;
 import com.kopchak.worldoftoys.exception.exception.CategoryException;
 import com.kopchak.worldoftoys.exception.exception.ImageException;
-import com.kopchak.worldoftoys.exception.exception.ProductException;
+import com.kopchak.worldoftoys.exception.exception.ProductNotFoundException;
 import com.kopchak.worldoftoys.mapper.product.ProductCategoryMapper;
 import com.kopchak.worldoftoys.mapper.product.ProductMapper;
 import com.kopchak.worldoftoys.model.image.Image;
@@ -64,10 +64,15 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Optional<ProductDto> getProductDtoBySlug(String productSlug) {
+    public ProductDto getProductDtoBySlug(String productSlug) throws ProductNotFoundException {
         Optional<Product> product = productRepository.findBySlug(productSlug);
+        if (product.isEmpty()) {
+            String errMsg = String.format("Product with slug: %s is not found.", productSlug);
+            log.error(errMsg);
+            throw new ProductNotFoundException(errMsg);
+        }
         log.info("Fetched product by slug: '{}'", productSlug);
-        return product.map(productMapper::toProductDto);
+        return productMapper.toProductDto(product.get());
     }
 
     @Override
@@ -120,11 +125,11 @@ public class ProductServiceImpl implements ProductService {
 
     public void updateProduct(Integer productId, AddUpdateProductDto addUpdateProductDto, MultipartFile mainImageFile,
                               List<MultipartFile> imageFilesList)
-            throws CategoryException, ImageException, ProductException {
+            throws CategoryException, ImageException, ProductNotFoundException {
         String productName = addUpdateProductDto.name();
         Optional<Product> productOptional = productRepository.findByName(productName);
         if (productOptional.isPresent() && !productOptional.get().getId().equals(productId)) {
-            throw new ProductException(String.format("Product with name: %s is already exist", productName));
+            throw new ProductNotFoundException(String.format("Product with name: %s is already exist", productName));
         }
         Product product = productMapper.toProduct(addUpdateProductDto, productId, productCategoryRepository,
                 mainImageFile, imageFilesList, imageService);
@@ -140,10 +145,10 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public void addProduct(AddUpdateProductDto addUpdateProductDto, MultipartFile mainImageFile,
-                           List<MultipartFile> imageFileList) throws CategoryException, ImageException, ProductException {
+                           List<MultipartFile> imageFileList) throws CategoryException, ImageException, ProductNotFoundException {
         String productName = addUpdateProductDto.name();
         if (productRepository.findByName(productName).isPresent()) {
-            throw new ProductException(String.format("Product with name: %s is already exist", productName));
+            throw new ProductNotFoundException(String.format("Product with name: %s is already exist", productName));
         }
         Product product = productMapper.toProduct(addUpdateProductDto, productCategoryRepository,
                 mainImageFile, imageFileList, imageService);

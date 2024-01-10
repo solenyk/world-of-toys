@@ -10,7 +10,7 @@ import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringProductCategoriesDto;
 import com.kopchak.worldoftoys.exception.exception.CategoryException;
 import com.kopchak.worldoftoys.exception.exception.ImageException;
-import com.kopchak.worldoftoys.exception.exception.ProductException;
+import com.kopchak.worldoftoys.exception.exception.ProductNotFoundException;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
@@ -23,7 +23,7 @@ public interface ProductService {
                                                 List<String> originCategories, List<String> brandCategories,
                                                 List<String> ageCategories, String priceSortOrder);
 
-    Optional<ProductDto> getProductDtoBySlug(String slug);
+    ProductDto getProductDtoBySlug(String productSlug) throws ProductNotFoundException;
 
     FilteringProductCategoriesDto getFilteringProductCategories(String productName, BigDecimal minPrice, BigDecimal maxPrice,
                                                                 List<String> originCategories, List<String> brandCategories,
@@ -37,11 +37,11 @@ public interface ProductService {
 
     void updateProduct(Integer productId, AddUpdateProductDto addUpdateProductDto, MultipartFile mainImageFile,
                        List<MultipartFile> imageFileList)
-            throws CategoryException, ImageException, ProductException;
+            throws CategoryException, ImageException, ProductNotFoundException;
 
     void addProduct(AddUpdateProductDto addUpdateProductDto, MultipartFile mainImageFile,
                     List<MultipartFile> imageFileList)
-            throws CategoryException, ImageException, ProductException;
+            throws CategoryException, ImageException, ProductNotFoundException;
 
     void deleteProduct(Integer productId);
 
