@@ -8,9 +8,7 @@ import com.kopchak.worldoftoys.dto.admin.product.category.AdminProductCategoryNa
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringProductCategoriesDto;
-import com.kopchak.worldoftoys.exception.exception.CategoryException;
-import com.kopchak.worldoftoys.exception.exception.ImageException;
-import com.kopchak.worldoftoys.exception.exception.ProductNotFoundException;
+import com.kopchak.worldoftoys.exception.exception.*;
 import com.kopchak.worldoftoys.mapper.product.ProductCategoryMapper;
 import com.kopchak.worldoftoys.mapper.product.ProductMapper;
 import com.kopchak.worldoftoys.model.image.Image;
@@ -72,7 +70,7 @@ public class ProductServiceImpl implements ProductService {
             throw new ProductNotFoundException(errMsg);
         }
         log.info("Fetched product by slug: '{}'", productSlug);
-        return productMapper.toProductDto(product.get());
+        return productMapper.toProductDto(product.get(), imageService);
     }
 
     @Override
@@ -102,10 +100,15 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Optional<AdminProductDto> getAdminProductDtoById(Integer productId) {
+    public AdminProductDto getAdminProductDtoById(Integer productId) throws ProductNotFoundException {
         Optional<Product> product = productRepository.findById(productId);
+        if(product.isEmpty()){
+            String errMsg = String.format("Product with id: %d is not found.", productId);
+            log.error(errMsg);
+            throw new ProductNotFoundException(errMsg);
+        }
         log.info("Fetched product by id: '{}'", productId);
-        return product.map(productMapper::toAdminProductDto);
+        return productMapper.toAdminProductDto(product.get(), imageService);
     }
 
     private Page<Product> getFilteredProductPage(int page, int size, String productName, BigDecimal minPrice,
@@ -123,9 +126,10 @@ public class ProductServiceImpl implements ProductService {
         return productPage;
     }
 
+    @Override
     public void updateProduct(Integer productId, AddUpdateProductDto addUpdateProductDto, MultipartFile mainImageFile,
                               List<MultipartFile> imageFilesList)
-            throws CategoryException, ImageException, ProductNotFoundException {
+            throws CategoryException, ProductNotFoundException, ImageCompressionException, ImageExceedsMaxSizeException, InvalidImageFileFormatException {
         String productName = addUpdateProductDto.name();
         Optional<Product> productOptional = productRepository.findByName(productName);
         if (productOptional.isPresent() && !productOptional.get().getId().equals(productId)) {
@@ -145,7 +149,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public void addProduct(AddUpdateProductDto addUpdateProductDto, MultipartFile mainImageFile,
-                           List<MultipartFile> imageFileList) throws CategoryException, ImageException, ProductNotFoundException {
+                           List<MultipartFile> imageFileList) throws CategoryException, ProductNotFoundException, ImageCompressionException, ImageExceedsMaxSizeException, InvalidImageFileFormatException {
         String productName = addUpdateProductDto.name();
         if (productRepository.findByName(productName).isPresent()) {
             throw new ProductNotFoundException(String.format("Product with name: %s is already exist", productName));

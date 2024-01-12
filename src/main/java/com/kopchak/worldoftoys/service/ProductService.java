@@ -8,14 +8,11 @@ import com.kopchak.worldoftoys.dto.admin.product.category.AdminProductCategoryNa
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringProductCategoriesDto;
-import com.kopchak.worldoftoys.exception.exception.CategoryException;
-import com.kopchak.worldoftoys.exception.exception.ImageException;
-import com.kopchak.worldoftoys.exception.exception.ProductNotFoundException;
+import com.kopchak.worldoftoys.exception.exception.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 public interface ProductService {
@@ -34,15 +31,15 @@ public interface ProductService {
                                                           List<String> brandCategories, List<String> ageCategories,
                                                           String priceSortOrder);
 
-    Optional<AdminProductDto> getAdminProductDtoById(Integer productId);
+    AdminProductDto getAdminProductDtoById(Integer productId) throws ProductNotFoundException;
 
     void updateProduct(Integer productId, AddUpdateProductDto addUpdateProductDto, MultipartFile mainImageFile,
                        List<MultipartFile> imageFileList)
-            throws CategoryException, ImageException, ProductNotFoundException;
+            throws CategoryException, ProductNotFoundException, ImageCompressionException, ImageExceedsMaxSizeException, InvalidImageFileFormatException;
 
     void addProduct(AddUpdateProductDto addUpdateProductDto, MultipartFile mainImageFile,
                     List<MultipartFile> imageFileList)
-            throws CategoryException, ImageException, ProductNotFoundException;
+            throws CategoryException, ProductNotFoundException, ImageCompressionException, ImageExceedsMaxSizeException, InvalidImageFileFormatException;
 
     void deleteProduct(Integer productId);
 

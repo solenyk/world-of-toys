@@ -11,10 +11,7 @@ import com.kopchak.worldoftoys.dto.admin.product.order.StatusDto;
 import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
-import com.kopchak.worldoftoys.exception.exception.CategoryException;
-import com.kopchak.worldoftoys.exception.exception.ImageException;
-import com.kopchak.worldoftoys.exception.exception.OrderCreationException;
-import com.kopchak.worldoftoys.exception.exception.ProductNotFoundException;
+import com.kopchak.worldoftoys.exception.exception.*;
 import com.kopchak.worldoftoys.model.order.OrderStatus;
 import com.kopchak.worldoftoys.model.order.payment.PaymentStatus;
 import com.kopchak.worldoftoys.service.OrderService;
@@ -38,7 +35,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 @RestController
@@ -88,12 +84,12 @@ public class AdminPanelController {
     })
     @GetMapping("/products/{productId}")
     public ResponseEntity<AdminProductDto> getAdminProductDtoById(@PathVariable(name = "productId") Integer productId) {
-        Optional<AdminProductDto> productDtoOptional = productService.getAdminProductDtoById(productId);
-        if (productDtoOptional.isEmpty()) {
-            log.error("Product with id: '{}' is not found.", productId);
-            throw new com.kopchak.worldoftoys.exception.ProductNotFoundException(HttpStatus.NOT_FOUND, "Product doesn't exist");
+        try {
+            AdminProductDto product = productService.getAdminProductDtoById(productId);
+            return new ResponseEntity<>(product, HttpStatus.OK);
+        } catch (ProductNotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         }
-        return new ResponseEntity<>(productDtoOptional.get(), HttpStatus.OK);
     }
 
     @Operation(summary = "Update product")
@@ -114,7 +110,8 @@ public class AdminPanelController {
                                               @RequestPart("images") List<MultipartFile> imageFilesList) {
         try {
             productService.updateProduct(productId, addUpdateProductDto, mainImageFile, imageFilesList);
-        } catch (ProductNotFoundException | CategoryException | ImageException e) {
+        } catch (ProductNotFoundException | CategoryException | InvalidImageFileFormatException |
+                ImageExceedsMaxSizeException | ImageCompressionException e) {
             log.error("The error: {} occurred while updating the product with id: {}", e.getMessage(), productId);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
@@ -138,7 +135,8 @@ public class AdminPanelController {
                                            @RequestPart("images") List<MultipartFile> imageFilesList) {
         try {
             productService.addProduct(addUpdateProductDto, mainImageFile, imageFilesList);
-        } catch (ProductNotFoundException | CategoryException | ImageException e) {
+        } catch (ProductNotFoundException | CategoryException | InvalidImageFileFormatException |
+                 ImageExceedsMaxSizeException | ImageCompressionException e) {
             log.error("The error: {} occurred while creating the product with name: {}",
                     e.getMessage(), addUpdateProductDto.name());
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());

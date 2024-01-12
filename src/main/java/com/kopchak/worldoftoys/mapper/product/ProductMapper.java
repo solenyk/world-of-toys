@@ -5,11 +5,14 @@ import com.kopchak.worldoftoys.dto.admin.product.AdminFilteredProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminFilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.category.AdminProductCategoryIdDto;
+import com.kopchak.worldoftoys.dto.image.ImageDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.exception.exception.CategoryException;
-import com.kopchak.worldoftoys.exception.exception.ImageException;
+import com.kopchak.worldoftoys.exception.exception.ImageCompressionException;
+import com.kopchak.worldoftoys.exception.exception.ImageExceedsMaxSizeException;
+import com.kopchak.worldoftoys.exception.exception.InvalidImageFileFormatException;
 import com.kopchak.worldoftoys.model.image.Image;
 import com.kopchak.worldoftoys.model.product.Product;
 import com.kopchak.worldoftoys.model.product.category.AgeCategory;
@@ -25,11 +28,11 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-@Mapper(componentModel = "spring", uses = {ImageMapper.class, ProductCategoryMapper.class, OriginCategory.class})
+@Mapper(componentModel = "spring", uses = {ImageMapper.class, ProductCategoryMapper.class})
 public abstract class ProductMapper {
-    public abstract ProductDto toProductDto(Product product);
+    public abstract ProductDto toProductDto(Product product, @Context ImageService imageService);
 
-    public abstract AdminProductDto toAdminProductDto(Product product);
+    public abstract AdminProductDto toAdminProductDto(Product product, @Context ImageService imageService);
 
     @Mapping(target = "id", source = "productId")
     @Mapping(target = "name", source = "addUpdateProductDto.name")
@@ -39,7 +42,7 @@ public abstract class ProductMapper {
     public abstract Product toProduct(AddUpdateProductDto addUpdateProductDto, Integer productId,
                                       @Context ProductCategoryRepository categoryRepository, MultipartFile mainImageFile,
                                       List<MultipartFile> imageFilesList, @Context ImageService imageService)
-            throws ImageException, CategoryException;
+            throws CategoryException, ImageCompressionException, ImageExceedsMaxSizeException, InvalidImageFileFormatException;
 
     @Mapping(target = "name", source = "addUpdateProductDto.name")
     @Mapping(target = "originCategory", ignore = true)
@@ -48,7 +51,8 @@ public abstract class ProductMapper {
     public abstract Product toProduct(AddUpdateProductDto addUpdateProductDto,
                                       @Context ProductCategoryRepository categoryRepository,
                                       MultipartFile mainImageFile, List<MultipartFile> imageFilesList,
-                                      @Context ImageService imageService) throws ImageException, CategoryException;
+                                      @Context ImageService imageService)
+            throws CategoryException, ImageCompressionException, ImageExceedsMaxSizeException, InvalidImageFileFormatException;
 
     protected abstract List<FilteredProductDto> toFilteredProductDtoList(List<Product> products);
 
@@ -64,12 +68,11 @@ public abstract class ProductMapper {
                 productPage.getTotalElements(), productPage.getTotalPages());
     }
 
-
     @AfterMapping
     protected void afterToProduct(@MappingTarget Product product, AddUpdateProductDto addUpdateProductDto,
                                   @Context ProductCategoryRepository categoryRepository, MultipartFile mainImageFile,
                                   List<MultipartFile> imageFilesList, @Context ImageService imageService)
-            throws CategoryException, ImageException {
+            throws CategoryException, ImageCompressionException, ImageExceedsMaxSizeException, InvalidImageFileFormatException {
         setProductCategories(product, addUpdateProductDto, categoryRepository);
         setProductImages(product, mainImageFile, imageFilesList, imageService);
     }
@@ -90,7 +93,8 @@ public abstract class ProductMapper {
     }
 
     protected void setProductImages(Product product, MultipartFile mainImageFile, List<MultipartFile> imageFilesList,
-                                    @Context ImageService imageService) throws ImageException {
+                                    @Context ImageService imageService)
+            throws ImageCompressionException, ImageExceedsMaxSizeException, InvalidImageFileFormatException {
         Image mainImage = imageService.convertMultipartFileToImage(mainImageFile, product);
 
         Set<Image> imagesSet = new LinkedHashSet<>();
