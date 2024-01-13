@@ -45,10 +45,6 @@ public abstract class ProductMapper {
     @Mapping(target = "ageCategories", ignore = true)
     public abstract Product toProduct(AddUpdateProductDto addUpdateProductDto);
 
-    protected abstract List<FilteredProductDto> toFilteredProductDtoList(List<Product> products);
-
-    protected abstract List<AdminFilteredProductDto> toAdminFilteredProductDtoList(List<Product> products);
-
     public FilteredProductsPageDto toFilteredProductsPageDto(Page<Product> productPage) {
         return new FilteredProductsPageDto(toFilteredProductDtoList(productPage.getContent()),
                 productPage.getTotalElements(), productPage.getTotalPages());
@@ -58,4 +54,8 @@ public abstract class ProductMapper {
         return new AdminFilteredProductsPageDto(toAdminFilteredProductDtoList(productPage.getContent()),
                 productPage.getTotalElements(), productPage.getTotalPages());
     }
+
+    protected abstract List<FilteredProductDto> toFilteredProductDtoList(List<Product> products);
+
+    protected abstract List<AdminFilteredProductDto> toAdminFilteredProductDtoList(List<Product> products);
 }

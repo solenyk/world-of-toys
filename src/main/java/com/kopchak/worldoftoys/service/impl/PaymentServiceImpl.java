@@ -1,7 +1,7 @@
 package com.kopchak.worldoftoys.service.impl;
 
 import com.kopchak.worldoftoys.dto.payment.StripeCredentialsDto;
-import com.kopchak.worldoftoys.exception.InvalidOrderException;
+import com.kopchak.worldoftoys.exception.exception.InvalidOrderException;
 import com.kopchak.worldoftoys.exception.exception.MessageSendingException;
 import com.kopchak.worldoftoys.model.order.Order;
 import com.kopchak.worldoftoys.model.order.OrderStatus;
@@ -29,7 +29,6 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -66,20 +65,19 @@ public class PaymentServiceImpl implements PaymentService {
     private static final String SESSION_ORDER_ID_METADATA_KEY = "order_id";
 
     @Override
-    public String stripeCheckout(StripeCredentialsDto credentialsDto, String orderId) throws StripeException {
-        Order order = orderRepository.findById(orderId).orElseThrow(() ->
-                new InvalidOrderException(HttpStatus.BAD_REQUEST, "The order does not exist or has already been paid!"));
+    public String stripeCheckout(StripeCredentialsDto credentialsDto, String orderId)
+            throws InvalidOrderException, StripeException {
+        Optional<Order> orderOptional = orderRepository.findById(orderId);
+        if (orderOptional.isEmpty() || !orderOptional.get().getOrderStatus().equals(OrderStatus.AWAITING_PAYMENT)) {
+            String errMsg = String.format("The order with id: %s does not exist or has already been paid!", orderId);
+            log.error(errMsg);
+            throw new InvalidOrderException(errMsg);
+        }
         Customer customer = findOrCreateStripeCustomer(credentialsDto.customerEmail(), credentialsDto.customerName());
-        Set<OrderDetails> orderDetails = order.getOrderDetails();
+        Set<OrderDetails> orderDetails = orderOptional.get().getOrderDetails();
         SessionCreateParams sessionCreateParams = createPaymentSessionParams(customer, orderId, orderDetails);
         Session session = Session.create(sessionCreateParams);
         return session.getUrl();
-    }
-
-    @Override
-    public boolean isNonExistentOrPaidOrder(String orderId) {
-        Optional<Order> order = orderRepository.findById(orderId);
-        return order.isEmpty() || !order.get().getOrderStatus().equals(OrderStatus.AWAITING_PAYMENT);
     }
 
     @Override

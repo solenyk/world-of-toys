@@ -65,15 +65,15 @@ public class ProductServiceImpl implements ProductService {
     public ProductDto getProductDtoBySlug(String productSlug) throws ProductNotFoundException, ImageDecompressionException {
         Optional<Product> productOptional = productRepository.findBySlug(productSlug);
         if (productOptional.isEmpty()) {
-            String errMsg = String.format("Product with slug: %s is not found.", productSlug);
+            String errMsg = String.format("The product with slug: %s is not found.", productSlug);
             log.error(errMsg);
             throw new ProductNotFoundException(errMsg);
         }
         Product product = productOptional.get();
-        log.info("Fetched product by slug: '{}'", productSlug);
         Image mainImage = product.getMainImage();
         ImageDto mainImageDto = imageService.generateDecompressedImageDto(mainImage);
         List<ImageDto> imageDtoList = getDecompressedProductImageDtoList(product.getImages(), mainImage);
+        log.info("Fetched product by slug: '{}'", productSlug);
         return productMapper.toProductDto(product, mainImageDto, imageDtoList);
     }
 
@@ -107,15 +107,15 @@ public class ProductServiceImpl implements ProductService {
     public AdminProductDto getAdminProductDtoById(Integer productId) throws ProductNotFoundException, ImageDecompressionException {
         Optional<Product> productOptional = productRepository.findById(productId);
         if (productOptional.isEmpty()) {
-            String errMsg = String.format("Product with id: %d is not found.", productId);
+            String errMsg = String.format("The product with id: %d is not found.", productId);
             log.error(errMsg);
             throw new ProductNotFoundException(errMsg);
         }
         Product product = productOptional.get();
-        log.info("Fetched product by id: '{}'", productId);
         Image mainImage = product.getMainImage();
         ImageDto mainImageDto = imageService.generateDecompressedImageDto(mainImage);
         List<ImageDto> imageDtoList = getDecompressedProductImageDtoList(product.getImages(), mainImage);
+        log.info("Fetched product by id: '{}'", productId);
         return productMapper.toAdminProductDto(product, mainImageDto, imageDtoList);
     }
 
@@ -141,7 +141,7 @@ public class ProductServiceImpl implements ProductService {
         String productName = addUpdateProductDto.name();
         Optional<Product> productOptional = productRepository.findByName(productName);
         if (productOptional.isPresent() && !productOptional.get().getId().equals(productId)) {
-            throw new ProductNotFoundException(String.format("Product with name: %s is already exist", productName));
+            throw new ProductNotFoundException(String.format("The product with name: %s is already exist", productName));
         }
         Product product = buildProductFromDtoAndImages(addUpdateProductDto, mainImageFile, imageFilesList);
         product.setId(productId);
@@ -155,7 +155,7 @@ public class ProductServiceImpl implements ProductService {
                            List<MultipartFile> imageFileList) throws CategoryException, ProductNotFoundException, ImageCompressionException, ImageExceedsMaxSizeException, InvalidImageFileFormatException {
         String productName = addUpdateProductDto.name();
         if (productRepository.findByName(productName).isPresent()) {
-            throw new ProductNotFoundException(String.format("Product with name: %s is already exist", productName));
+            throw new ProductNotFoundException(String.format("The product with name: %s is already exist", productName));
         }
         Product product = buildProductFromDtoAndImages(addUpdateProductDto, mainImageFile, imageFileList);
         productRepository.save(product);
@@ -243,7 +243,7 @@ public class ProductServiceImpl implements ProductService {
         return imageDtoList;
     }
 
-    private void updateProductImages(Product product){
+    private void updateProductImages(Product product) {
         Set<Image> productImagesSet = product.getImages();
         productImagesSet.add(product.getMainImage());
         Set<String> imageNames = productImagesSet.stream().map(Image::getName).collect(Collectors.toSet());
