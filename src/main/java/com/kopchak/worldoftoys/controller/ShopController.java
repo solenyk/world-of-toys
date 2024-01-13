@@ -81,20 +81,23 @@ public class ShopController {
                     description = "The product was successfully fetched",
                     content = @Content(schema = @Schema(implementation = ProductDto.class))),
             @ApiResponse(
+                    responseCode = "400",
+                    description = "The product image cannot be decompressed",
+                    content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class))),
+            @ApiResponse(
                     responseCode = "404",
                     description = "The product with this slug is not found",
                     content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class)))
     })
     @GetMapping("/{productSlug}")
-    //ToDo: add docs
     public ResponseEntity<ProductDto> getProductBySlug(@PathVariable(name = "productSlug") String productSlug) {
         try {
             var productDto = productService.getProductDtoBySlug(productSlug);
             return new ResponseEntity<>(productDto, HttpStatus.OK);
-        } catch (ProductNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         } catch (ImageDecompressionException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        } catch (ProductNotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         }
     }
 }

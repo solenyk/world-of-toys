@@ -1,7 +1,7 @@
 package com.kopchak.worldoftoys.repository.cart;
 
 import com.kopchak.worldoftoys.dto.cart.CartItemDto;
-import com.kopchak.worldoftoys.model.user.AppUser;
+import com.kopchak.worldoftoys.domain.user.AppUser;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

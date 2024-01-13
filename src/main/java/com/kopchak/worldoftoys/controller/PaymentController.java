@@ -39,7 +39,7 @@ public class PaymentController {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "302",
-                    description = "Stripe custom checkout link has been successfully created",
+                    description = "The stripe custom checkout link has been successfully created",
                     content = @Content(schema = @Schema(hidden = true))),
             @ApiResponse(
                     responseCode = "400",
@@ -65,7 +65,7 @@ public class PaymentController {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "204",
-                    description = "Payment has been successfully handled",
+                    description = "The payment has been successfully handled",
                     content = @Content(schema = @Schema(hidden = true))),
             @ApiResponse(
                     responseCode = "400",

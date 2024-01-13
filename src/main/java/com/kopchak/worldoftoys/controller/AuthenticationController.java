@@ -8,7 +8,7 @@ import com.kopchak.worldoftoys.dto.user.UserAuthDto;
 import com.kopchak.worldoftoys.dto.user.UserRegistrationDto;
 import com.kopchak.worldoftoys.dto.user.UsernameDto;
 import com.kopchak.worldoftoys.exception.*;
-import com.kopchak.worldoftoys.model.token.ConfirmationTokenType;
+import com.kopchak.worldoftoys.domain.token.ConfirmationTokenType;
 import com.kopchak.worldoftoys.service.ConfirmationTokenService;
 import com.kopchak.worldoftoys.service.EmailSenderService;
 import com.kopchak.worldoftoys.service.JwtTokenService;
@@ -22,7 +22,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -35,7 +34,6 @@ import org.springframework.web.server.ResponseStatusException;
 @Tag(name = "authentication-controller", description = "The authentication controller is responsible for handling user " +
         "authentication and registration. It provides endpoints for user registration, account confirmation, " +
         "reset password and login")
-@Slf4j
 public class AuthenticationController {
     private final UserService userService;
     private final ConfirmationTokenService confirmTokenService;

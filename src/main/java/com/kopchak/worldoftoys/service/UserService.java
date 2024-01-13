@@ -7,7 +7,7 @@ import com.kopchak.worldoftoys.exception.AccountActivationException;
 import com.kopchak.worldoftoys.exception.InvalidPasswordException;
 import com.kopchak.worldoftoys.exception.UserNotFoundException;
 import com.kopchak.worldoftoys.exception.UsernameAlreadyExistException;
-import com.kopchak.worldoftoys.model.user.AppUser;
+import com.kopchak.worldoftoys.domain.user.AppUser;
 
 public interface UserService {
     void registerUser(UserRegistrationDto userRegistrationDto) throws UsernameAlreadyExistException;

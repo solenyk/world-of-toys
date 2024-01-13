@@ -1,6 +1,6 @@
 package com.kopchak.worldoftoys.repository.specifications;
 
-import com.kopchak.worldoftoys.model.product.Product;
+import com.kopchak.worldoftoys.domain.product.Product;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;

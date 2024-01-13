@@ -35,20 +35,20 @@ public interface ProductService {
 
     void updateProduct(Integer productId, AddUpdateProductDto addUpdateProductDto, MultipartFile mainImageFile,
                        List<MultipartFile> imageFileList)
-            throws CategoryException, ProductNotFoundException, ImageCompressionException, ImageExceedsMaxSizeException, InvalidImageFileFormatException;
+            throws InvalidCategoryTypeException, ProductNotFoundException, ImageCompressionException, ImageExceedsMaxSizeException, InvalidImageFileFormatException;
 
     void addProduct(AddUpdateProductDto addUpdateProductDto, MultipartFile mainImageFile,
                     List<MultipartFile> imageFileList)
-            throws CategoryException, ProductNotFoundException, ImageCompressionException, ImageExceedsMaxSizeException, InvalidImageFileFormatException;
+            throws InvalidCategoryTypeException, ProductNotFoundException, ImageCompressionException, ImageExceedsMaxSizeException, InvalidImageFileFormatException;
 
     void deleteProduct(Integer productId);
 
-    Set<AdminCategoryDto> getAdminCategories(String categoryType) throws CategoryException;
+    Set<AdminCategoryDto> getAdminCategories(String categoryType) throws InvalidCategoryTypeException;
 
-    void deleteCategory(String category, Integer categoryId) throws CategoryException;
+    void deleteCategory(String category, Integer categoryId) throws InvalidCategoryTypeException;
 
     void updateCategory(String categoryType, Integer categoryId, CategoryNameDto categoryNameDto)
-            throws CategoryException;
+            throws InvalidCategoryTypeException;
 
-    void addCategory(String categoryType, CategoryNameDto categoryNameDto) throws CategoryException;
+    void addCategory(String categoryType, CategoryNameDto categoryNameDto) throws InvalidCategoryTypeException;
 }

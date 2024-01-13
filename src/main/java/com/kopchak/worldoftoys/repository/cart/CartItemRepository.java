@@ -1,9 +1,9 @@
 package com.kopchak.worldoftoys.repository.cart;
 
+import com.kopchak.worldoftoys.domain.cart.CartItem;
+import com.kopchak.worldoftoys.domain.cart.CartItemId;
+import com.kopchak.worldoftoys.domain.user.AppUser;
 import com.kopchak.worldoftoys.dto.cart.CartItemDto;
-import com.kopchak.worldoftoys.model.cart.CartItem;
-import com.kopchak.worldoftoys.model.cart.CartItemId;
-import com.kopchak.worldoftoys.model.user.AppUser;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

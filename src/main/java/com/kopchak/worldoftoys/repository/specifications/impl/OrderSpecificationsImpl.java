@@ -1,11 +1,11 @@
 package com.kopchak.worldoftoys.repository.specifications.impl;
 
-import com.kopchak.worldoftoys.model.order.Order;
-import com.kopchak.worldoftoys.model.order.OrderStatus;
-import com.kopchak.worldoftoys.model.order.Order_;
-import com.kopchak.worldoftoys.model.order.payment.Payment;
-import com.kopchak.worldoftoys.model.order.payment.PaymentStatus;
-import com.kopchak.worldoftoys.model.order.payment.Payment_;
+import com.kopchak.worldoftoys.domain.order.Order;
+import com.kopchak.worldoftoys.domain.order.OrderStatus;
+import com.kopchak.worldoftoys.domain.order.Order_;
+import com.kopchak.worldoftoys.domain.order.payment.Payment;
+import com.kopchak.worldoftoys.domain.order.payment.PaymentStatus;
+import com.kopchak.worldoftoys.domain.order.payment.Payment_;
 import com.kopchak.worldoftoys.repository.specifications.OrderSpecifications;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.JoinType;

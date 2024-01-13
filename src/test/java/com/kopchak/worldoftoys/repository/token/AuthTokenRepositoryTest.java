@@ -1,8 +1,8 @@
 package com.kopchak.worldoftoys.repository.token;
 
-import com.kopchak.worldoftoys.model.token.AuthTokenType;
-import com.kopchak.worldoftoys.model.token.AuthenticationToken;
-import com.kopchak.worldoftoys.model.user.AppUser;
+import com.kopchak.worldoftoys.domain.token.AuthTokenType;
+import com.kopchak.worldoftoys.domain.token.AuthenticationToken;
+import com.kopchak.worldoftoys.domain.user.AppUser;
 import com.kopchak.worldoftoys.repository.user.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

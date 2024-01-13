@@ -4,7 +4,7 @@ import com.kopchak.worldoftoys.dto.product.category.CategoryDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringCategoriesDto;
 import com.kopchak.worldoftoys.mapper.product.CategoryMapper;
 import com.kopchak.worldoftoys.mapper.product.CategoryMapperImpl;
-import com.kopchak.worldoftoys.model.product.Product;
+import com.kopchak.worldoftoys.domain.product.Product;
 import com.kopchak.worldoftoys.repository.product.impl.CategoryRepositoryImpl;
 import com.kopchak.worldoftoys.repository.specifications.ProductSpecifications;
 import com.kopchak.worldoftoys.repository.specifications.impl.ProductSpecificationsImpl;

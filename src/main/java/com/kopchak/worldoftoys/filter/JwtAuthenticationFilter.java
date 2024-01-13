@@ -1,7 +1,7 @@
 package com.kopchak.worldoftoys.filter;
 
 import com.kopchak.worldoftoys.exception.JwtTokenException;
-import com.kopchak.worldoftoys.model.token.AuthTokenType;
+import com.kopchak.worldoftoys.domain.token.AuthTokenType;
 import com.kopchak.worldoftoys.service.JwtTokenService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

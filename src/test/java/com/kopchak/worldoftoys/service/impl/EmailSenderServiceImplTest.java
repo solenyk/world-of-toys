@@ -1,7 +1,7 @@
 package com.kopchak.worldoftoys.service.impl;
 
-import com.kopchak.worldoftoys.model.token.ConfirmationTokenType;
-import com.kopchak.worldoftoys.model.user.AppUser;
+import com.kopchak.worldoftoys.domain.token.ConfirmationTokenType;
+import com.kopchak.worldoftoys.domain.user.AppUser;
 import com.kopchak.worldoftoys.repository.user.UserRepository;
 import jakarta.mail.Message;
 import jakarta.mail.MessagingException;

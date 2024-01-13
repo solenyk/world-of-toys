@@ -3,7 +3,7 @@ package com.kopchak.worldoftoys.integration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
 import com.kopchak.worldoftoys.dto.order.*;
-import com.kopchak.worldoftoys.model.order.OrderStatus;
+import com.kopchak.worldoftoys.domain.order.OrderStatus;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

@@ -6,7 +6,7 @@ import com.kopchak.worldoftoys.dto.order.AddressDto;
 import com.kopchak.worldoftoys.dto.order.OrderDto;
 import com.kopchak.worldoftoys.dto.order.OrderRecipientDto;
 import com.kopchak.worldoftoys.dto.order.PhoneNumberDto;
-import com.kopchak.worldoftoys.model.user.AppUser;
+import com.kopchak.worldoftoys.domain.user.AppUser;
 import com.kopchak.worldoftoys.service.JwtTokenService;
 import com.kopchak.worldoftoys.service.OrderService;
 import org.junit.jupiter.api.BeforeEach;

@@ -1,7 +1,7 @@
 package com.kopchak.worldoftoys.mapper.order;
 
 import com.kopchak.worldoftoys.dto.order.PhoneNumberDto;
-import com.kopchak.worldoftoys.model.order.recipient.number.PhoneNumber;
+import com.kopchak.worldoftoys.domain.order.recipient.number.PhoneNumber;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

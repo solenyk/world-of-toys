@@ -12,8 +12,8 @@ import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.exception.*;
-import com.kopchak.worldoftoys.model.order.OrderStatus;
-import com.kopchak.worldoftoys.model.order.payment.PaymentStatus;
+import com.kopchak.worldoftoys.domain.order.OrderStatus;
+import com.kopchak.worldoftoys.domain.order.payment.PaymentStatus;
 import com.kopchak.worldoftoys.service.OrderService;
 import com.kopchak.worldoftoys.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -76,6 +76,10 @@ public class AdminPanelController {
                     description = "Product was successfully fetched",
                     content = @Content(schema = @Schema(implementation = ProductDto.class))),
             @ApiResponse(
+                    responseCode = "400",
+                    description = "The product image cannot be decompressed",
+                    content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class))),
+            @ApiResponse(
                     responseCode = "404",
                     description = "Product with this id is not found",
                     content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class)))
@@ -85,10 +89,10 @@ public class AdminPanelController {
         try {
             AdminProductDto product = productService.getAdminProductDtoById(productId);
             return new ResponseEntity<>(product, HttpStatus.OK);
-        } catch (ProductNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         } catch (ImageDecompressionException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        } catch (ProductNotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         }
     }
 
@@ -110,7 +114,7 @@ public class AdminPanelController {
                                               @RequestPart("images") List<MultipartFile> imageFilesList) {
         try {
             productService.updateProduct(productId, addUpdateProductDto, mainImageFile, imageFilesList);
-        } catch (ProductNotFoundException | CategoryException | InvalidImageFileFormatException |
+        } catch (ProductNotFoundException | InvalidCategoryTypeException | InvalidImageFileFormatException |
                  ImageExceedsMaxSizeException | ImageCompressionException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
@@ -134,7 +138,7 @@ public class AdminPanelController {
                                            @RequestPart("images") List<MultipartFile> imageFilesList) {
         try {
             productService.addProduct(addUpdateProductDto, mainImageFile, imageFilesList);
-        } catch (ProductNotFoundException | CategoryException | InvalidImageFileFormatException |
+        } catch (ProductNotFoundException | InvalidCategoryTypeException | InvalidImageFileFormatException |
                  ImageExceedsMaxSizeException | ImageCompressionException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
@@ -175,7 +179,7 @@ public class AdminPanelController {
         try {
             Set<AdminCategoryDto> categoryDtoSet = productService.getAdminCategories(categoryType);
             return new ResponseEntity<>(categoryDtoSet, HttpStatus.OK);
-        } catch (CategoryException e) {
+        } catch (InvalidCategoryTypeException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
     }
@@ -196,7 +200,7 @@ public class AdminPanelController {
                                                @PathVariable(name = "categoryId") Integer categoryId) {
         try {
             productService.deleteCategory(categoryType, categoryId);
-        } catch (CategoryException e) {
+        } catch (InvalidCategoryTypeException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -208,7 +212,7 @@ public class AdminPanelController {
                                                @Valid @RequestBody CategoryNameDto categoryNameDto) {
         try {
             productService.updateCategory(categoryType, categoryId, categoryNameDto);
-        } catch (CategoryException e) {
+        } catch (InvalidCategoryTypeException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -219,7 +223,7 @@ public class AdminPanelController {
                                             @Valid @RequestBody CategoryNameDto categoryNameDto) {
         try {
             productService.addCategory(categoryType, categoryNameDto);
-        } catch (CategoryException e) {
+        } catch (InvalidCategoryTypeException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
         return new ResponseEntity<>(HttpStatus.CREATED);

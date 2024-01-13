@@ -1,7 +1,7 @@
 package com.kopchak.worldoftoys.repository.token;
 
-import com.kopchak.worldoftoys.model.token.ConfirmationToken;
-import com.kopchak.worldoftoys.model.token.ConfirmationTokenType;
+import com.kopchak.worldoftoys.domain.token.ConfirmationToken;
+import com.kopchak.worldoftoys.domain.token.ConfirmationTokenType;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;

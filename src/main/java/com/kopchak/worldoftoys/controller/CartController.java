@@ -3,7 +3,7 @@ package com.kopchak.worldoftoys.controller;
 import com.kopchak.worldoftoys.dto.cart.RequestCartItemDto;
 import com.kopchak.worldoftoys.dto.cart.UserCartDetailsDto;
 import com.kopchak.worldoftoys.exception.ProductNotFoundException;
-import com.kopchak.worldoftoys.model.user.AppUser;
+import com.kopchak.worldoftoys.domain.user.AppUser;
 import com.kopchak.worldoftoys.service.CartService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -14,7 +14,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -25,7 +24,6 @@ import org.springframework.web.server.ResponseStatusException;
 @RequestMapping("/api/v1/cart")
 @CrossOrigin
 @RequiredArgsConstructor
-@Slf4j
 @Tag(name = "cart-controller", description = "The cart controller is responsible for managing the user's cart. " +
         "It provides endpoints for adding, editing, and deleting cart items, as well as for retrieving all cart items.")
 @SecurityRequirement(name = "Bearer Authentication")
@@ -72,7 +70,7 @@ public class CartController {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "204",
-                    description = "Cart item quantity was successfully updated",
+                    description = "The cart item quantity was successfully updated",
                     content = @Content(schema = @Schema(hidden = true))
             ),
             @ApiResponse(

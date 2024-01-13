@@ -1,12 +1,12 @@
 package com.kopchak.worldoftoys.service.impl;
 
-import com.kopchak.worldoftoys.dto.image.ImageDto;
+import com.kopchak.worldoftoys.dto.product.image.ImageDto;
 import com.kopchak.worldoftoys.exception.ImageCompressionException;
 import com.kopchak.worldoftoys.exception.ImageDecompressionException;
 import com.kopchak.worldoftoys.exception.ImageExceedsMaxSizeException;
 import com.kopchak.worldoftoys.exception.InvalidImageFileFormatException;
-import com.kopchak.worldoftoys.model.image.Image;
-import com.kopchak.worldoftoys.model.product.Product;
+import com.kopchak.worldoftoys.domain.image.Image;
+import com.kopchak.worldoftoys.domain.product.Product;
 import com.kopchak.worldoftoys.repository.product.image.ImageRepository;
 import com.kopchak.worldoftoys.service.ImageService;
 import lombok.RequiredArgsConstructor;

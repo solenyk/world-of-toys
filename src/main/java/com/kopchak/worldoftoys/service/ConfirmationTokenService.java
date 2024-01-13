@@ -3,7 +3,7 @@ package com.kopchak.worldoftoys.service;
 import com.kopchak.worldoftoys.dto.token.ConfirmTokenDto;
 import com.kopchak.worldoftoys.dto.user.ResetPasswordDto;
 import com.kopchak.worldoftoys.exception.*;
-import com.kopchak.worldoftoys.model.token.ConfirmationTokenType;
+import com.kopchak.worldoftoys.domain.token.ConfirmationTokenType;
 
 public interface ConfirmationTokenService {
     ConfirmTokenDto createConfirmationToken(String username, ConfirmationTokenType tokenType)

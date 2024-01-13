@@ -1,6 +1,6 @@
 package com.kopchak.worldoftoys.repository.product.image;
 
-import com.kopchak.worldoftoys.model.image.Image;
+import com.kopchak.worldoftoys.domain.image.Image;
 import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;

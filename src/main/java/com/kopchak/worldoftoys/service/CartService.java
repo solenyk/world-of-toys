@@ -3,7 +3,7 @@ package com.kopchak.worldoftoys.service;
 import com.kopchak.worldoftoys.dto.cart.RequestCartItemDto;
 import com.kopchak.worldoftoys.dto.cart.UserCartDetailsDto;
 import com.kopchak.worldoftoys.exception.ProductNotFoundException;
-import com.kopchak.worldoftoys.model.user.AppUser;
+import com.kopchak.worldoftoys.domain.user.AppUser;
 
 public interface CartService {
     void addProductToCart(RequestCartItemDto requestCartItemDto, AppUser user) throws ProductNotFoundException;

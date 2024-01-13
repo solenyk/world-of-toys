@@ -6,20 +6,20 @@ import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.category.AdminCategoryDto;
 import com.kopchak.worldoftoys.dto.admin.product.category.CategoryIdDto;
 import com.kopchak.worldoftoys.dto.admin.product.category.CategoryNameDto;
-import com.kopchak.worldoftoys.dto.image.ImageDto;
+import com.kopchak.worldoftoys.dto.product.image.ImageDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringCategoriesDto;
 import com.kopchak.worldoftoys.exception.*;
 import com.kopchak.worldoftoys.mapper.product.CategoryMapper;
 import com.kopchak.worldoftoys.mapper.product.ProductMapper;
-import com.kopchak.worldoftoys.model.image.Image;
-import com.kopchak.worldoftoys.model.product.Product;
-import com.kopchak.worldoftoys.model.product.category.AgeCategory;
-import com.kopchak.worldoftoys.model.product.category.BrandCategory;
-import com.kopchak.worldoftoys.model.product.category.OriginCategory;
-import com.kopchak.worldoftoys.model.product.category.ProductCategory;
-import com.kopchak.worldoftoys.model.product.category.type.CategoryType;
+import com.kopchak.worldoftoys.domain.image.Image;
+import com.kopchak.worldoftoys.domain.product.Product;
+import com.kopchak.worldoftoys.domain.product.category.AgeCategory;
+import com.kopchak.worldoftoys.domain.product.category.BrandCategory;
+import com.kopchak.worldoftoys.domain.product.category.OriginCategory;
+import com.kopchak.worldoftoys.domain.product.category.ProductCategory;
+import com.kopchak.worldoftoys.domain.product.category.type.CategoryType;
 import com.kopchak.worldoftoys.repository.product.CategoryRepository;
 import com.kopchak.worldoftoys.repository.product.ProductRepository;
 import com.kopchak.worldoftoys.repository.product.image.ImageRepository;
@@ -137,7 +137,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public void updateProduct(Integer productId, AddUpdateProductDto addUpdateProductDto, MultipartFile mainImageFile,
                               List<MultipartFile> imageFilesList)
-            throws CategoryException, ProductNotFoundException, ImageCompressionException, ImageExceedsMaxSizeException, InvalidImageFileFormatException {
+            throws InvalidCategoryTypeException, ProductNotFoundException, ImageCompressionException, ImageExceedsMaxSizeException, InvalidImageFileFormatException {
         String productName = addUpdateProductDto.name();
         Optional<Product> productOptional = productRepository.findByName(productName);
         if (productOptional.isPresent() && !productOptional.get().getId().equals(productId)) {
@@ -152,7 +152,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public void addProduct(AddUpdateProductDto addUpdateProductDto, MultipartFile mainImageFile,
-                           List<MultipartFile> imageFileList) throws CategoryException, ProductNotFoundException, ImageCompressionException, ImageExceedsMaxSizeException, InvalidImageFileFormatException {
+                           List<MultipartFile> imageFileList) throws InvalidCategoryTypeException, ProductNotFoundException, ImageCompressionException, ImageExceedsMaxSizeException, InvalidImageFileFormatException {
         String productName = addUpdateProductDto.name();
         if (productRepository.findByName(productName).isPresent()) {
             throw new ProductNotFoundException(String.format("The product with name: %s is already exist", productName));
@@ -168,32 +168,33 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Set<AdminCategoryDto> getAdminCategories(String categoryType) throws CategoryException {
+    public Set<AdminCategoryDto> getAdminCategories(String categoryType) throws InvalidCategoryTypeException {
         Class<? extends ProductCategory> categoryClass = getCategoryByCategoryType(categoryType);
         var categories = categoryRepository.findAllCategories(categoryClass);
         return categoryMapper.toAdminCategoryDtoSet(categories);
     }
 
     @Override
-    public void deleteCategory(String categoryType, Integer categoryId) throws CategoryException {
+    public void deleteCategory(String categoryType, Integer categoryId) throws InvalidCategoryTypeException {
         Class<? extends ProductCategory> categoryClass = getCategoryByCategoryType(categoryType);
         categoryRepository.deleteCategory(categoryClass, categoryId);
     }
 
     @Override
     public void updateCategory(String categoryType, Integer categoryId, CategoryNameDto categoryNameDto)
-            throws CategoryException {
+            throws InvalidCategoryTypeException {
         Class<? extends ProductCategory> categoryClass = getCategoryByCategoryType(categoryType);
         categoryRepository.updateCategory(categoryClass, categoryId, categoryNameDto.name());
     }
 
     @Override
-    public void addCategory(String categoryType, CategoryNameDto categoryNameDto) throws CategoryException {
+    public void addCategory(String categoryType, CategoryNameDto categoryNameDto) throws InvalidCategoryTypeException {
         Class<? extends ProductCategory> categoryClass = getCategoryByCategoryType(categoryType);
         categoryRepository.addCategory(categoryClass, categoryNameDto.name());
     }
 
-    private Class<? extends ProductCategory> getCategoryByCategoryType(String categoryType) throws CategoryException {
+    private Class<? extends ProductCategory> getCategoryByCategoryType(String categoryType)
+            throws InvalidCategoryTypeException {
         return switch (CategoryType.findByValue(categoryType)) {
             case BRANDS -> BrandCategory.class;
             case ORIGINS -> OriginCategory.class;
@@ -202,7 +203,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private Product buildProductFromDtoAndImages(AddUpdateProductDto addUpdateProductDto, MultipartFile mainImageFile,
-                                                 List<MultipartFile> imageFilesList) throws CategoryException,
+                                                 List<MultipartFile> imageFilesList) throws InvalidCategoryTypeException,
             ImageCompressionException, ImageExceedsMaxSizeException, InvalidImageFileFormatException {
         Product product = productMapper.toProduct(addUpdateProductDto);
         setProductCategories(product, addUpdateProductDto);
@@ -211,7 +212,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private void setProductCategories(Product product, AddUpdateProductDto productDto)
-            throws CategoryException {
+            throws InvalidCategoryTypeException {
         product.setBrandCategory(categoryRepository.findById(productDto.brandCategory().id(), BrandCategory.class));
         product.setOriginCategory(categoryRepository.findById(productDto.originCategory().id(), OriginCategory.class));
         Set<AgeCategory> ageCategories = new LinkedHashSet<>();

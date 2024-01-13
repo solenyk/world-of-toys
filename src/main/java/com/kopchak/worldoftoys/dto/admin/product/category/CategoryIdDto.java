@@ -10,6 +10,6 @@ public record CategoryIdDto(
         @Min(
                 value = 1,
                 message = "Invalid product category id: id '${validatedValue}' should not be less than {status}"
-        )Integer id
+        ) Integer id
 ) {
 }
