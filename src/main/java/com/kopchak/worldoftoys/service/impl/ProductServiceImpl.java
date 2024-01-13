@@ -71,14 +71,9 @@ public class ProductServiceImpl implements ProductService {
         }
         Product product = productOptional.get();
         log.info("Fetched product by slug: '{}'", productSlug);
-        List<ImageDto> imageDtoList = new ArrayList<>();
         Image mainImage = product.getMainImage();
         ImageDto mainImageDto = imageService.generateDecompressedImageDto(mainImage);
-        for (Image image : product.getImages()) {
-            if (!image.equals(mainImage)) {
-                imageDtoList.add(imageService.generateDecompressedImageDto(image));
-            }
-        }
+        List<ImageDto> imageDtoList = getDecompressedProductImageDtoList(product.getImages(), mainImage);
         return productMapper.toProductDto(product, mainImageDto, imageDtoList);
     }
 
@@ -118,14 +113,9 @@ public class ProductServiceImpl implements ProductService {
         }
         Product product = productOptional.get();
         log.info("Fetched product by id: '{}'", productId);
-        List<ImageDto> imageDtoList = new ArrayList<>();
         Image mainImage = product.getMainImage();
         ImageDto mainImageDto = imageService.generateDecompressedImageDto(mainImage);
-        for (Image image : product.getImages()) {
-            if (!image.equals(mainImage)) {
-                imageDtoList.add(imageService.generateDecompressedImageDto(image));
-            }
-        }
+        List<ImageDto> imageDtoList = getDecompressedProductImageDtoList(product.getImages(), mainImage);
         return productMapper.toAdminProductDto(product, mainImageDto, imageDtoList);
     }
 
@@ -153,16 +143,11 @@ public class ProductServiceImpl implements ProductService {
         if (productOptional.isPresent() && !productOptional.get().getId().equals(productId)) {
             throw new ProductNotFoundException(String.format("Product with name: %s is already exist", productName));
         }
-        Product product = toProduct(addUpdateProductDto, mainImageFile, imageFilesList);
+        Product product = buildProductFromDtoAndImages(addUpdateProductDto, mainImageFile, imageFilesList);
         product.setId(productId);
         productRepository.save(product);
+        updateProductImages(product);
         log.info("The product with id: {} was successfully updated", productId);
-        Set<Image> productImagesSet = product.getImages();
-        productImagesSet.add(product.getMainImage());
-        Set<String> imageNames = productImagesSet.stream().map(Image::getName).collect(Collectors.toSet());
-        imageRepository.deleteImagesByProductIdNotInNames(productId, imageNames);
-        log.info("Product photos that were missing during the update have been removed in " +
-                "the updated version of the product");
     }
 
     @Override
@@ -172,7 +157,7 @@ public class ProductServiceImpl implements ProductService {
         if (productRepository.findByName(productName).isPresent()) {
             throw new ProductNotFoundException(String.format("Product with name: %s is already exist", productName));
         }
-        Product product = toProduct(addUpdateProductDto, mainImageFile, imageFileList);
+        Product product = buildProductFromDtoAndImages(addUpdateProductDto, mainImageFile, imageFileList);
         productRepository.save(product);
         log.info("The product with name: {} was successfully saved", product.getName());
     }
@@ -216,8 +201,9 @@ public class ProductServiceImpl implements ProductService {
         };
     }
 
-    private Product toProduct(AddUpdateProductDto addUpdateProductDto, MultipartFile mainImageFile,
-                              List<MultipartFile> imageFilesList) throws CategoryException, ImageCompressionException, ImageExceedsMaxSizeException, InvalidImageFileFormatException {
+    private Product buildProductFromDtoAndImages(AddUpdateProductDto addUpdateProductDto, MultipartFile mainImageFile,
+                                                 List<MultipartFile> imageFilesList) throws CategoryException,
+            ImageCompressionException, ImageExceedsMaxSizeException, InvalidImageFileFormatException {
         Product product = productMapper.toProduct(addUpdateProductDto);
         setProductCategories(product, addUpdateProductDto);
         setProductImages(product, mainImageFile, imageFilesList);
@@ -244,5 +230,25 @@ public class ProductServiceImpl implements ProductService {
         }
         product.setMainImage(mainImage);
         product.setImages(imagesSet);
+    }
+
+    private List<ImageDto> getDecompressedProductImageDtoList(Set<Image> images, Image mainImage)
+            throws ImageDecompressionException {
+        List<ImageDto> imageDtoList = new ArrayList<>();
+        for (Image image : images) {
+            if (!image.equals(mainImage)) {
+                imageDtoList.add(imageService.generateDecompressedImageDto(image));
+            }
+        }
+        return imageDtoList;
+    }
+
+    private void updateProductImages(Product product){
+        Set<Image> productImagesSet = product.getImages();
+        productImagesSet.add(product.getMainImage());
+        Set<String> imageNames = productImagesSet.stream().map(Image::getName).collect(Collectors.toSet());
+        imageRepository.deleteImagesByProductIdNotInNames(product.getId(), imageNames);
+        log.info("Product photos that were missing during the update have been removed in " +
+                "the updated version of the product");
     }
 }
