@@ -4,7 +4,9 @@ import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminFilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.category.AdminProductCategoryDto;
+import com.kopchak.worldoftoys.dto.admin.product.category.AdminProductCategoryIdDto;
 import com.kopchak.worldoftoys.dto.admin.product.category.AdminProductCategoryNameDto;
+import com.kopchak.worldoftoys.dto.image.ImageDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringProductCategoriesDto;
@@ -34,9 +36,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -44,7 +44,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
-    private final ProductCategoryRepository productCategoryRepository;
+    private final ProductCategoryRepository categoryRepository;
     private final ProductSpecificationsImpl productSpecifications;
     private final ProductCategoryMapper productCategoryMapper;
     private final ProductMapper productMapper;
@@ -62,15 +62,24 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public ProductDto getProductDtoBySlug(String productSlug) throws ProductNotFoundException {
-        Optional<Product> product = productRepository.findBySlug(productSlug);
-        if (product.isEmpty()) {
+    public ProductDto getProductDtoBySlug(String productSlug) throws ProductNotFoundException, ImageDecompressionException {
+        Optional<Product> productOptional = productRepository.findBySlug(productSlug);
+        if (productOptional.isEmpty()) {
             String errMsg = String.format("Product with slug: %s is not found.", productSlug);
             log.error(errMsg);
             throw new ProductNotFoundException(errMsg);
         }
+        Product product = productOptional.get();
         log.info("Fetched product by slug: '{}'", productSlug);
-        return productMapper.toProductDto(product.get(), imageService);
+        List<ImageDto> imageDtoList = new ArrayList<>();
+        Image mainImage = product.getMainImage();
+        ImageDto mainImageDto = imageService.generateDecompressedImageDto(mainImage);
+        for (Image image : product.getImages()) {
+            if (!image.equals(mainImage)) {
+                imageDtoList.add(imageService.generateDecompressedImageDto(image));
+            }
+        }
+        return productMapper.toProductDto(product, mainImageDto, imageDtoList);
     }
 
     @Override
@@ -81,7 +90,7 @@ public class ProductServiceImpl implements ProductService {
                                                                        List<String> ageCategories) {
         Specification<Product> spec = productSpecifications.filterByProductNamePriceAndCategories(productName, minPrice,
                 maxPrice, originCategories, brandCategories, ageCategories);
-        var filteringProductCategoriesDto = productCategoryRepository.findUniqueFilteringProductCategories(spec);
+        var filteringProductCategoriesDto = categoryRepository.findUniqueFilteringProductCategories(spec);
         log.info("Fetched filtering product categories - Product Name: '{}', Min Price: {}, Max Price: {}, " +
                         "Origin Categories: {}, Brand Categories: {}, Age Categories: {}",
                 productName, minPrice, maxPrice, originCategories, brandCategories, ageCategories);
@@ -100,15 +109,24 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public AdminProductDto getAdminProductDtoById(Integer productId) throws ProductNotFoundException {
-        Optional<Product> product = productRepository.findById(productId);
-        if(product.isEmpty()){
+    public AdminProductDto getAdminProductDtoById(Integer productId) throws ProductNotFoundException, ImageDecompressionException {
+        Optional<Product> productOptional = productRepository.findById(productId);
+        if (productOptional.isEmpty()) {
             String errMsg = String.format("Product with id: %d is not found.", productId);
             log.error(errMsg);
             throw new ProductNotFoundException(errMsg);
         }
+        Product product = productOptional.get();
         log.info("Fetched product by id: '{}'", productId);
-        return productMapper.toAdminProductDto(product.get(), imageService);
+        List<ImageDto> imageDtoList = new ArrayList<>();
+        Image mainImage = product.getMainImage();
+        ImageDto mainImageDto = imageService.generateDecompressedImageDto(mainImage);
+        for (Image image : product.getImages()) {
+            if (!image.equals(mainImage)) {
+                imageDtoList.add(imageService.generateDecompressedImageDto(image));
+            }
+        }
+        return productMapper.toAdminProductDto(product, mainImageDto, imageDtoList);
     }
 
     private Page<Product> getFilteredProductPage(int page, int size, String productName, BigDecimal minPrice,
@@ -135,8 +153,8 @@ public class ProductServiceImpl implements ProductService {
         if (productOptional.isPresent() && !productOptional.get().getId().equals(productId)) {
             throw new ProductNotFoundException(String.format("Product with name: %s is already exist", productName));
         }
-        Product product = productMapper.toProduct(addUpdateProductDto, productId, productCategoryRepository,
-                mainImageFile, imageFilesList, imageService);
+        Product product = toProduct(addUpdateProductDto, mainImageFile, imageFilesList);
+        product.setId(productId);
         productRepository.save(product);
         log.info("The product with id: {} was successfully updated", productId);
         Set<Image> productImagesSet = product.getImages();
@@ -154,8 +172,7 @@ public class ProductServiceImpl implements ProductService {
         if (productRepository.findByName(productName).isPresent()) {
             throw new ProductNotFoundException(String.format("Product with name: %s is already exist", productName));
         }
-        Product product = productMapper.toProduct(addUpdateProductDto, productCategoryRepository,
-                mainImageFile, imageFileList, imageService);
+        Product product = toProduct(addUpdateProductDto, mainImageFile, imageFileList);
         productRepository.save(product);
         log.info("The product with name: {} was successfully saved", product.getName());
     }
@@ -168,27 +185,27 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public Set<AdminProductCategoryDto> getAdminProductCategories(String categoryType) throws CategoryException {
         Class<? extends ProductCategory> categoryClass = getCategoryByCategoryType(categoryType);
-        var categories = productCategoryRepository.findAllCategories(categoryClass);
+        var categories = categoryRepository.findAllCategories(categoryClass);
         return productCategoryMapper.toAdminProductCategoryDtoSet(categories);
     }
 
     @Override
     public void deleteCategory(String categoryType, Integer categoryId) throws CategoryException {
         Class<? extends ProductCategory> categoryClass = getCategoryByCategoryType(categoryType);
-        productCategoryRepository.deleteCategory(categoryClass, categoryId);
+        categoryRepository.deleteCategory(categoryClass, categoryId);
     }
 
     @Override
     public void updateCategory(String categoryType, Integer categoryId, AdminProductCategoryNameDto categoryNameDto)
             throws CategoryException {
         Class<? extends ProductCategory> categoryClass = getCategoryByCategoryType(categoryType);
-        productCategoryRepository.updateCategory(categoryClass, categoryId, categoryNameDto.name());
+        categoryRepository.updateCategory(categoryClass, categoryId, categoryNameDto.name());
     }
 
     @Override
     public void addCategory(String categoryType, AdminProductCategoryNameDto categoryNameDto) throws CategoryException {
         Class<? extends ProductCategory> categoryClass = getCategoryByCategoryType(categoryType);
-        productCategoryRepository.addCategory(categoryClass, categoryNameDto.name());
+        categoryRepository.addCategory(categoryClass, categoryNameDto.name());
     }
 
     private Class<? extends ProductCategory> getCategoryByCategoryType(String categoryType) throws CategoryException {
@@ -197,5 +214,35 @@ public class ProductServiceImpl implements ProductService {
             case ORIGINS -> OriginCategory.class;
             case AGES -> AgeCategory.class;
         };
+    }
+
+    private Product toProduct(AddUpdateProductDto addUpdateProductDto, MultipartFile mainImageFile,
+                              List<MultipartFile> imageFilesList) throws CategoryException, ImageCompressionException, ImageExceedsMaxSizeException, InvalidImageFileFormatException {
+        Product product = productMapper.toProduct(addUpdateProductDto);
+        setProductCategories(product, addUpdateProductDto);
+        setProductImages(product, mainImageFile, imageFilesList);
+        return product;
+    }
+
+    private void setProductCategories(Product product, AddUpdateProductDto productDto)
+            throws CategoryException {
+        product.setBrandCategory(categoryRepository.findById(productDto.brandCategory().id(), BrandCategory.class));
+        product.setOriginCategory(categoryRepository.findById(productDto.originCategory().id(), OriginCategory.class));
+        Set<AgeCategory> ageCategories = new LinkedHashSet<>();
+        for (AdminProductCategoryIdDto ageCategory : productDto.ageCategories()) {
+            ageCategories.add(categoryRepository.findById(ageCategory.id(), AgeCategory.class));
+        }
+        product.setAgeCategories(ageCategories);
+    }
+
+    private void setProductImages(Product product, MultipartFile mainImageFile, List<MultipartFile> imageFilesList)
+            throws ImageCompressionException, ImageExceedsMaxSizeException, InvalidImageFileFormatException {
+        Image mainImage = imageService.convertMultipartFileToImage(mainImageFile, product);
+        Set<Image> imagesSet = new LinkedHashSet<>();
+        for (MultipartFile image : imageFilesList) {
+            imagesSet.add(imageService.convertMultipartFileToImage(image, product));
+        }
+        product.setMainImage(mainImage);
+        product.setImages(imagesSet);
     }
 }

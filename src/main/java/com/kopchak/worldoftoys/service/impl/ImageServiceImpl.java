@@ -1,6 +1,8 @@
 package com.kopchak.worldoftoys.service.impl;
 
+import com.kopchak.worldoftoys.dto.image.ImageDto;
 import com.kopchak.worldoftoys.exception.exception.ImageCompressionException;
+import com.kopchak.worldoftoys.exception.exception.ImageDecompressionException;
 import com.kopchak.worldoftoys.exception.exception.ImageExceedsMaxSizeException;
 import com.kopchak.worldoftoys.exception.exception.InvalidImageFileFormatException;
 import com.kopchak.worldoftoys.model.image.Image;
@@ -61,23 +63,22 @@ public class ImageServiceImpl implements ImageService {
     }
 
     @Override
-    public byte[] decompressImage(byte[] data, String fileName) throws ImageCompressionException {
-        Inflater inflater = new Inflater();
-        inflater.setInput(data);
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream(data.length);
-        byte[] tmp = new byte[4 * 1024];
-        try {
-            while (!inflater.finished()) {
-                int count = inflater.inflate(tmp);
-                outputStream.write(tmp, 0, count);
-            }
-            outputStream.close();
-        } catch (DataFormatException | IOException e) {
-            String errorMsg = String.format("The image with name: %s cannot be decompressed", fileName);
-            log.error(errorMsg);
-            throw new ImageCompressionException(errorMsg);
+    public ImageDto generateDecompressedImageDto(Image image) throws ImageDecompressionException {
+        String imageName = image.getName();
+        byte[] decompressedImg = decompressImage(image.getImage(), imageName);
+        return ImageDto.builder()
+                .name(imageName)
+                .type(image.getType())
+                .image(decompressedImg)
+                .build();
+    }
+
+    private boolean isNonImageFile(MultipartFile file) {
+        String contentType = file.getContentType();
+        if (contentType != null) {
+            return !contentType.startsWith(IMAGE_CONTENT_TYPE_PREFIX);
         }
-        return outputStream.toByteArray();
+        return true;
     }
 
     private byte[] compressImage(MultipartFile multipartFile, String fileName) throws ImageCompressionException {
@@ -108,11 +109,22 @@ public class ImageServiceImpl implements ImageService {
         return outputStream.toByteArray();
     }
 
-    private boolean isNonImageFile(MultipartFile file) {
-        String contentType = file.getContentType();
-        if (contentType != null) {
-            return !contentType.startsWith(IMAGE_CONTENT_TYPE_PREFIX);
+    private byte[] decompressImage(byte[] data, String fileName) throws ImageDecompressionException {
+        Inflater inflater = new Inflater();
+        inflater.setInput(data);
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream(data.length);
+        byte[] tmp = new byte[4 * 1024];
+        try {
+            while (!inflater.finished()) {
+                int count = inflater.inflate(tmp);
+                outputStream.write(tmp, 0, count);
+            }
+            outputStream.close();
+        } catch (DataFormatException | IOException e) {
+            String errorMsg = String.format("The image with name: %s cannot be decompressed", fileName);
+            log.error(errorMsg);
+            throw new ImageDecompressionException(errorMsg);
         }
-        return true;
+        return outputStream.toByteArray();
     }
 }

@@ -89,6 +89,8 @@ public class AdminPanelController {
             return new ResponseEntity<>(product, HttpStatus.OK);
         } catch (ProductNotFoundException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+        } catch (ImageDecompressionException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
     }
 
@@ -111,7 +113,7 @@ public class AdminPanelController {
         try {
             productService.updateProduct(productId, addUpdateProductDto, mainImageFile, imageFilesList);
         } catch (ProductNotFoundException | CategoryException | InvalidImageFileFormatException |
-                ImageExceedsMaxSizeException | ImageCompressionException e) {
+                 ImageExceedsMaxSizeException | ImageCompressionException e) {
             log.error("The error: {} occurred while updating the product with id: {}", e.getMessage(), productId);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }

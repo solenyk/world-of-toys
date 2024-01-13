@@ -20,7 +20,7 @@ public interface ProductService {
                                                 List<String> originCategories, List<String> brandCategories,
                                                 List<String> ageCategories, String priceSortOrder);
 
-    ProductDto getProductDtoBySlug(String productSlug) throws ProductNotFoundException;
+    ProductDto getProductDtoBySlug(String productSlug) throws ProductNotFoundException, ImageDecompressionException;
 
     FilteringProductCategoriesDto getFilteringProductCategories(String productName, BigDecimal minPrice, BigDecimal maxPrice,
                                                                 List<String> originCategories, List<String> brandCategories,
@@ -31,7 +31,7 @@ public interface ProductService {
                                                           List<String> brandCategories, List<String> ageCategories,
                                                           String priceSortOrder);
 
-    AdminProductDto getAdminProductDtoById(Integer productId) throws ProductNotFoundException;
+    AdminProductDto getAdminProductDtoById(Integer productId) throws ProductNotFoundException, ImageDecompressionException;
 
     void updateProduct(Integer productId, AddUpdateProductDto addUpdateProductDto, MultipartFile mainImageFile,
                        List<MultipartFile> imageFileList)
