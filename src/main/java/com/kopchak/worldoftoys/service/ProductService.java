@@ -3,11 +3,11 @@ package com.kopchak.worldoftoys.service;
 import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminFilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
-import com.kopchak.worldoftoys.dto.admin.product.category.AdminProductCategoryDto;
-import com.kopchak.worldoftoys.dto.admin.product.category.AdminProductCategoryNameDto;
+import com.kopchak.worldoftoys.dto.admin.product.category.AdminCategoryDto;
+import com.kopchak.worldoftoys.dto.admin.product.category.CategoryNameDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
-import com.kopchak.worldoftoys.dto.product.category.FilteringProductCategoriesDto;
+import com.kopchak.worldoftoys.dto.product.category.FilteringCategoriesDto;
 import com.kopchak.worldoftoys.exception.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -22,9 +22,9 @@ public interface ProductService {
 
     ProductDto getProductDtoBySlug(String productSlug) throws ProductNotFoundException, ImageDecompressionException;
 
-    FilteringProductCategoriesDto getFilteringProductCategories(String productName, BigDecimal minPrice, BigDecimal maxPrice,
-                                                                List<String> originCategories, List<String> brandCategories,
-                                                                List<String> ageCategories);
+    FilteringCategoriesDto getFilteringCategories(String productName, BigDecimal minPrice, BigDecimal maxPrice,
+                                                  List<String> originCategories, List<String> brandCategories,
+                                                  List<String> ageCategories);
 
     AdminFilteredProductsPageDto getAdminFilteredProducts(int page, int size, String productName, BigDecimal minPrice,
                                                           BigDecimal maxPrice, List<String> originCategories,
@@ -43,12 +43,12 @@ public interface ProductService {
 
     void deleteProduct(Integer productId);
 
-    Set<AdminProductCategoryDto> getAdminProductCategories(String categoryType) throws CategoryException;
+    Set<AdminCategoryDto> getAdminCategories(String categoryType) throws CategoryException;
 
     void deleteCategory(String category, Integer categoryId) throws CategoryException;
 
-    void updateCategory(String categoryType, Integer categoryId, AdminProductCategoryNameDto categoryNameDto)
+    void updateCategory(String categoryType, Integer categoryId, CategoryNameDto categoryNameDto)
             throws CategoryException;
 
-    void addCategory(String categoryType, AdminProductCategoryNameDto categoryNameDto) throws CategoryException;
+    void addCategory(String categoryType, CategoryNameDto categoryNameDto) throws CategoryException;
 }

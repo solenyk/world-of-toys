@@ -7,7 +7,10 @@ import com.kopchak.worldoftoys.model.user.AppUser;
 
 public interface CartService {
     void addProductToCart(RequestCartItemDto requestCartItemDto, AppUser user) throws ProductNotFoundException;
+
     UserCartDetailsDto getUserCartDetails(AppUser user);
+
     void updateUserCartItem(RequestCartItemDto requestCartItemDto, AppUser user) throws ProductNotFoundException;
+
     void deleteUserCartItem(RequestCartItemDto requestCartItemDto, AppUser user) throws ProductNotFoundException;
 }

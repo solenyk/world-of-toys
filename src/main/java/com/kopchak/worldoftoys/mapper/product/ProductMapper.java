@@ -14,7 +14,7 @@ import org.springframework.data.domain.Page;
 
 import java.util.List;
 
-@Mapper(componentModel = "spring", uses = {ProductCategoryMapper.class})
+@Mapper(componentModel = "spring", uses = {CategoryMapper.class})
 public abstract class ProductMapper {
     @Mapping(target = "name", source = "product.name")
     @Mapping(target = "mainImage", source = "mainImage")

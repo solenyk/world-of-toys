@@ -22,6 +22,7 @@ public interface OrderService {
 
     FilteredOrdersPageDto filterOrdersByStatusesAndDate(int pageNumber, int pageSize, List<OrderStatus> orderStatuses,
                                                         List<PaymentStatus> paymentStatuses, String dateSortOrder);
+
     void updateOrderStatus(String orderId, StatusDto statusDto) throws OrderCreationException;
 
     Set<StatusDto> getAllOrderStatuses();

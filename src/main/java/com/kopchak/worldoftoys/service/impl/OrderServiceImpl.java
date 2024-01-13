@@ -47,8 +47,6 @@ public class OrderServiceImpl implements OrderService {
         Set<CartItem> cartItems = cartItemRepository.deleteAllById_User(user);
         String username = user.getUsername();
         if (cartItems.isEmpty()) {
-            log.error("It is impossible to create an order for the user with username: {} " +
-                    "because there are no products in the user's cart.", username);
             throw new OrderCreationException("It is impossible to create an order for the user " +
                     "because there are no products in the user's cart.");
         }

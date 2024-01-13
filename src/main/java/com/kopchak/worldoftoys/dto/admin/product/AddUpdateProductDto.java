@@ -1,6 +1,6 @@
 package com.kopchak.worldoftoys.dto.admin.product;
 
-import com.kopchak.worldoftoys.dto.admin.product.category.AdminProductCategoryIdDto;
+import com.kopchak.worldoftoys.dto.admin.product.category.CategoryIdDto;
 import com.kopchak.worldoftoys.exception.validation.ValidationStepTwo;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.GroupSequence;
@@ -52,13 +52,13 @@ public record AddUpdateProductDto(
 
         @Valid
         @NotNull(message = "Invalid origin category: origin category is mandatory")
-        AdminProductCategoryIdDto originCategory,
+        CategoryIdDto originCategory,
 
         @Valid
         @NotNull(message = "Invalid brand category: brand category is mandatory")
-        AdminProductCategoryIdDto brandCategory,
+        CategoryIdDto brandCategory,
 
         @Valid
         @NotNull(message = "Invalid age categories: age categories is mandatory")
-        List<AdminProductCategoryIdDto> ageCategories) {
+        List<CategoryIdDto> ageCategories) {
 }

@@ -33,16 +33,16 @@ public class ConfirmationTokenServiceImpl implements ConfirmationTokenService {
     public ConfirmTokenDto createConfirmationToken(String username, ConfirmationTokenType tokenType)
             throws UserNotFoundException, TokenAlreadyExistException, AccountActivationException {
         AppUser user = userRepository.findByEmail(username).orElseThrow(() -> {
-            String errorMsg = String.format("The user with the username: %s does not exist!", username);
+            String errorMsg = String.format("The user with username: %s does not exist!", username);
             log.error(errorMsg);
             return new UserNotFoundException(errorMsg);
         });
         if (user.isEnabled() && tokenType.equals(ConfirmationTokenType.ACTIVATION)) {
-            log.error("The account with the username: {} is already activated!", username);
+            log.error("The account with username: {} is already activated!", username);
             throw new AccountActivationException("The account is already activated!");
         }
         if (!confirmTokenRepository.isNoActiveConfirmationToken(username, tokenType, LocalDateTime.now())) {
-            log.error("The valid confirmation token for the user with the username: {} already exits!", username);
+            log.error("The valid confirmation token for the user with username: {} already exits!", username);
             throw new TokenAlreadyExistException("The valid confirmation token already exits!");
         }
         String token = UUID.randomUUID().toString();
@@ -55,7 +55,7 @@ public class ConfirmationTokenServiceImpl implements ConfirmationTokenService {
                 .expiresAt(LocalDateTime.now().plusMinutes(TOKEN_EXPIRATION_TIME_IN_MINUTES))
                 .build();
         confirmTokenRepository.save(confirmationToken);
-        log.info("Created confirmation token for the user with the username: {}", username);
+        log.info("Created confirmation token for the user with username: {}", username);
         return new ConfirmTokenDto(confirmationToken.getToken());
     }
 
@@ -70,7 +70,7 @@ public class ConfirmationTokenServiceImpl implements ConfirmationTokenService {
         user.setEnabled(true);
         userRepository.save(user);
         confirmTokenRepository.save(confirmationToken);
-        log.info("The account for the user with the username: {} is activated", user.getUsername());
+        log.info("The account for the user with username: {} is activated", user.getUsername());
     }
 
     @Override
@@ -85,7 +85,7 @@ public class ConfirmationTokenServiceImpl implements ConfirmationTokenService {
         userService.changeUserPassword(user, newPassword.password());
         confirmTokenRepository.save(confirmationToken);
         jwtTokenService.revokeAllUserAuthTokens(user);
-        log.info("Changed password for the user with the username: {}", user.getUsername());
+        log.info("Changed password for the user with username: {}", user.getUsername());
     }
 
     private boolean isConfirmationTokenInvalid(String token, ConfirmationTokenType tokenType) {

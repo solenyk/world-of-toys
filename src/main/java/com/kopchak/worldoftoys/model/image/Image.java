@@ -5,7 +5,6 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.*;
-import org.apache.commons.lang3.RandomStringUtils;
 
 @Entity
 @Getter
@@ -27,7 +26,7 @@ public class Image {
     private String type;
 
     @Lob
-    @Column(nullable = false, length = 1_000_000_000, columnDefinition = "BLOB")
+    @Column(nullable = false, length = 100_000, columnDefinition = "BLOB")
     @NotEmpty(message = "Invalid image: image is empty")
     private byte[] image;
 

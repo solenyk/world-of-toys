@@ -5,8 +5,8 @@ import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
-import com.kopchak.worldoftoys.dto.product.category.FilteringProductCategoriesDto;
-import com.kopchak.worldoftoys.dto.product.category.ProductCategoryDto;
+import com.kopchak.worldoftoys.dto.product.category.CategoryDto;
+import com.kopchak.worldoftoys.dto.product.category.FilteringCategoriesDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -102,19 +102,19 @@ public class ShopControllerIntegrationTest {
 
     @Test
     public void getFilteringProductCategories_RequestFilteringParams_ReturnsOkStatusAndFilteringProductCategoriesDto() throws Exception {
-        List<ProductCategoryDto> expectedBrandCategories = new ArrayList<>() {{
-            add(new ProductCategoryDto("Devilon", "devilon"));
-            add(new ProductCategoryDto("Сurlimals", "сurlimals"));
+        List<CategoryDto> expectedBrandCategories = new ArrayList<>() {{
+            add(new CategoryDto("Devilon", "devilon"));
+            add(new CategoryDto("Сurlimals", "сurlimals"));
         }};
-        List<ProductCategoryDto> expectedOriginCategories = new ArrayList<>() {{
-            add(new ProductCategoryDto("Китай", "china"));
-            add(new ProductCategoryDto("Україна", "ukraine"));
+        List<CategoryDto> expectedOriginCategories = new ArrayList<>() {{
+            add(new CategoryDto("Китай", "china"));
+            add(new CategoryDto("Україна", "ukraine"));
         }};
-        List<ProductCategoryDto> expectedAgeCategories = new ArrayList<>() {{
-            add(new ProductCategoryDto("від 1 до 3 років", "vid-1-do-3-rokiv"));
-            add(new ProductCategoryDto("від 6 до 9 років", "vid-6-do-9-rokiv"));
+        List<CategoryDto> expectedAgeCategories = new ArrayList<>() {{
+            add(new CategoryDto("від 1 до 3 років", "vid-1-do-3-rokiv"));
+            add(new CategoryDto("від 6 до 9 років", "vid-6-do-9-rokiv"));
         }};
-        var expectedFilteringProductCategoriesDto = FilteringProductCategoriesDto
+        var expectedFilteringProductCategoriesDto = FilteringCategoriesDto
                 .builder()
                 .originCategories(expectedOriginCategories)
                 .brandCategories(expectedBrandCategories)
@@ -132,21 +132,21 @@ public class ShopControllerIntegrationTest {
 
     @Test
     public void getFilteringProductCategories_ReturnsOkStatusAndFilteringProductCategoriesDto() throws Exception {
-        List<ProductCategoryDto> expectedBrandCategories = new ArrayList<>() {{
-            add(new ProductCategoryDto("Devilon", "devilon"));
-            add(new ProductCategoryDto("Disney", "disney"));
-            add(new ProductCategoryDto("CoComelon", "сoсomelon"));
-            add(new ProductCategoryDto("Сurlimals", "сurlimals"));
+        List<CategoryDto> expectedBrandCategories = new ArrayList<>() {{
+            add(new CategoryDto("Devilon", "devilon"));
+            add(new CategoryDto("Disney", "disney"));
+            add(new CategoryDto("CoComelon", "сoсomelon"));
+            add(new CategoryDto("Сurlimals", "сurlimals"));
         }};
-        List<ProductCategoryDto> expectedOriginCategories = new ArrayList<>() {{
-            add(new ProductCategoryDto("Китай", "china"));
-            add(new ProductCategoryDto("Україна", "ukraine"));
+        List<CategoryDto> expectedOriginCategories = new ArrayList<>() {{
+            add(new CategoryDto("Китай", "china"));
+            add(new CategoryDto("Україна", "ukraine"));
         }};
-        List<ProductCategoryDto> expectedAgeCategories = new ArrayList<>() {{
-            add(new ProductCategoryDto("від 1 до 3 років", "vid-1-do-3-rokiv"));
-            add(new ProductCategoryDto("від 6 до 9 років", "vid-6-do-9-rokiv"));
+        List<CategoryDto> expectedAgeCategories = new ArrayList<>() {{
+            add(new CategoryDto("від 1 до 3 років", "vid-1-do-3-rokiv"));
+            add(new CategoryDto("від 6 до 9 років", "vid-6-do-9-rokiv"));
         }};
-        var expectedFilteringProductCategoriesDto = FilteringProductCategoriesDto
+        var expectedFilteringProductCategoriesDto = FilteringCategoriesDto
                 .builder()
                 .originCategories(expectedOriginCategories)
                 .brandCategories(expectedBrandCategories)
@@ -184,9 +184,9 @@ public class ShopControllerIntegrationTest {
                 "сприяє розвитку навичок у дітей. Вона створює захоплюючий світ уяви, розвиваючи логічне мислення та " +
                 "творчість. Іграшка безпечна, енергоефективна і сприяє розвитку спостережливості, уваги та " +
                 "винахідливості у дітей, забезпечуючи незабутні враження та навчальний досвід.";
-        List<ProductCategoryDto> expectedProductAgeCategories = new ArrayList<>() {{
-            add(new ProductCategoryDto("від 1 до 3 років", "vid-1-do-3-rokiv"));
-            add(new ProductCategoryDto("від 6 до 9 років", "vid-6-do-9-rokiv"));
+        List<CategoryDto> expectedProductAgeCategories = new ArrayList<>() {{
+            add(new CategoryDto("від 1 до 3 років", "vid-1-do-3-rokiv"));
+            add(new CategoryDto("від 6 до 9 років", "vid-6-do-9-rokiv"));
         }};
         ProductDto expectedProductDto = ProductDto
                 .builder()
@@ -196,8 +196,8 @@ public class ShopControllerIntegrationTest {
                 .price(BigDecimal.valueOf(900))
                 .availableQuantity(BigInteger.valueOf(200))
                 .images(new ArrayList<>())
-                .originCategory(new ProductCategoryDto("Україна", "ukraine"))
-                .brandCategory(new ProductCategoryDto("Сurlimals", "сurlimals"))
+                .originCategory(new CategoryDto("Україна", "ukraine"))
+                .brandCategory(new CategoryDto("Сurlimals", "сurlimals"))
                 .ageCategories(expectedProductAgeCategories)
                 .build();
 

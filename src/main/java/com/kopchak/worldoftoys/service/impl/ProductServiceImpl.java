@@ -3,15 +3,15 @@ package com.kopchak.worldoftoys.service.impl;
 import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminFilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
-import com.kopchak.worldoftoys.dto.admin.product.category.AdminProductCategoryDto;
-import com.kopchak.worldoftoys.dto.admin.product.category.AdminProductCategoryIdDto;
-import com.kopchak.worldoftoys.dto.admin.product.category.AdminProductCategoryNameDto;
+import com.kopchak.worldoftoys.dto.admin.product.category.AdminCategoryDto;
+import com.kopchak.worldoftoys.dto.admin.product.category.CategoryIdDto;
+import com.kopchak.worldoftoys.dto.admin.product.category.CategoryNameDto;
 import com.kopchak.worldoftoys.dto.image.ImageDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
-import com.kopchak.worldoftoys.dto.product.category.FilteringProductCategoriesDto;
+import com.kopchak.worldoftoys.dto.product.category.FilteringCategoriesDto;
 import com.kopchak.worldoftoys.exception.*;
-import com.kopchak.worldoftoys.mapper.product.ProductCategoryMapper;
+import com.kopchak.worldoftoys.mapper.product.CategoryMapper;
 import com.kopchak.worldoftoys.mapper.product.ProductMapper;
 import com.kopchak.worldoftoys.model.image.Image;
 import com.kopchak.worldoftoys.model.product.Product;
@@ -20,7 +20,7 @@ import com.kopchak.worldoftoys.model.product.category.BrandCategory;
 import com.kopchak.worldoftoys.model.product.category.OriginCategory;
 import com.kopchak.worldoftoys.model.product.category.ProductCategory;
 import com.kopchak.worldoftoys.model.product.category.type.CategoryType;
-import com.kopchak.worldoftoys.repository.product.ProductCategoryRepository;
+import com.kopchak.worldoftoys.repository.product.CategoryRepository;
 import com.kopchak.worldoftoys.repository.product.ProductRepository;
 import com.kopchak.worldoftoys.repository.product.image.ImageRepository;
 import com.kopchak.worldoftoys.repository.specifications.impl.ProductSpecificationsImpl;
@@ -44,9 +44,9 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
-    private final ProductCategoryRepository categoryRepository;
+    private final CategoryRepository categoryRepository;
     private final ProductSpecificationsImpl productSpecifications;
-    private final ProductCategoryMapper productCategoryMapper;
+    private final CategoryMapper categoryMapper;
     private final ProductMapper productMapper;
     private final ImageRepository imageRepository;
     private final ImageService imageService;
@@ -78,11 +78,11 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public FilteringProductCategoriesDto getFilteringProductCategories(String productName, BigDecimal minPrice,
-                                                                       BigDecimal maxPrice,
-                                                                       List<String> originCategories,
-                                                                       List<String> brandCategories,
-                                                                       List<String> ageCategories) {
+    public FilteringCategoriesDto getFilteringCategories(String productName, BigDecimal minPrice,
+                                                         BigDecimal maxPrice,
+                                                         List<String> originCategories,
+                                                         List<String> brandCategories,
+                                                         List<String> ageCategories) {
         Specification<Product> spec = productSpecifications.filterByProductNamePriceAndCategories(productName, minPrice,
                 maxPrice, originCategories, brandCategories, ageCategories);
         var filteringProductCategoriesDto = categoryRepository.findUniqueFilteringProductCategories(spec);
@@ -168,10 +168,10 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Set<AdminProductCategoryDto> getAdminProductCategories(String categoryType) throws CategoryException {
+    public Set<AdminCategoryDto> getAdminCategories(String categoryType) throws CategoryException {
         Class<? extends ProductCategory> categoryClass = getCategoryByCategoryType(categoryType);
         var categories = categoryRepository.findAllCategories(categoryClass);
-        return productCategoryMapper.toAdminProductCategoryDtoSet(categories);
+        return categoryMapper.toAdminCategoryDtoSet(categories);
     }
 
     @Override
@@ -181,14 +181,14 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public void updateCategory(String categoryType, Integer categoryId, AdminProductCategoryNameDto categoryNameDto)
+    public void updateCategory(String categoryType, Integer categoryId, CategoryNameDto categoryNameDto)
             throws CategoryException {
         Class<? extends ProductCategory> categoryClass = getCategoryByCategoryType(categoryType);
         categoryRepository.updateCategory(categoryClass, categoryId, categoryNameDto.name());
     }
 
     @Override
-    public void addCategory(String categoryType, AdminProductCategoryNameDto categoryNameDto) throws CategoryException {
+    public void addCategory(String categoryType, CategoryNameDto categoryNameDto) throws CategoryException {
         Class<? extends ProductCategory> categoryClass = getCategoryByCategoryType(categoryType);
         categoryRepository.addCategory(categoryClass, categoryNameDto.name());
     }
@@ -215,7 +215,7 @@ public class ProductServiceImpl implements ProductService {
         product.setBrandCategory(categoryRepository.findById(productDto.brandCategory().id(), BrandCategory.class));
         product.setOriginCategory(categoryRepository.findById(productDto.originCategory().id(), OriginCategory.class));
         Set<AgeCategory> ageCategories = new LinkedHashSet<>();
-        for (AdminProductCategoryIdDto ageCategory : productDto.ageCategories()) {
+        for (CategoryIdDto ageCategory : productDto.ageCategories()) {
             ageCategories.add(categoryRepository.findById(ageCategory.id(), AgeCategory.class));
         }
         product.setAgeCategories(ageCategories);

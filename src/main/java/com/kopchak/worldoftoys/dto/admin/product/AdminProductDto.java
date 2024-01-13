@@ -1,7 +1,7 @@
 package com.kopchak.worldoftoys.dto.admin.product;
 
 import com.kopchak.worldoftoys.dto.image.ImageDto;
-import com.kopchak.worldoftoys.dto.product.category.ProductCategoryDto;
+import com.kopchak.worldoftoys.dto.product.category.CategoryDto;
 import lombok.Builder;
 
 import java.math.BigDecimal;
@@ -11,6 +11,6 @@ import java.util.List;
 @Builder
 public record AdminProductDto(Integer id, String name, String slug, String description, BigDecimal price,
                               BigInteger availableQuantity, ImageDto mainImage, List<ImageDto> images,
-                              ProductCategoryDto originCategory, ProductCategoryDto brandCategory,
-                              List<ProductCategoryDto> ageCategories) {
+                              CategoryDto originCategory, CategoryDto brandCategory,
+                              List<CategoryDto> ageCategories) {
 }

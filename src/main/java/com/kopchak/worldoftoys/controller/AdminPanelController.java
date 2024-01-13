@@ -3,8 +3,8 @@ package com.kopchak.worldoftoys.controller;
 import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminFilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
-import com.kopchak.worldoftoys.dto.admin.product.category.AdminProductCategoryDto;
-import com.kopchak.worldoftoys.dto.admin.product.category.AdminProductCategoryNameDto;
+import com.kopchak.worldoftoys.dto.admin.product.category.AdminCategoryDto;
+import com.kopchak.worldoftoys.dto.admin.product.category.CategoryNameDto;
 import com.kopchak.worldoftoys.dto.admin.product.order.FilteredOrdersPageDto;
 import com.kopchak.worldoftoys.dto.admin.product.order.FilteringOrderOptionsDto;
 import com.kopchak.worldoftoys.dto.admin.product.order.StatusDto;
@@ -26,7 +26,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -43,7 +42,6 @@ import java.util.Set;
 @RequiredArgsConstructor
 @Tag(name = "admin-panel-controller", description = "")
 @SecurityRequirement(name = "Bearer Authentication")
-@Slf4j
 public class AdminPanelController {
 
     private final ProductService productService;
@@ -114,7 +112,6 @@ public class AdminPanelController {
             productService.updateProduct(productId, addUpdateProductDto, mainImageFile, imageFilesList);
         } catch (ProductNotFoundException | CategoryException | InvalidImageFileFormatException |
                  ImageExceedsMaxSizeException | ImageCompressionException e) {
-            log.error("The error: {} occurred while updating the product with id: {}", e.getMessage(), productId);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -139,8 +136,6 @@ public class AdminPanelController {
             productService.addProduct(addUpdateProductDto, mainImageFile, imageFilesList);
         } catch (ProductNotFoundException | CategoryException | InvalidImageFileFormatException |
                  ImageExceedsMaxSizeException | ImageCompressionException e) {
-            log.error("The error: {} occurred while creating the product with name: {}",
-                    e.getMessage(), addUpdateProductDto.name());
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
         return new ResponseEntity<>(HttpStatus.CREATED);
@@ -166,7 +161,7 @@ public class AdminPanelController {
                             @Content(
                                     mediaType = "application/json",
                                     array = @ArraySchema(
-                                            schema = @Schema(implementation = AdminProductCategoryDto.class))
+                                            schema = @Schema(implementation = AdminCategoryDto.class))
                             )
                     }),
             @ApiResponse(
@@ -175,10 +170,10 @@ public class AdminPanelController {
                     content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class)))
     })
     @GetMapping("/categories/{categoryType}")
-    public ResponseEntity<Set<AdminProductCategoryDto>> getProductCategories(
+    public ResponseEntity<Set<AdminCategoryDto>> getProductCategories(
             @PathVariable("categoryType") String categoryType) {
         try {
-            Set<AdminProductCategoryDto> categoryDtoSet = productService.getAdminProductCategories(categoryType);
+            Set<AdminCategoryDto> categoryDtoSet = productService.getAdminCategories(categoryType);
             return new ResponseEntity<>(categoryDtoSet, HttpStatus.OK);
         } catch (CategoryException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
@@ -210,7 +205,7 @@ public class AdminPanelController {
     @PutMapping("/categories/{categoryType}/{categoryId}")
     public ResponseEntity<Void> updateCategory(@PathVariable("categoryType") String categoryType,
                                                @PathVariable(name = "categoryId") Integer categoryId,
-                                               @Valid @RequestBody AdminProductCategoryNameDto categoryNameDto) {
+                                               @Valid @RequestBody CategoryNameDto categoryNameDto) {
         try {
             productService.updateCategory(categoryType, categoryId, categoryNameDto);
         } catch (CategoryException e) {
@@ -221,7 +216,7 @@ public class AdminPanelController {
 
     @PostMapping("/categories/{categoryType}/add")
     public ResponseEntity<Void> addCategory(@PathVariable("categoryType") String categoryType,
-                                            @Valid @RequestBody AdminProductCategoryNameDto categoryNameDto) {
+                                            @Valid @RequestBody CategoryNameDto categoryNameDto) {
         try {
             productService.addCategory(categoryType, categoryNameDto);
         } catch (CategoryException e) {

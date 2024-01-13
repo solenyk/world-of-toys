@@ -2,10 +2,10 @@ package com.kopchak.worldoftoys.service.impl;
 
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
-import com.kopchak.worldoftoys.dto.product.category.FilteringProductCategoriesDto;
+import com.kopchak.worldoftoys.dto.product.category.FilteringCategoriesDto;
 import com.kopchak.worldoftoys.mapper.product.ProductMapper;
 import com.kopchak.worldoftoys.model.product.Product;
-import com.kopchak.worldoftoys.repository.product.ProductCategoryRepository;
+import com.kopchak.worldoftoys.repository.product.CategoryRepository;
 import com.kopchak.worldoftoys.repository.product.ProductRepository;
 import com.kopchak.worldoftoys.repository.specifications.impl.ProductSpecificationsImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,7 +34,7 @@ class ProductServiceImplTest {
     @Mock
     private ProductRepository productRepository;
     @Mock
-    private ProductCategoryRepository productCategoryRepository;
+    private CategoryRepository categoryRepository;
     @Mock
     private ProductSpecificationsImpl productSpecifications;
     @Mock
@@ -110,14 +110,14 @@ class ProductServiceImplTest {
 
     @Test
     public void getFilteringProductCategories_FilteringCriteria_ReturnsFilteringProductCategoriesDto() {
-        var expectedFilteringProductCategoriesDto = FilteringProductCategoriesDto.builder().build();
+        var expectedFilteringProductCategoriesDto = FilteringCategoriesDto.builder().build();
 
         when(productSpecifications.filterByProductNamePriceAndCategories(eq(productName), eq(minProductPrice),
                 eq(maxProductPrice), eq(originCategories), eq(brandCategories), eq(ageCategories))).thenReturn(spec);
-        when(productCategoryRepository.findUniqueFilteringProductCategories(eq(spec)))
+        when(categoryRepository.findUniqueFilteringProductCategories(eq(spec)))
                 .thenReturn(expectedFilteringProductCategoriesDto);
 
-        var actualFilteringProductCategoriesDto = productService.getFilteringProductCategories(productName,
+        var actualFilteringProductCategoriesDto = productService.getFilteringCategories(productName,
                 minProductPrice, maxProductPrice, originCategories, brandCategories, ageCategories);
 
         assertThat(actualFilteringProductCategoriesDto).isNotNull();

@@ -1,15 +1,15 @@
 package com.kopchak.worldoftoys.repository.product.impl;
 
-import com.kopchak.worldoftoys.dto.product.category.FilteringProductCategoriesDto;
-import com.kopchak.worldoftoys.dto.product.category.ProductCategoryDto;
+import com.kopchak.worldoftoys.dto.product.category.CategoryDto;
+import com.kopchak.worldoftoys.dto.product.category.FilteringCategoriesDto;
 import com.kopchak.worldoftoys.exception.CategoryException;
-import com.kopchak.worldoftoys.mapper.product.ProductCategoryMapper;
+import com.kopchak.worldoftoys.mapper.product.CategoryMapper;
 import com.kopchak.worldoftoys.model.product.Product;
 import com.kopchak.worldoftoys.model.product.Product_;
 import com.kopchak.worldoftoys.model.product.category.AgeCategory;
 import com.kopchak.worldoftoys.model.product.category.ProductCategory;
 import com.kopchak.worldoftoys.model.product.category.ProductCategory_;
-import com.kopchak.worldoftoys.repository.product.ProductCategoryRepository;
+import com.kopchak.worldoftoys.repository.product.CategoryRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.TypedQuery;
@@ -26,13 +26,13 @@ import java.util.*;
 @Repository
 @RequiredArgsConstructor
 @Slf4j
-public class ProductCategoryRepositoryImpl implements ProductCategoryRepository {
+public class CategoryRepositoryImpl implements CategoryRepository {
     private final EntityManager entityManager;
-    private final ProductCategoryMapper productCategoryMapper;
+    private final CategoryMapper categoryMapper;
 
     @Override
-    public FilteringProductCategoriesDto findUniqueFilteringProductCategories(Specification<Product> spec) {
-        return FilteringProductCategoriesDto
+    public FilteringCategoriesDto findUniqueFilteringProductCategories(Specification<Product> spec) {
+        return FilteringCategoriesDto
                 .builder()
                 .originCategories(findUniqueProductCategoryDtoList(spec, Product_.ORIGIN_CATEGORY))
                 .brandCategories(findUniqueProductCategoryDtoList(spec, Product_.BRAND_CATEGORY))
@@ -108,8 +108,8 @@ public class ProductCategoryRepositoryImpl implements ProductCategoryRepository 
         }
     }
 
-    private List<ProductCategoryDto> findUniqueProductCategoryDtoList(Specification<Product> spec,
-                                                                      String productCategoryAttribute) {
+    private List<CategoryDto> findUniqueProductCategoryDtoList(Specification<Product> spec,
+                                                               String productCategoryAttribute) {
 
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
         CriteriaQuery<ProductCategory> criteriaQuery = criteriaBuilder.createQuery(ProductCategory.class);
@@ -131,11 +131,11 @@ public class ProductCategoryRepositoryImpl implements ProductCategoryRepository 
         }
 
         TypedQuery<ProductCategory> query = entityManager.createQuery(criteriaQuery);
-        List<ProductCategoryDto> productCategoryDtoList = productCategoryMapper
-                .toProductCategoryDtoList(query.getResultList());
-        log.info("Found {} unique product categories for category: {}", productCategoryDtoList.size(),
+        List<CategoryDto> categoryDtoList = categoryMapper
+                .toCategoryDtoList(query.getResultList());
+        log.info("Found {} unique product categories for category: {}", categoryDtoList.size(),
                 productCategoryAttribute);
-        return productCategoryDtoList;
+        return categoryDtoList;
     }
 
     private <T extends ProductCategory> boolean containsProductsInCategory(Class<T> categoryType, Integer id)

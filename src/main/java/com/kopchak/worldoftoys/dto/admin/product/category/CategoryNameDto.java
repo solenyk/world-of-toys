@@ -7,8 +7,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 @Schema(description = "Product category name")
-@GroupSequence({AdminProductCategoryNameDto.class, ValidationStepTwo.class})
-public record AdminProductCategoryNameDto(
+@GroupSequence({CategoryNameDto.class, ValidationStepTwo.class})
+public record CategoryNameDto(
         @Schema(example = "15-18 років", requiredMode = Schema.RequiredMode.REQUIRED)
         @NotBlank(message = "Invalid name: name is mandatory")
         @Size(

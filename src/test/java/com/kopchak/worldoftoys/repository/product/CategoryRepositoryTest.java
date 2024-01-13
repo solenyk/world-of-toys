@@ -1,11 +1,11 @@
 package com.kopchak.worldoftoys.repository.product;
 
-import com.kopchak.worldoftoys.dto.product.category.FilteringProductCategoriesDto;
-import com.kopchak.worldoftoys.dto.product.category.ProductCategoryDto;
-import com.kopchak.worldoftoys.mapper.product.ProductCategoryMapper;
-import com.kopchak.worldoftoys.mapper.product.ProductCategoryMapperImpl;
+import com.kopchak.worldoftoys.dto.product.category.CategoryDto;
+import com.kopchak.worldoftoys.dto.product.category.FilteringCategoriesDto;
+import com.kopchak.worldoftoys.mapper.product.CategoryMapper;
+import com.kopchak.worldoftoys.mapper.product.CategoryMapperImpl;
 import com.kopchak.worldoftoys.model.product.Product;
-import com.kopchak.worldoftoys.repository.product.impl.ProductCategoryRepositoryImpl;
+import com.kopchak.worldoftoys.repository.product.impl.CategoryRepositoryImpl;
 import com.kopchak.worldoftoys.repository.specifications.ProductSpecifications;
 import com.kopchak.worldoftoys.repository.specifications.impl.ProductSpecificationsImpl;
 import org.junit.jupiter.api.Test;
@@ -22,16 +22,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
 @ActiveProfiles("integrationtest")
-@Import({ProductSpecificationsImpl.class, ProductCategoryRepositoryImpl.class, ProductCategoryMapperImpl.class})
-class ProductCategoryRepositoryTest {
+@Import({ProductSpecificationsImpl.class, CategoryRepositoryImpl.class, CategoryMapperImpl.class})
+class CategoryRepositoryTest {
     @Autowired
-    ProductCategoryRepository productCategoryRepository;
+    CategoryRepository categoryRepository;
 
     @Autowired
     ProductSpecifications productSpecifications;
 
     @Autowired
-    ProductCategoryMapper productCategoryMapper;
+    CategoryMapper categoryMapper;
 
     @Test
     public void findUniqueFilteringProductCategories() {
@@ -45,19 +45,19 @@ class ProductCategoryRepositoryTest {
         Specification<Product> productSpecification = productSpecifications.filterByProductNamePriceAndCategories(
                 productName, minPrice, maxPrice, originCategoriesSlugList, brandCategoriesSlugList, ageCategoriesSlugList);
 
-        FilteringProductCategoriesDto filteringProductCategoriesDto = productCategoryRepository
+        FilteringCategoriesDto filteringCategoriesDto = categoryRepository
                 .findUniqueFilteringProductCategories(productSpecification);
 
-        List<ProductCategoryDto> expectedOriginCategories = List.of(new ProductCategoryDto("Китай", "china"));
-        List<ProductCategoryDto> expectedBrandCategories = List.of(
-                new ProductCategoryDto("CoComelon", "сoсomelon"));
-        List<ProductCategoryDto> expectedAgeCategories = List.of(
-                new ProductCategoryDto("від 1 до 3 років", "vid-1-do-3-rokiv"),
-                new ProductCategoryDto("від 6 до 9 років", "vid-6-do-9-rokiv"));
+        List<CategoryDto> expectedOriginCategories = List.of(new CategoryDto("Китай", "china"));
+        List<CategoryDto> expectedBrandCategories = List.of(
+                new CategoryDto("CoComelon", "сoсomelon"));
+        List<CategoryDto> expectedAgeCategories = List.of(
+                new CategoryDto("від 1 до 3 років", "vid-1-do-3-rokiv"),
+                new CategoryDto("від 6 до 9 років", "vid-6-do-9-rokiv"));
 
-        List<ProductCategoryDto> actualOriginCategories = filteringProductCategoriesDto.originCategories();
-        List<ProductCategoryDto> actualBrandCategories = filteringProductCategoriesDto.brandCategories();
-        List<ProductCategoryDto> actualAgeCategories = filteringProductCategoriesDto.ageCategories();
+        List<CategoryDto> actualOriginCategories = filteringCategoriesDto.originCategories();
+        List<CategoryDto> actualBrandCategories = filteringCategoriesDto.brandCategories();
+        List<CategoryDto> actualAgeCategories = filteringCategoriesDto.ageCategories();
 
         assertThat(actualOriginCategories).isEqualTo(expectedOriginCategories);
         assertThat(actualBrandCategories).isEqualTo(expectedBrandCategories);

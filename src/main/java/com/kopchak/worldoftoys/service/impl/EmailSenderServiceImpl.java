@@ -46,7 +46,7 @@ public class EmailSenderServiceImpl implements EmailSenderService {
             helper.setSubject(msgSubject);
             helper.setFrom(SENDER_EMAIL);
             mailSender.send(mimeMessage);
-            log.info("The email sent to the: {}", emailRecipient);
+            log.info("The email with subject: {} sent to the: {}", msgSubject, emailRecipient);
         } catch (MessagingException e) {
             log.error("Failed to send the email to the user with username: {}", emailRecipient);
             throw new MessageSendingException(String.format("Failed to send the email: %s", e.getMessage()));
@@ -57,7 +57,7 @@ public class EmailSenderServiceImpl implements EmailSenderService {
     public void sendEmail(String userEmail, String confirmToken, ConfirmationTokenType tokenType)
             throws UserNotFoundException, MessageSendingException {
         AppUser user = userRepository.findByEmail(userEmail).orElseThrow(() -> {
-            String errMsg = String.format("The user with the username: %s does not exist!", userEmail);
+            String errMsg = String.format("The user with username: %s does not exist!", userEmail);
             log.error(errMsg);
             return new UserNotFoundException(errMsg);
         });

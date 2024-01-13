@@ -3,7 +3,7 @@ package com.kopchak.worldoftoys.controller;
 import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
-import com.kopchak.worldoftoys.dto.product.category.FilteringProductCategoriesDto;
+import com.kopchak.worldoftoys.dto.product.category.FilteringCategoriesDto;
 import com.kopchak.worldoftoys.exception.ImageDecompressionException;
 import com.kopchak.worldoftoys.exception.ProductNotFoundException;
 import com.kopchak.worldoftoys.service.ProductService;
@@ -59,9 +59,9 @@ public class ShopController {
     @ApiResponse(
             responseCode = "200",
             description = "Product categories were successfully fetched",
-            content = @Content(schema = @Schema(implementation = FilteringProductCategoriesDto.class)))
+            content = @Content(schema = @Schema(implementation = FilteringCategoriesDto.class)))
     @GetMapping("/categories")
-    public ResponseEntity<FilteringProductCategoriesDto> getFilteringProductCategories(
+    public ResponseEntity<FilteringCategoriesDto> getFilteringProductCategories(
             @RequestParam(name = "name", required = false) String productName,
             @RequestParam(name = "min-price", required = false) BigDecimal minPrice,
             @RequestParam(name = "max-price", required = false) BigDecimal maxPrice,
@@ -69,9 +69,9 @@ public class ShopController {
             @RequestParam(name = "brand", required = false) List<String> brandCategories,
             @RequestParam(name = "age", required = false) List<String> ageCategories
     ) {
-        FilteringProductCategoriesDto filteringProductCategoriesDto = productService.getFilteringProductCategories(
+        FilteringCategoriesDto filteringCategoriesDto = productService.getFilteringCategories(
                 productName, minPrice, maxPrice, originCategories, brandCategories, ageCategories);
-        return new ResponseEntity<>(filteringProductCategoriesDto, HttpStatus.OK);
+        return new ResponseEntity<>(filteringCategoriesDto, HttpStatus.OK);
     }
 
     @Operation(summary = "Fetch product by slug")

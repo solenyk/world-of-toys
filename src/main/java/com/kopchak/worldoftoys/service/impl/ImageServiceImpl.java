@@ -17,7 +17,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.Objects;
 import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
@@ -27,7 +26,7 @@ import java.util.zip.Inflater;
 @Slf4j
 public class ImageServiceImpl implements ImageService {
     private final ImageRepository imageRepository;
-    private final static int MAX_IMG_COMPRESSION_SIZE = 1_000_000_000;
+    private final static int MAX_IMG_COMPRESSION_SIZE = 100_000;
     private final static String IMAGE_CONTENT_TYPE_PREFIX = "image/";
 
     @Override
@@ -45,21 +44,7 @@ public class ImageServiceImpl implements ImageService {
             log.error(errMsg);
             throw new ImageExceedsMaxSizeException(errMsg);
         }
-        String generatedName = Objects.requireNonNull(multipartFile.getOriginalFilename())
-                .concat(RandomStringUtils.randomAlphanumeric(4));
-        Image.ImageBuilder imageBuilder = Image.builder()
-                .name(generatedName)
-                .type(multipartFile.getContentType())
-                .product(product);
-        Image image;
-        if (product.getId() != null) {
-            image = imageRepository.findByNameAndProduct_Id(multipartFile.getOriginalFilename(), product.getId())
-                    .orElse(imageBuilder.build());
-        } else {
-            image = imageBuilder.build();
-        }
-        image.setImage(compressedImg);
-        return image;
+        return buildProductImage(product, fileName, multipartFile, compressedImg);
     }
 
     @Override
@@ -92,6 +77,7 @@ public class ImageServiceImpl implements ImageService {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream(data.length);
             byte[] compressedData = compressData(deflater, outputStream);
             outputStream.close();
+            log.info("The image with name: {} was successfully compressed", fileName);
             return compressedData;
         } catch (IOException e) {
             String errorMsg = String.format("The image with name: %s cannot be compressed", fileName);
@@ -125,6 +111,31 @@ public class ImageServiceImpl implements ImageService {
             log.error(errorMsg);
             throw new ImageDecompressionException(errorMsg);
         }
+        log.info("The image with name: {} was successfully decompressed", fileName);
         return outputStream.toByteArray();
+    }
+
+    private String generateImageName(MultipartFile multipartFile) {
+        String originalFilename = multipartFile.getOriginalFilename();
+        String randString = RandomStringUtils.randomAlphanumeric(4);
+        return originalFilename != null ? originalFilename.concat(randString) : randString;
+    }
+
+    private Image buildProductImage(Product product, String originalFileName,
+                                    MultipartFile multipartFile, byte[] compressedImg) {
+        String generatedName = generateImageName(multipartFile);
+        Image.ImageBuilder imageBuilder = Image.builder()
+                .name(generatedName)
+                .type(multipartFile.getContentType())
+                .product(product);
+        Image image;
+        if (product.getId() != null) {
+            image = imageRepository.findByNameAndProduct_Id(originalFileName, product.getId())
+                    .orElse(imageBuilder.build());
+        } else {
+            image = imageBuilder.build();
+        }
+        image.setImage(compressedImg);
+        return image;
     }
 }

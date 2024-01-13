@@ -4,8 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
-import com.kopchak.worldoftoys.dto.product.category.FilteringProductCategoriesDto;
-import com.kopchak.worldoftoys.dto.product.category.ProductCategoryDto;
+import com.kopchak.worldoftoys.dto.product.category.CategoryDto;
+import com.kopchak.worldoftoys.dto.product.category.FilteringCategoriesDto;
 import com.kopchak.worldoftoys.service.JwtTokenService;
 import com.kopchak.worldoftoys.service.ProductService;
 import org.junit.jupiter.api.BeforeEach;
@@ -105,15 +105,15 @@ class ShopControllerTest {
 
     @Test
     public void getFilteringProductCategories_RequestFilteringParams_ReturnsOkStatusAndFilteringProductCategoriesDto() throws Exception {
-        var expectedFilteringProductCategoriesDto = FilteringProductCategoriesDto
+        var expectedFilteringProductCategoriesDto = FilteringCategoriesDto
                 .builder()
-                .originCategories(List.of(new ProductCategoryDto("Китай", "china")))
-                .brandCategories(List.of(new ProductCategoryDto("Devilon", "devilon"),
-                        new ProductCategoryDto("Сurlimals", "сurlimals")))
-                .ageCategories(List.of(new ProductCategoryDto("від 1 до 3 років", "vid-1-do-3-rokiv")))
+                .originCategories(List.of(new CategoryDto("Китай", "china")))
+                .brandCategories(List.of(new CategoryDto("Devilon", "devilon"),
+                        new CategoryDto("Сurlimals", "сurlimals")))
+                .ageCategories(List.of(new CategoryDto("від 1 до 3 років", "vid-1-do-3-rokiv")))
                 .build();
 
-        when(productService.getFilteringProductCategories(eq(productName), eq(minProductPrice), eq(maxProductPrice),
+        when(productService.getFilteringCategories(eq(productName), eq(minProductPrice), eq(maxProductPrice),
                 eq(originCategories), eq(brandCategories), eq(ageCategories)))
                 .thenReturn(expectedFilteringProductCategoriesDto);
 
