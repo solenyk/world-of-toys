@@ -1,4 +1,4 @@
-package com.kopchak.worldoftoys.exception.exception;
+package com.kopchak.worldoftoys.exception;
 
 public class InvalidPasswordException extends Exception{
     public InvalidPasswordException(String message) {

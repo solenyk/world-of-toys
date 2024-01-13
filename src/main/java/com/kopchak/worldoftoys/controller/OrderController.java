@@ -2,7 +2,7 @@ package com.kopchak.worldoftoys.controller;
 
 import com.kopchak.worldoftoys.dto.order.OrderDto;
 import com.kopchak.worldoftoys.dto.order.OrderRecipientDto;
-import com.kopchak.worldoftoys.exception.exception.OrderCreationException;
+import com.kopchak.worldoftoys.exception.OrderCreationException;
 import com.kopchak.worldoftoys.model.user.AppUser;
 import com.kopchak.worldoftoys.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;

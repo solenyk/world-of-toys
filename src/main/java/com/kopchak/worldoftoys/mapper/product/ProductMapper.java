@@ -4,29 +4,15 @@ import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminFilteredProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminFilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
-import com.kopchak.worldoftoys.dto.admin.product.category.AdminProductCategoryIdDto;
 import com.kopchak.worldoftoys.dto.image.ImageDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
-import com.kopchak.worldoftoys.exception.exception.CategoryException;
-import com.kopchak.worldoftoys.exception.exception.ImageCompressionException;
-import com.kopchak.worldoftoys.exception.exception.ImageExceedsMaxSizeException;
-import com.kopchak.worldoftoys.exception.exception.InvalidImageFileFormatException;
-import com.kopchak.worldoftoys.model.image.Image;
 import com.kopchak.worldoftoys.model.product.Product;
-import com.kopchak.worldoftoys.model.product.category.AgeCategory;
-import com.kopchak.worldoftoys.model.product.category.BrandCategory;
-import com.kopchak.worldoftoys.model.product.category.OriginCategory;
-import com.kopchak.worldoftoys.repository.product.ProductCategoryRepository;
-import com.kopchak.worldoftoys.service.ImageService;
 import org.mapstruct.*;
 import org.springframework.data.domain.Page;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 
 @Mapper(componentModel = "spring", uses = {ProductCategoryMapper.class})
 public abstract class ProductMapper {

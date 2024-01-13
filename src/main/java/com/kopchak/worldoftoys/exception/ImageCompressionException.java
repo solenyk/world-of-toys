@@ -1,4 +1,4 @@
-package com.kopchak.worldoftoys.exception.exception;
+package com.kopchak.worldoftoys.exception;
 
 public class ImageCompressionException extends Exception{
     public ImageCompressionException(String message) {

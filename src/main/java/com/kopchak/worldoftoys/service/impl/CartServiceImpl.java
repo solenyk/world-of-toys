@@ -3,7 +3,7 @@ package com.kopchak.worldoftoys.service.impl;
 import com.kopchak.worldoftoys.dto.cart.CartItemDto;
 import com.kopchak.worldoftoys.dto.cart.RequestCartItemDto;
 import com.kopchak.worldoftoys.dto.cart.UserCartDetailsDto;
-import com.kopchak.worldoftoys.exception.exception.ProductNotFoundException;
+import com.kopchak.worldoftoys.exception.ProductNotFoundException;
 import com.kopchak.worldoftoys.model.cart.CartItem;
 import com.kopchak.worldoftoys.model.cart.CartItemId;
 import com.kopchak.worldoftoys.model.product.Product;

@@ -8,7 +8,7 @@ import com.kopchak.worldoftoys.dto.admin.product.category.AdminProductCategoryNa
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringProductCategoriesDto;
-import com.kopchak.worldoftoys.exception.exception.*;
+import com.kopchak.worldoftoys.exception.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;

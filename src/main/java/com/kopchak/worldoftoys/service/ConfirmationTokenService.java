@@ -2,7 +2,7 @@ package com.kopchak.worldoftoys.service;
 
 import com.kopchak.worldoftoys.dto.token.ConfirmTokenDto;
 import com.kopchak.worldoftoys.dto.user.ResetPasswordDto;
-import com.kopchak.worldoftoys.exception.exception.*;
+import com.kopchak.worldoftoys.exception.*;
 import com.kopchak.worldoftoys.model.token.ConfirmationTokenType;
 
 public interface ConfirmationTokenService {

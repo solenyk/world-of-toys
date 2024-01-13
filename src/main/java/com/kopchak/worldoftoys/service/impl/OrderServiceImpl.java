@@ -5,7 +5,7 @@ import com.kopchak.worldoftoys.dto.admin.product.order.FilteringOrderOptionsDto;
 import com.kopchak.worldoftoys.dto.admin.product.order.StatusDto;
 import com.kopchak.worldoftoys.dto.order.OrderDto;
 import com.kopchak.worldoftoys.dto.order.OrderRecipientDto;
-import com.kopchak.worldoftoys.exception.exception.OrderCreationException;
+import com.kopchak.worldoftoys.exception.OrderCreationException;
 import com.kopchak.worldoftoys.mapper.order.OrderMapper;
 import com.kopchak.worldoftoys.mapper.order.OrderRecipientMapper;
 import com.kopchak.worldoftoys.model.cart.CartItem;

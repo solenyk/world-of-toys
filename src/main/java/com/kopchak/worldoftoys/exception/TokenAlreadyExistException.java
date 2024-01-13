@@ -1,4 +1,4 @@
-package com.kopchak.worldoftoys.exception.exception;
+package com.kopchak.worldoftoys.exception;
 
 public class TokenAlreadyExistException extends Exception {
     public TokenAlreadyExistException(String message) {

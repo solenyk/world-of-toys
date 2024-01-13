@@ -1,7 +1,7 @@
 package com.kopchak.worldoftoys.service;
 
-import com.kopchak.worldoftoys.exception.exception.MessageSendingException;
-import com.kopchak.worldoftoys.exception.exception.UserNotFoundException;
+import com.kopchak.worldoftoys.exception.MessageSendingException;
+import com.kopchak.worldoftoys.exception.UserNotFoundException;
 import com.kopchak.worldoftoys.model.order.StatusProvider;
 import com.kopchak.worldoftoys.model.token.ConfirmationTokenType;
 

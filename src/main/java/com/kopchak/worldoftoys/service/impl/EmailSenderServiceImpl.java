@@ -1,7 +1,7 @@
 package com.kopchak.worldoftoys.service.impl;
 
-import com.kopchak.worldoftoys.exception.exception.MessageSendingException;
-import com.kopchak.worldoftoys.exception.exception.UserNotFoundException;
+import com.kopchak.worldoftoys.exception.MessageSendingException;
+import com.kopchak.worldoftoys.exception.UserNotFoundException;
 import com.kopchak.worldoftoys.model.email.EmailType;
 import com.kopchak.worldoftoys.model.email.confirm.ConfirmEmailType;
 import com.kopchak.worldoftoys.model.email.confirm.impl.AccountActivationEmail;

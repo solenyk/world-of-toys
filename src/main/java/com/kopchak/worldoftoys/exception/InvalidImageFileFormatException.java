@@ -1,4 +1,4 @@
-package com.kopchak.worldoftoys.exception.exception;
+package com.kopchak.worldoftoys.exception;
 
 public class InvalidImageFileFormatException extends Exception{
     public InvalidImageFileFormatException(String message) {

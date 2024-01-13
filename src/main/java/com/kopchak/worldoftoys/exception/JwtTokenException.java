@@ -1,4 +1,4 @@
-package com.kopchak.worldoftoys.exception.exception;
+package com.kopchak.worldoftoys.exception;
 
 public class JwtTokenException extends Exception{
     public JwtTokenException(String reason) {

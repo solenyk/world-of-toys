@@ -10,7 +10,7 @@ import com.kopchak.worldoftoys.dto.image.ImageDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringProductCategoriesDto;
-import com.kopchak.worldoftoys.exception.exception.*;
+import com.kopchak.worldoftoys.exception.*;
 import com.kopchak.worldoftoys.mapper.product.ProductCategoryMapper;
 import com.kopchak.worldoftoys.mapper.product.ProductMapper;
 import com.kopchak.worldoftoys.model.image.Image;

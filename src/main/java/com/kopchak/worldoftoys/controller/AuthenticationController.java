@@ -7,7 +7,7 @@ import com.kopchak.worldoftoys.dto.user.ResetPasswordDto;
 import com.kopchak.worldoftoys.dto.user.UserAuthDto;
 import com.kopchak.worldoftoys.dto.user.UserRegistrationDto;
 import com.kopchak.worldoftoys.dto.user.UsernameDto;
-import com.kopchak.worldoftoys.exception.exception.*;
+import com.kopchak.worldoftoys.exception.*;
 import com.kopchak.worldoftoys.model.token.ConfirmationTokenType;
 import com.kopchak.worldoftoys.service.ConfirmationTokenService;
 import com.kopchak.worldoftoys.service.EmailSenderService;

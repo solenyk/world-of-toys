@@ -1,6 +1,6 @@
 package com.kopchak.worldoftoys.model.product.category.type;
 
-import com.kopchak.worldoftoys.exception.exception.CategoryException;
+import com.kopchak.worldoftoys.exception.CategoryException;
 import lombok.Getter;
 
 @Getter

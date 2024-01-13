@@ -3,7 +3,7 @@ package com.kopchak.worldoftoys.mapper.order.impl;
 import com.kopchak.worldoftoys.dto.admin.product.order.*;
 import com.kopchak.worldoftoys.dto.order.OrderDto;
 import com.kopchak.worldoftoys.dto.order.OrderProductDto;
-import com.kopchak.worldoftoys.exception.exception.OrderCreationException;
+import com.kopchak.worldoftoys.exception.OrderCreationException;
 import com.kopchak.worldoftoys.mapper.order.OrderMapper;
 import com.kopchak.worldoftoys.model.cart.CartItem;
 import com.kopchak.worldoftoys.model.order.Order;

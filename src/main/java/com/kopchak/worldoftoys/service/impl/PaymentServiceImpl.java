@@ -1,8 +1,8 @@
 package com.kopchak.worldoftoys.service.impl;
 
 import com.kopchak.worldoftoys.dto.payment.StripeCredentialsDto;
-import com.kopchak.worldoftoys.exception.exception.InvalidOrderException;
-import com.kopchak.worldoftoys.exception.exception.MessageSendingException;
+import com.kopchak.worldoftoys.exception.InvalidOrderException;
+import com.kopchak.worldoftoys.exception.MessageSendingException;
 import com.kopchak.worldoftoys.model.order.Order;
 import com.kopchak.worldoftoys.model.order.OrderStatus;
 import com.kopchak.worldoftoys.model.order.details.OrderDetails;

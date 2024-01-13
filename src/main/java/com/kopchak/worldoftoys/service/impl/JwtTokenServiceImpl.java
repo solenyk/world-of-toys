@@ -2,8 +2,8 @@ package com.kopchak.worldoftoys.service.impl;
 
 import com.kopchak.worldoftoys.dto.token.AccessAndRefreshTokensDto;
 import com.kopchak.worldoftoys.dto.token.AuthTokenDto;
-import com.kopchak.worldoftoys.exception.exception.JwtTokenException;
-import com.kopchak.worldoftoys.exception.exception.TokenAlreadyExistException;
+import com.kopchak.worldoftoys.exception.JwtTokenException;
+import com.kopchak.worldoftoys.exception.TokenAlreadyExistException;
 import com.kopchak.worldoftoys.model.token.AuthTokenType;
 import com.kopchak.worldoftoys.model.token.AuthenticationToken;
 import com.kopchak.worldoftoys.model.user.AppUser;
