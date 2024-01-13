@@ -8,6 +8,6 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface PhoneNumberMapper {
     @Mapping(target = "countryCode",
-            expression = "java(com.kopchak.worldoftoys.model.order.recipient.number.CountryCode.UA)")
+            expression = "java(com.kopchak.worldoftoys.domain.order.recipient.number.CountryCode.UA)")
     PhoneNumber toPhoneNumber(PhoneNumberDto phoneNumberDto);
 }

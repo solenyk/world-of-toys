@@ -85,7 +85,7 @@ class ConfirmationTokenServiceImplTest {
     public void createConfirmationToken_NonExistingUser_ThrowsUserNotFoundException() {
         String userNotFoundExceptionMsg = String.format("The user with username: %s does not exist!", username);
 
-        assertResponseStatusException(UserNotFoundException.class, userNotFoundExceptionMsg, () ->
+        assertException(UserNotFoundException.class, userNotFoundExceptionMsg, () ->
                 confirmationTokenService.createConfirmationToken(username, activationTokenType));
     }
 
@@ -96,7 +96,7 @@ class ConfirmationTokenServiceImplTest {
 
         when(userRepository.findByEmail(eq(username))).thenReturn(Optional.of(user));
 
-        assertResponseStatusException(AccountActivationException.class, accountActivationExceptionMsg, () ->
+        assertException(AccountActivationException.class, accountActivationExceptionMsg, () ->
                 confirmationTokenService.createConfirmationToken(username, activationTokenType));
     }
 
@@ -108,7 +108,7 @@ class ConfirmationTokenServiceImplTest {
         when(confirmTokenRepository.isNoActiveConfirmationToken(eq(username), eq(activationTokenType),
                 any(LocalDateTime.class))).thenReturn(false);
 
-        assertResponseStatusException(TokenAlreadyExistException.class, tokenAlreadyExistExceptionMsg, () ->
+        assertException(TokenAlreadyExistException.class, tokenAlreadyExistExceptionMsg, () ->
                 confirmationTokenService.createConfirmationToken(username, activationTokenType));
     }
 
@@ -126,7 +126,7 @@ class ConfirmationTokenServiceImplTest {
     @Test
     public void activateAccountUsingActivationToken_NonExistingToken_ThrowsInvalidConfirmationTokenException() {
         String invalidConfirmTokenExceptionMsg = "The account confirmation token is invalid!";
-        assertResponseStatusException(InvalidConfirmationTokenException.class, invalidConfirmTokenExceptionMsg,
+        assertException(InvalidConfirmationTokenException.class, invalidConfirmTokenExceptionMsg,
                 () -> confirmationTokenService.activateAccountUsingActivationToken(token));
     }
 
@@ -148,12 +148,12 @@ class ConfirmationTokenServiceImplTest {
     public void changePasswordUsingResetToken_NonExistingToken_ThrowsInvalidConfirmationTokenException() {
         String invalidConfirmTokenExceptionMsg = "The reset password token is invalid!";
 
-        assertResponseStatusException(InvalidConfirmationTokenException.class, invalidConfirmTokenExceptionMsg,
+        assertException(InvalidConfirmationTokenException.class, invalidConfirmTokenExceptionMsg,
                 () -> confirmationTokenService.changePasswordUsingResetToken(token, newPassword));
     }
 
-    private void assertResponseStatusException(Class<? extends Exception> expectedExceptionType,
-                                               String expectedMessage, Executable executable) {
+    private void assertException(Class<? extends Exception> expectedExceptionType, String expectedMessage,
+                                 Executable executable) {
         Exception exception = assertThrows(expectedExceptionType, executable);
         String actualMessage = exception.getMessage();
         assertEquals(expectedMessage, actualMessage);

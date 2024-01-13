@@ -81,7 +81,7 @@ class CartServiceImplTest {
 
     @Test
     public void addProductToCart_NonExistentProductSlug() {
-        assertResponseStatusException(() -> cartService.addProductToCart(requestCartItemDto, user));
+        assertException(() -> cartService.addProductToCart(requestCartItemDto, user));
     }
 
     @Test
@@ -112,7 +112,7 @@ class CartServiceImplTest {
 
     @Test
     public void updateUserCartItem_NonExistentProductSlug() {
-        assertResponseStatusException(() -> cartService.updateUserCartItem(requestCartItemDto, user));
+        assertException(() -> cartService.updateUserCartItem(requestCartItemDto, user));
     }
 
     @Test
@@ -131,10 +131,10 @@ class CartServiceImplTest {
 
     @Test
     public void deleteUserCartItem_NonExistentProductSlug() {
-        assertResponseStatusException(() -> cartService.deleteUserCartItem(requestCartItemDto, user));
+        assertException(() -> cartService.deleteUserCartItem(requestCartItemDto, user));
     }
 
-    private void assertResponseStatusException(Executable executable) {
+    private void assertException(Executable executable) {
         Exception exception = assertThrows(ProductNotFoundException.class, executable);
         String actualMessage = exception.getMessage();
         String expectedMessage = String.format("Product with slug: %s doesn't exist.", PRODUCT_SLUG);
