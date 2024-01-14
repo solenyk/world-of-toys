@@ -4,11 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kopchak.worldoftoys.config.UserDetailsTestConfig;
 import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
 import com.kopchak.worldoftoys.dto.payment.StripeCredentialsDto;
+import com.kopchak.worldoftoys.exception.InvalidOrderException;
+import com.kopchak.worldoftoys.exception.MessageSendingException;
 import com.kopchak.worldoftoys.service.JwtTokenService;
 import com.kopchak.worldoftoys.service.PaymentService;
 import com.stripe.exception.AuthenticationException;
-import com.stripe.exception.SignatureVerificationException;
 import com.stripe.exception.StripeException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -19,11 +21,17 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithAnonymousUser;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
+
+import java.io.IOException;
+import java.util.Objects;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -39,7 +47,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import(UserDetailsTestConfig.class)
 class PaymentControllerTest {
     @Autowired
+    private WebApplicationContext webApplicationContext;
+
     private MockMvc mockMvc;
+
     @MockBean
     private PaymentService paymentService;
 
@@ -49,17 +60,24 @@ class PaymentControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    private final static String ORDER_ID = "order_id";
+    private static final String STRIPE_HEADER = "Stripe-Signature";
+    private StripeCredentialsDto credentialsDto;
+
+    @BeforeEach
+    void setUp() {
+        mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
+        credentialsDto = new StripeCredentialsDto("user", "user@test.com");
+    }
+
     @Test
     @WithUserDetails(value = "user@example.com", userDetailsServiceBeanName = "userDetailsService")
     public void stripeCheckout_AuthUser_ReturnsFoundStatusAndRedirectsToStripeCheckoutPage() throws Exception {
-        String orderId = "order_id";
-        var credentialsDto = new StripeCredentialsDto("user", "user@test.com");
         String expectedStripeCheckoutUserUrl = "stripe_checkout_url";
 
-        when(paymentService.isNonExistentOrPaidOrder(orderId)).thenReturn(false);
-        when(paymentService.stripeCheckout(credentialsDto, orderId)).thenReturn(expectedStripeCheckoutUserUrl);
+        when(paymentService.stripeCheckout(credentialsDto, ORDER_ID)).thenReturn(expectedStripeCheckoutUserUrl);
 
-        ResultActions response = mockMvc.perform(post("/api/v1/payment/{orderId}", orderId)
+        ResultActions response = mockMvc.perform(post("/api/v1/payment/{orderId}", ORDER_ID)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(credentialsDto))
                 .with(csrf()));
@@ -72,14 +90,11 @@ class PaymentControllerTest {
     @Test
     @WithUserDetails(value = "user@example.com", userDetailsServiceBeanName = "userDetailsService")
     public void stripeCheckout_ThrowStripeException_ReturnsForbiddenStatusAndResponseStatusExceptionDto() throws Exception {
-        String orderId = "order_id";
-        var credentialsDto = new StripeCredentialsDto("user", "user@test.com");
         StripeException stripeException = new AuthenticationException("msg", "code", "request-id", 403);
 
-        when(paymentService.isNonExistentOrPaidOrder(orderId)).thenReturn(false);
-        when(paymentService.stripeCheckout(credentialsDto, orderId)).thenThrow(stripeException);
+        when(paymentService.stripeCheckout(credentialsDto, ORDER_ID)).thenThrow(stripeException);
 
-        ResultActions response = mockMvc.perform(post("/api/v1/payment/{orderId}", orderId)
+        ResultActions response = mockMvc.perform(post("/api/v1/payment/{orderId}", ORDER_ID)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(credentialsDto))
                 .with(csrf()));
@@ -94,19 +109,19 @@ class PaymentControllerTest {
 
     @Test
     @WithUserDetails(value = "user@example.com", userDetailsServiceBeanName = "userDetailsService")
-    public void stripeCheckout_AuthUserNonExistentOrder_ReturnsBadRequestStatusAndResponseStatusExceptionDto() throws Exception {
-        String orderId = "order_id";
-        var credentialsDto = new StripeCredentialsDto("user", "user@test.com");
+    public void stripeCheckout_ThrowInvalidOrderException_ReturnsBadRequestAndResponseStatusExceptionDto() throws Exception {
+        String invalidOrderExceptionMsg = String.format("The order with id: %s does not exist or has already been paid!",
+                ORDER_ID);
+        doThrow(new InvalidOrderException(invalidOrderExceptionMsg))
+                .when(paymentService).stripeCheckout(credentialsDto, ORDER_ID);
 
-        when(paymentService.isNonExistentOrPaidOrder(orderId)).thenReturn(true);
-
-        ResultActions response = mockMvc.perform(post("/api/v1/payment/{orderId}", orderId)
+        ResultActions response = mockMvc.perform(post("/api/v1/payment/{orderId}", ORDER_ID)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(credentialsDto))
                 .with(csrf()));
 
         var responseStatusExceptionDto = getResponseStatusExceptionDto(HttpStatus.BAD_REQUEST,
-                "The order does not exist or has already been paid!");
+                invalidOrderExceptionMsg);
 
         response.andExpect(MockMvcResultMatchers.status().isBadRequest())
                 .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)))
@@ -114,26 +129,6 @@ class PaymentControllerTest {
     }
 
     @Test
-    @WithAnonymousUser
-    public void stripeCheckout_AnonymousUser_ReturnsUnauthorizedStatus() throws Exception {
-        String orderId = "order_id";
-        var credentialsDto = new StripeCredentialsDto("user", "user@test.com");
-        String expectedStripeCheckoutUserUrl = "stripe_checkout_url";
-
-        when(paymentService.isNonExistentOrPaidOrder(orderId)).thenReturn(false);
-        when(paymentService.stripeCheckout(credentialsDto, orderId)).thenReturn(expectedStripeCheckoutUserUrl);
-
-        ResultActions response = mockMvc.perform(post("/api/v1/payment/{orderId}", orderId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(credentialsDto))
-                .with(csrf()));
-
-        response.andExpect(MockMvcResultMatchers.status().isUnauthorized())
-                .andDo(print());
-    }
-
-    @Test
-    @WithUserDetails(value = "user@example.com", userDetailsServiceBeanName = "userDetailsService")
     public void handlePaymentWebhook_ReturnsNoContentStatus() throws Exception {
         doNothing().when(paymentService).handlePaymentWebhook(any(), any());
 
@@ -146,18 +141,58 @@ class PaymentControllerTest {
     }
 
     @Test
-    @WithUserDetails(value = "user@example.com", userDetailsServiceBeanName = "userDetailsService")
-    public void handlePaymentWebhook_ThrowStripeException_ReturnsBadRequestStatusAndResponseStatusExceptionDto() throws Exception {
-        StripeException stripeException = new SignatureVerificationException("msg", "signHeader");
+    public void handlePaymentWebhook_ThrowIOException_ReturnsBadRequestStatus() throws Exception {
+        String iOExceptionMsg = "Error reading from the input stream: Connection reset by peer";
+
+        MockHttpServletRequest request = spy(MockMvcRequestBuilders.post("/api/v1/payment/webhook")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(STRIPE_HEADER, "yourStripeHeaderValue")
+                .buildRequest(Objects.requireNonNull(webApplicationContext.getServletContext())));
+
+        doThrow(new IOException(iOExceptionMsg)).when(request).getReader();
+
+        ResultActions response = mockMvc.perform(sr -> request);
+
+        var responseStatusExceptionDto = getResponseStatusExceptionDto(HttpStatus.BAD_REQUEST, iOExceptionMsg);
+
+        response.andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)))
+                .andDo(print());
+    }
+
+    @Test
+    public void handlePaymentWebhook_ThrowStripeException_ReturnsForbiddenStatusAndResponseStatusExceptionDto() throws Exception {
+        StripeException stripeException = new AuthenticationException("msg", "code", "request-id", 403);
+
         doThrow(stripeException).when(paymentService).handlePaymentWebhook(any(), any());
 
         ResultActions response = mockMvc.perform(post("/api/v1/payment/webhook")
                 .contentType(MediaType.APPLICATION_JSON)
                 .with(csrf()));
 
-        var responseStatusExceptionDto = getResponseStatusExceptionDto(HttpStatus.BAD_REQUEST, "msg");
+        var responseStatusExceptionDto = getResponseStatusExceptionDto(HttpStatus.FORBIDDEN,
+                "msg; code: request-id; request-id: code");
 
-        response.andExpect(MockMvcResultMatchers.status().isBadRequest())
+        response.andExpect(MockMvcResultMatchers.status().isForbidden())
+                .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)))
+                .andDo(print());
+    }
+
+    @Test
+    public void handlePaymentWebhook_ThrowMessageSendingException_ReturnsServiceUnavailableAndResponseStatusExceptionDto() throws Exception {
+        String messageSendingExceptionMsg = "Failed to send the email";
+
+        doThrow(new MessageSendingException(messageSendingExceptionMsg))
+                .when(paymentService).handlePaymentWebhook(any(), any());
+
+        ResultActions response = mockMvc.perform(post("/api/v1/payment/webhook")
+                .contentType(MediaType.APPLICATION_JSON)
+                .with(csrf()));
+
+        var responseStatusExceptionDto = getResponseStatusExceptionDto(HttpStatus.SERVICE_UNAVAILABLE,
+                messageSendingExceptionMsg);
+
+        response.andExpect(MockMvcResultMatchers.status().isServiceUnavailable())
                 .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)))
                 .andDo(print());
     }
