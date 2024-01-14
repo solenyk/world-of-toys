@@ -1,18 +1,5 @@
 package com.kopchak.worldoftoys.service.impl;
 
-import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
-import com.kopchak.worldoftoys.dto.admin.product.AdminFilteredProductsPageDto;
-import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
-import com.kopchak.worldoftoys.dto.admin.product.category.AdminCategoryDto;
-import com.kopchak.worldoftoys.dto.admin.product.category.CategoryIdDto;
-import com.kopchak.worldoftoys.dto.admin.product.category.CategoryNameDto;
-import com.kopchak.worldoftoys.dto.product.image.ImageDto;
-import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
-import com.kopchak.worldoftoys.dto.product.ProductDto;
-import com.kopchak.worldoftoys.dto.product.category.FilteringCategoriesDto;
-import com.kopchak.worldoftoys.exception.*;
-import com.kopchak.worldoftoys.mapper.product.CategoryMapper;
-import com.kopchak.worldoftoys.mapper.product.ProductMapper;
 import com.kopchak.worldoftoys.domain.image.Image;
 import com.kopchak.worldoftoys.domain.product.Product;
 import com.kopchak.worldoftoys.domain.product.category.AgeCategory;
@@ -20,6 +7,19 @@ import com.kopchak.worldoftoys.domain.product.category.BrandCategory;
 import com.kopchak.worldoftoys.domain.product.category.OriginCategory;
 import com.kopchak.worldoftoys.domain.product.category.ProductCategory;
 import com.kopchak.worldoftoys.domain.product.category.type.CategoryType;
+import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
+import com.kopchak.worldoftoys.dto.admin.product.AdminFilteredProductsPageDto;
+import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
+import com.kopchak.worldoftoys.dto.admin.product.category.AdminCategoryDto;
+import com.kopchak.worldoftoys.dto.admin.product.category.CategoryIdDto;
+import com.kopchak.worldoftoys.dto.admin.product.category.CategoryNameDto;
+import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
+import com.kopchak.worldoftoys.dto.product.ProductDto;
+import com.kopchak.worldoftoys.dto.product.category.FilteringCategoriesDto;
+import com.kopchak.worldoftoys.dto.product.image.ImageDto;
+import com.kopchak.worldoftoys.exception.*;
+import com.kopchak.worldoftoys.mapper.product.CategoryMapper;
+import com.kopchak.worldoftoys.mapper.product.ProductMapper;
 import com.kopchak.worldoftoys.repository.product.CategoryRepository;
 import com.kopchak.worldoftoys.repository.product.ProductRepository;
 import com.kopchak.worldoftoys.repository.product.image.ImageRepository;
@@ -119,21 +119,6 @@ public class ProductServiceImpl implements ProductService {
         return productMapper.toAdminProductDto(product, mainImageDto, imageDtoList);
     }
 
-    private Page<Product> getFilteredProductPage(int page, int size, String productName, BigDecimal minPrice,
-                                                 BigDecimal maxPrice, List<String> originCategories,
-                                                 List<String> brandCategories, List<String> ageCategories,
-                                                 String priceSortOrder) {
-        Pageable pageable = PageRequest.of(page, size);
-        Specification<Product> spec = productSpecifications.filterByAllCriteria(productName, minPrice,
-                maxPrice, originCategories, brandCategories, ageCategories, priceSortOrder);
-        Page<Product> productPage = productRepository.findAll(spec, pageable);
-        log.info("Fetched filtered products - Page: {}, Size: {}, Product Name: '{}', Min Price: {}, Max Price: {}, " +
-                        "Origin Categories: {}, Brand Categories: {}, Age Categories: {}, Price Sort Order: '{}'",
-                page, size, productName, minPrice, maxPrice, originCategories, brandCategories, ageCategories,
-                priceSortOrder);
-        return productPage;
-    }
-
     @Override
     public void updateProduct(Integer productId, AddUpdateProductDto addUpdateProductDto, MultipartFile mainImageFile,
                               List<MultipartFile> imageFilesList)
@@ -191,6 +176,21 @@ public class ProductServiceImpl implements ProductService {
     public void addCategory(String categoryType, CategoryNameDto categoryNameDto) throws InvalidCategoryTypeException {
         Class<? extends ProductCategory> categoryClass = getCategoryByCategoryType(categoryType);
         categoryRepository.addCategory(categoryClass, categoryNameDto.name());
+    }
+
+    private Page<Product> getFilteredProductPage(int page, int size, String productName, BigDecimal minPrice,
+                                                 BigDecimal maxPrice, List<String> originCategories,
+                                                 List<String> brandCategories, List<String> ageCategories,
+                                                 String priceSortOrder) {
+        Pageable pageable = PageRequest.of(page, size);
+        Specification<Product> spec = productSpecifications.filterByAllCriteria(productName, minPrice,
+                maxPrice, originCategories, brandCategories, ageCategories, priceSortOrder);
+        Page<Product> productPage = productRepository.findAll(spec, pageable);
+        log.info("Fetched filtered products - Page: {}, Size: {}, Product Name: '{}', Min Price: {}, Max Price: {}, " +
+                        "Origin Categories: {}, Brand Categories: {}, Age Categories: {}, Price Sort Order: '{}'",
+                page, size, productName, minPrice, maxPrice, originCategories, brandCategories, ageCategories,
+                priceSortOrder);
+        return productPage;
     }
 
     private Class<? extends ProductCategory> getCategoryByCategoryType(String categoryType)
