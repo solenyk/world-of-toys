@@ -1,9 +1,9 @@
 package com.kopchak.worldoftoys.repository.order;
 
-import com.kopchak.worldoftoys.model.order.Order;
-import com.kopchak.worldoftoys.model.order.OrderStatus;
-import com.kopchak.worldoftoys.model.order.payment.PaymentStatus;
-import com.kopchak.worldoftoys.model.user.AppUser;
+import com.kopchak.worldoftoys.domain.order.Order;
+import com.kopchak.worldoftoys.domain.order.OrderStatus;
+import com.kopchak.worldoftoys.domain.order.payment.PaymentStatus;
+import com.kopchak.worldoftoys.domain.user.AppUser;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

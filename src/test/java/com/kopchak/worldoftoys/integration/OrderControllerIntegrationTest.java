@@ -3,7 +3,7 @@ package com.kopchak.worldoftoys.integration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
 import com.kopchak.worldoftoys.dto.order.*;
-import com.kopchak.worldoftoys.model.order.OrderStatus;
+import com.kopchak.worldoftoys.domain.order.OrderStatus;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -78,6 +78,26 @@ public class OrderControllerIntegrationTest {
                 .with(csrf()));
 
         response.andExpect(MockMvcResultMatchers.status().isCreated())
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    @WithUserDetails("alice.johnson@example.com")
+    public void createOrder_AuthUserWithEmptyCart_ReturnsBadRequestStatus() throws Exception {
+        HttpStatus httpStatus = HttpStatus.BAD_REQUEST;
+        String orderCreationExceptionMsg =
+                "It is impossible to create an order for the user because there are no products in the user's cart.";
+
+        ResultActions response = mockMvc.perform(post("/api/v1/order")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(orderRecipientDto))
+                .with(csrf()));
+
+        var responseStatusExceptionDto = new ResponseStatusExceptionDto(httpStatus.value(), httpStatus.name(),
+                orderCreationExceptionMsg);
+
+        response.andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)))
                 .andDo(MockMvcResultHandlers.print());
     }
 

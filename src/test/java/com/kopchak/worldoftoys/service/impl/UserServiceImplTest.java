@@ -1,12 +1,15 @@
 package com.kopchak.worldoftoys.service.impl;
 
+import com.kopchak.worldoftoys.domain.user.AppUser;
+import com.kopchak.worldoftoys.dto.token.AccessAndRefreshTokensDto;
+import com.kopchak.worldoftoys.dto.user.UserAuthDto;
 import com.kopchak.worldoftoys.dto.user.UserRegistrationDto;
-import com.kopchak.worldoftoys.exception.InvalidConfirmationTokenException;
+import com.kopchak.worldoftoys.exception.AccountActivationException;
+import com.kopchak.worldoftoys.exception.InvalidPasswordException;
 import com.kopchak.worldoftoys.exception.UserNotFoundException;
-import com.kopchak.worldoftoys.model.token.ConfirmationToken;
-import com.kopchak.worldoftoys.model.user.AppUser;
-import com.kopchak.worldoftoys.repository.token.ConfirmTokenRepository;
+import com.kopchak.worldoftoys.exception.UsernameAlreadyExistException;
 import com.kopchak.worldoftoys.repository.user.UserRepository;
+import com.kopchak.worldoftoys.service.JwtTokenService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,16 +17,17 @@ import org.junit.jupiter.api.function.Executable;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceImplTest {
@@ -32,133 +36,125 @@ class UserServiceImplTest {
     @Mock
     private PasswordEncoder passwordEncoder;
     @Mock
-    private ConfirmTokenRepository confirmationTokenRepository;
+    private JwtTokenService jwtTokenService;
+    @Mock
+    private AuthenticationManager authenticationManager;
     @InjectMocks
     private UserServiceImpl userService;
-    private String userEmail;
+    private final static String USER_EMAIL = "test@gmail.com";
+    private final static String OLD_USER_PASSWORD = "password";
+    private final static String NEW_USER_PASSWORD = "new-password";
+    private UserRegistrationDto userRegistrationDto;
     private AppUser user;
-    private String confirmToken;
-    private String userPassword;
-    private String userNotFoundExceptionMsg;
+    private UserAuthDto userAuthDto;
 
     @BeforeEach
     void setUp() {
-        userEmail = "test@gmail.com";
-        user = AppUser
-                .builder()
-                .enabled(true)
-                .password("password")
-                .build();
-        confirmToken = "confirm-token";
-        userPassword = "new-password";
-        userNotFoundExceptionMsg = "User with this username does not exist!";
-    }
-
-    @Test
-    public void registerUser_UserRegistrationDto() {
-        UserRegistrationDto userRegistrationDto = UserRegistrationDto
+        userRegistrationDto = UserRegistrationDto
                 .builder()
                 .firstname("Firstname")
                 .lastname("Lastname")
-                .email(userEmail)
-                .password("password")
+                .email(USER_EMAIL)
+                .password(OLD_USER_PASSWORD)
                 .build();
+        user = AppUser
+                .builder()
+                .enabled(true)
+                .password(OLD_USER_PASSWORD)
+                .build();
+        userAuthDto = new UserAuthDto(USER_EMAIL, OLD_USER_PASSWORD);
+    }
 
+    @Test
+    public void registerUser_UserIsNotPresent() throws UsernameAlreadyExistException {
         userService.registerUser(userRegistrationDto);
 
         verify(userRepository).save(any());
     }
 
     @Test
-    public void isUserRegistered_ExistingUserEmail_ReturnsTrue() {
-        when(userRepository.findByEmail(userEmail)).thenReturn(Optional.of(user));
+    public void registerUser_UserIsPresent_ThrowsUsernameAlreadyExistException() {
+        String usernameAlreadyExistExceptionMsg = String.format("The user with the username: %s already exist!", USER_EMAIL);
 
-        boolean isUserRegistered = userService.isUserRegistered(userEmail);
+        when(userRepository.findByEmail(USER_EMAIL)).thenReturn(Optional.of(user));
 
-        assertTrue(isUserRegistered);
+        assertException(UsernameAlreadyExistException.class, usernameAlreadyExistExceptionMsg,
+                () -> userService.registerUser(userRegistrationDto));
     }
 
     @Test
-    public void isUserActivated_ActivatedUser_ReturnsTrue() {
-        when(userRepository.findByEmail(userEmail)).thenReturn(Optional.of(user));
+    public void authenticateUser_UserIsPresentAndEnabledPasswordMatches() throws UserNotFoundException, AccountActivationException {
+        var expectedAccessAndRefreshTokensDto = AccessAndRefreshTokensDto.builder().build();
 
-        boolean isUserActivated = userService.isUserActivated(userEmail);
+        when(userRepository.findByEmail(USER_EMAIL)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches(eq(OLD_USER_PASSWORD), eq(OLD_USER_PASSWORD))).thenReturn(true);
+        doNothing().when(jwtTokenService).revokeAllUserAuthTokens(eq(user));
+        when(jwtTokenService.generateAuthTokens(user)).thenReturn(expectedAccessAndRefreshTokensDto);
 
-        assertTrue(isUserActivated);
+        var actualAccessAndRefreshTokensDto = userService.authenticateUser(userAuthDto);
+
+        verify(authenticationManager).authenticate(any());
+        verify(jwtTokenService).revokeAllUserAuthTokens(eq(user));
+
+        assertThat(actualAccessAndRefreshTokensDto).isNotNull();
+        assertThat(actualAccessAndRefreshTokensDto).isEqualTo(expectedAccessAndRefreshTokensDto);
     }
 
     @Test
-    public void isUserActivated_NonExistingUser_ThrowsUserNotFoundException() {
-        assertResponseStatusException(UserNotFoundException.class, userNotFoundExceptionMsg, HttpStatus.NOT_FOUND, () ->
-                userService.isUserActivated(userEmail));
-    }
-
-    @Test
-    public void isNewPasswordMatchOldPassword_ExistingConfirmTokenAndMatchingPasswords_ReturnsTrue() {
-        ConfirmationToken confirmationToken = ConfirmationToken.builder().user(user).build();
-
-        when(confirmationTokenRepository.findByToken(confirmToken)).thenReturn(Optional.of(confirmationToken));
-        when(passwordEncoder.matches(userPassword, user.getPassword())).thenReturn(true);
-
-        boolean isNewPasswordMatchOldPassword = userService.isNewPasswordMatchOldPassword(confirmToken, userPassword);
-
-        assertTrue(isNewPasswordMatchOldPassword);
-    }
-
-    @Test
-    public void isNewPasswordMatchOldPassword_NonExistingConfirmToken_ThrowsInvalidConfirmationTokenException() {
-        String  invalidConfirmationTokenExceptionMsg = "This confirmation token is invalid!";
-
-        assertResponseStatusException(InvalidConfirmationTokenException.class, invalidConfirmationTokenExceptionMsg,
-                HttpStatus.BAD_REQUEST, () -> userService.isNewPasswordMatchOldPassword(confirmToken, userPassword));
-    }
-
-    @Test
-    public void isPasswordsMatch_MatchingPasswords_ReturnsTrue() {
-        when(userRepository.findByEmail(userEmail)).thenReturn(Optional.of(user));
-        when(passwordEncoder.matches(userPassword, user.getPassword())).thenReturn(true);
-
-        boolean isPasswordsMatch = userService.isPasswordsMatch(userEmail, userPassword);
-
-        assertTrue(isPasswordsMatch);
-    }
-
-    @Test
-    public void isPasswordsMatch_NonExistingUser_ThrowsUserNotFoundException() {
-        assertResponseStatusException(UserNotFoundException.class, userNotFoundExceptionMsg, HttpStatus.NOT_FOUND, () ->
-                userService.isPasswordsMatch(userEmail, userPassword));
-    }
-
-    @Test
-    public void activateUserAccount_UnactivatedAppUser() {
+    public void authenticateUser_UserIsPresentAndIsNotEnabledPasswordMatches_ThrowsAccountActivationException() {
         user.setEnabled(false);
+        String accountActivationExceptionMsg = "The account is not activated!";
 
-        userService.activateUserAccount(user);
+        when(userRepository.findByEmail(USER_EMAIL)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches(eq(OLD_USER_PASSWORD), eq(OLD_USER_PASSWORD))).thenReturn(true);
 
-        verify(userRepository).save(user);
-        assertTrue(user.getEnabled());
+        assertException(AccountActivationException.class, accountActivationExceptionMsg,
+                () -> userService.authenticateUser(userAuthDto));
+
+        verify(authenticationManager, never()).authenticate(any());
+        verify(jwtTokenService, never()).revokeAllUserAuthTokens(eq(user));
+        verify(jwtTokenService, never()).generateAuthTokens(eq(user));
     }
 
     @Test
-    public void changeUserPassword_AppUserAndNewPassword() {
-        when(passwordEncoder.encode(userPassword)).thenReturn(userPassword);
+    public void authenticateUser_UserNotIsPresent_ThrowsUserNotFoundException() {
+        String userNotFoundExceptionMsg = "Bad user credentials!";
 
-        userService.changeUserPassword(user, userPassword);
+        when(userRepository.findByEmail(USER_EMAIL)).thenReturn(Optional.empty());
 
-        verify(userRepository).save(user);
-        assertEquals(user.getPassword(), userPassword);
+        assertException(UserNotFoundException.class, userNotFoundExceptionMsg,
+                () -> userService.authenticateUser(userAuthDto));
+
+        verify(authenticationManager, never()).authenticate(any());
+        verify(jwtTokenService, never()).revokeAllUserAuthTokens(eq(user));
+        verify(jwtTokenService, never()).generateAuthTokens(eq(user));
     }
 
-    private void assertResponseStatusException(Class<? extends ResponseStatusException> expectedExceptionType,
-                                               String expectedMessage, HttpStatus expectedHttpStatus,
-                                               Executable executable) {
-        ResponseStatusException exception = assertThrows(expectedExceptionType, executable);
+    @Test
+    public void changeUserPassword_NewPassword() throws InvalidPasswordException {
+        when(passwordEncoder.encode(NEW_USER_PASSWORD)).thenReturn(NEW_USER_PASSWORD);
 
-        String actualMessage = exception.getReason();
-        int expectedStatusCode = expectedHttpStatus.value();
-        int actualStatusCode = exception.getStatusCode().value();
+        userService.changeUserPassword(user, NEW_USER_PASSWORD);
 
+        verify(userRepository).save(user);
+        assertEquals(user.getPassword(), NEW_USER_PASSWORD);
+    }
+
+    @Test
+    public void changeUserPassword_OldPassword_ThrowsInvalidPasswordException() {
+        String invalidPasswordExceptionMsg = "The new password matches old password!";
+        when(passwordEncoder.matches(eq(OLD_USER_PASSWORD), eq(OLD_USER_PASSWORD))).thenReturn(true);
+
+        assertException(InvalidPasswordException.class, invalidPasswordExceptionMsg,
+                () -> userService.changeUserPassword(user, OLD_USER_PASSWORD));
+
+        verify(userRepository, never()).save(user);
+    }
+
+    private void assertException(Class<? extends Exception> expectedExceptionType,
+                                 String expectedMessage, Executable executable) {
+        Exception exception = assertThrows(expectedExceptionType, executable);
+        String actualMessage = exception.getMessage();
         assertEquals(expectedMessage, actualMessage);
-        assertEquals(expectedStatusCode, actualStatusCode);
     }
 }

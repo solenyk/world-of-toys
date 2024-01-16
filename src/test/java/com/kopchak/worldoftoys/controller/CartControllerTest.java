@@ -2,9 +2,11 @@ package com.kopchak.worldoftoys.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kopchak.worldoftoys.config.UserDetailsTestConfig;
+import com.kopchak.worldoftoys.domain.user.AppUser;
 import com.kopchak.worldoftoys.dto.cart.RequestCartItemDto;
 import com.kopchak.worldoftoys.dto.cart.UserCartDetailsDto;
-import com.kopchak.worldoftoys.model.user.AppUser;
+import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
+import com.kopchak.worldoftoys.exception.ProductNotFoundException;
 import com.kopchak.worldoftoys.service.CartService;
 import com.kopchak.worldoftoys.service.JwtTokenService;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,6 +18,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithUserDetails;
@@ -29,8 +32,7 @@ import java.util.HashSet;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -53,11 +55,14 @@ class CartControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    private final static String PRODUCT_SLUG = "product-slug";
+    private final static String PRODUCT_NOT_FOUND_EXCEPTION_MSG =
+            String.format("Product with slug: %s doesn't exist.", PRODUCT_SLUG);
     private RequestCartItemDto requestCartItemDto;
 
     @BeforeEach
     public void setUp() {
-        requestCartItemDto = new RequestCartItemDto("product-slug", 2);
+        requestCartItemDto = new RequestCartItemDto(PRODUCT_SLUG, 2);
     }
 
 
@@ -72,6 +77,22 @@ class CartControllerTest {
                 .with(csrf()));
 
         response.andExpect(MockMvcResultMatchers.status().isCreated())
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    @WithUserDetails(value = "user@example.com", userDetailsServiceBeanName = "userDetailsService")
+    public void addProductToCart_AuthUserAndThrowProductNotFoundException_ReturnsNotFoundStatusAndResponseStatusExceptionDto() throws Exception {
+        doThrow(new ProductNotFoundException(PRODUCT_NOT_FOUND_EXCEPTION_MSG))
+                .when(cartService).addProductToCart(eq(requestCartItemDto), any(AppUser.class));
+
+        ResultActions response = mockMvc.perform(post("/api/v1/cart/add-product")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(requestCartItemDto))
+                .with(csrf()));
+
+        response.andExpect(MockMvcResultMatchers.status().isNotFound())
+                .andExpect(content().json(objectMapper.writeValueAsString(getResponseStatusExceptionDto())))
                 .andDo(MockMvcResultHandlers.print());
     }
 
@@ -127,6 +148,22 @@ class CartControllerTest {
     }
 
     @Test
+    @WithUserDetails(value = "user@example.com", userDetailsServiceBeanName = "userDetailsService")
+    public void updateUserCartItem_AuthUserAndThrowProductNotFoundException_ReturnsNotFoundStatusAndResponseStatusExceptionDto() throws Exception {
+        doThrow(new ProductNotFoundException(PRODUCT_NOT_FOUND_EXCEPTION_MSG))
+                .when(cartService).updateUserCartItem(eq(requestCartItemDto), any(AppUser.class));
+
+        ResultActions response = mockMvc.perform(patch("/api/v1/cart")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(requestCartItemDto))
+                .with(csrf()));
+
+        response.andExpect(MockMvcResultMatchers.status().isNotFound())
+                .andExpect(content().json(objectMapper.writeValueAsString(getResponseStatusExceptionDto())))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
     @WithAnonymousUser
     public void updateUserCartItem_AnonymousUserAndRequestCartItemDto_ReturnsUnauthorizedStatus() throws Exception {
         ResultActions response = mockMvc.perform(patch("/api/v1/cart")
@@ -153,6 +190,22 @@ class CartControllerTest {
     }
 
     @Test
+    @WithUserDetails(value = "user@example.com", userDetailsServiceBeanName = "userDetailsService")
+    public void deleteUserCartItem_AuthUserAndThrowProductNotFoundException_ReturnsNotFoundStatusAndResponseStatusExceptionDto() throws Exception {
+        doThrow(new ProductNotFoundException(PRODUCT_NOT_FOUND_EXCEPTION_MSG))
+                .when(cartService).deleteUserCartItem(eq(requestCartItemDto), any(AppUser.class));
+
+        ResultActions response = mockMvc.perform(delete("/api/v1/cart")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(requestCartItemDto))
+                .with(csrf()));
+
+        response.andExpect(MockMvcResultMatchers.status().isNotFound())
+                .andExpect(content().json(objectMapper.writeValueAsString(getResponseStatusExceptionDto())))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
     @WithAnonymousUser
     public void deleteUserCartItem_AnonymousUserAndRequestCartItemDto_ReturnsUnauthorizedStatus() throws Exception {
         ResultActions response = mockMvc.perform(delete("/api/v1/cart")
@@ -164,4 +217,13 @@ class CartControllerTest {
                 .andDo(MockMvcResultHandlers.print());
     }
 
+    private ResponseStatusExceptionDto getResponseStatusExceptionDto() {
+        HttpStatus httpStatus = HttpStatus.NOT_FOUND;
+        return ResponseStatusExceptionDto
+                .builder()
+                .error(httpStatus.name())
+                .status(httpStatus.value())
+                .message(PRODUCT_NOT_FOUND_EXCEPTION_MSG)
+                .build();
+    }
 }

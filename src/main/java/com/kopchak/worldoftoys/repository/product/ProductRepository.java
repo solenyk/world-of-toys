@@ -1,6 +1,6 @@
 package com.kopchak.worldoftoys.repository.product;
 
-import com.kopchak.worldoftoys.model.product.Product;
+import com.kopchak.worldoftoys.domain.product.Product;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

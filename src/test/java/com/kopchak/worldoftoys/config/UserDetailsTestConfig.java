@@ -1,9 +1,7 @@
 package com.kopchak.worldoftoys.config;
 
-import com.kopchak.worldoftoys.model.user.AppUser;
-import com.kopchak.worldoftoys.model.user.Role;
-import com.kopchak.worldoftoys.service.JwtTokenService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.kopchak.worldoftoys.domain.user.AppUser;
+import com.kopchak.worldoftoys.domain.user.Role;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.core.userdetails.UserDetails;

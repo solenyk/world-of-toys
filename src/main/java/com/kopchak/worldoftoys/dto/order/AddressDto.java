@@ -38,7 +38,7 @@ public record AddressDto(
         ) String street,
 
         @Schema(example = "2", requiredMode = Schema.RequiredMode.REQUIRED)
-        @NotNull(message =  "Invalid house: house is mandatory")
+        @NotNull(message = "Invalid house: house is mandatory")
         @Min(
                 value = 1,
                 message = "Invalid house number: house number '${validatedValue}' should not be less than {status}",

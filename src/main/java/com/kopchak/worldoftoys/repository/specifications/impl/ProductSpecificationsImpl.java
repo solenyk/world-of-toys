@@ -1,8 +1,8 @@
 package com.kopchak.worldoftoys.repository.specifications.impl;
 
-import com.kopchak.worldoftoys.model.product.Product;
-import com.kopchak.worldoftoys.model.product.Product_;
-import com.kopchak.worldoftoys.model.product.category.*;
+import com.kopchak.worldoftoys.domain.product.Product;
+import com.kopchak.worldoftoys.domain.product.Product_;
+import com.kopchak.worldoftoys.domain.product.category.*;
 import com.kopchak.worldoftoys.repository.specifications.ProductSpecifications;
 import jakarta.persistence.criteria.*;
 import jakarta.persistence.metamodel.SingularAttribute;

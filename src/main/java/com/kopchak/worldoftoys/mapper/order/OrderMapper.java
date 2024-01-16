@@ -4,12 +4,12 @@ import com.kopchak.worldoftoys.dto.admin.product.order.FilteredOrdersPageDto;
 import com.kopchak.worldoftoys.dto.admin.product.order.FilteringOrderOptionsDto;
 import com.kopchak.worldoftoys.dto.admin.product.order.StatusDto;
 import com.kopchak.worldoftoys.dto.order.OrderDto;
-import com.kopchak.worldoftoys.exception.exception.OrderException;
-import com.kopchak.worldoftoys.model.cart.CartItem;
-import com.kopchak.worldoftoys.model.order.Order;
-import com.kopchak.worldoftoys.model.order.OrderStatus;
-import com.kopchak.worldoftoys.model.order.details.OrderDetails;
-import com.kopchak.worldoftoys.model.order.payment.PaymentStatus;
+import com.kopchak.worldoftoys.exception.OrderCreationException;
+import com.kopchak.worldoftoys.domain.cart.CartItem;
+import com.kopchak.worldoftoys.domain.order.Order;
+import com.kopchak.worldoftoys.domain.order.OrderStatus;
+import com.kopchak.worldoftoys.domain.order.details.OrderDetails;
+import com.kopchak.worldoftoys.domain.order.payment.PaymentStatus;
 import org.springframework.data.domain.Page;
 
 import java.util.List;
@@ -24,6 +24,8 @@ public interface OrderMapper {
 
     FilteringOrderOptionsDto toFilteringOrderOptionsDto(Set<OrderStatus> orderStatusSet,
                                                         Set<PaymentStatus> paymentStatusesSet);
-    OrderStatus toOrderStatus(StatusDto statusDto) throws OrderException;
+
+    OrderStatus toOrderStatus(StatusDto statusDto) throws OrderCreationException;
+
     Set<StatusDto> toStatusDtoSet(List<OrderStatus> orderStatuses);
 }

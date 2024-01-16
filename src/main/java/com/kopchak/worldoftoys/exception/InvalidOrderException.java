@@ -1,10 +1,7 @@
 package com.kopchak.worldoftoys.exception;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
-
-public class InvalidOrderException extends ResponseStatusException {
-    public InvalidOrderException(HttpStatus status, String reason) {
-        super(status, reason);
+public class InvalidOrderException extends Exception {
+    public InvalidOrderException(String message) {
+        super(message);
     }
 }

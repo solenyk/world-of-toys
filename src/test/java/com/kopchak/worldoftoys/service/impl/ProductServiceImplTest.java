@@ -1,16 +1,22 @@
 package com.kopchak.worldoftoys.service.impl;
 
+import com.kopchak.worldoftoys.domain.image.Image;
+import com.kopchak.worldoftoys.domain.product.Product;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
-import com.kopchak.worldoftoys.dto.product.category.FilteringProductCategoriesDto;
+import com.kopchak.worldoftoys.dto.product.category.FilteringCategoriesDto;
+import com.kopchak.worldoftoys.dto.product.image.ImageDto;
+import com.kopchak.worldoftoys.exception.ImageDecompressionException;
+import com.kopchak.worldoftoys.exception.ProductNotFoundException;
 import com.kopchak.worldoftoys.mapper.product.ProductMapper;
-import com.kopchak.worldoftoys.model.product.Product;
-import com.kopchak.worldoftoys.repository.product.ProductCategoryRepository;
+import com.kopchak.worldoftoys.repository.product.CategoryRepository;
 import com.kopchak.worldoftoys.repository.product.ProductRepository;
 import com.kopchak.worldoftoys.repository.specifications.impl.ProductSpecificationsImpl;
+import com.kopchak.worldoftoys.service.ImageService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.function.Executable;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -24,8 +30,12 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
@@ -34,7 +44,9 @@ class ProductServiceImplTest {
     @Mock
     private ProductRepository productRepository;
     @Mock
-    private ProductCategoryRepository productCategoryRepository;
+    private ImageService imageService;
+    @Mock
+    private CategoryRepository categoryRepository;
     @Mock
     private ProductSpecificationsImpl productSpecifications;
     @Mock
@@ -92,35 +104,58 @@ class ProductServiceImplTest {
     }
 
     @Test
-    public void getProductDtoBySlug_ProductSlug_ReturnsOptionalOfProductDto() {
+    public void getProductDtoBySlug_ProductOptionalIsNotEmpty_ReturnsProductDto() throws ImageDecompressionException, ProductNotFoundException {
         String productSlug = "lyalka-klaymber";
-        Product product = new Product();
+        Product product = Product
+                .builder()
+                .mainImage(new Image())
+                .images(Set.of(new Image()))
+                .build();
         ProductDto expectedProductDto = ProductDto.builder().build();
+        ImageDto imageDto = ImageDto.builder().build();
 
         when(productRepository.findBySlug(eq(productSlug))).thenReturn(Optional.of(product));
-        when(productMapper.toProductDto(eq(product))).thenReturn(expectedProductDto);
+        when(imageService.generateDecompressedImageDto(any())).thenReturn(imageDto);
+        when(productMapper.toProductDto(eq(product), any(), any())).thenReturn(expectedProductDto);
 
-        Optional<ProductDto> actualOptionalProductDto = productService.getProductDtoBySlug(productSlug);
+        ProductDto actualProductDto = productService.getProductDtoBySlug(productSlug);
 
-        assertThat(actualOptionalProductDto).isNotNull();
-        assertThat(actualOptionalProductDto).isPresent();
-        assertThat(actualOptionalProductDto).isEqualTo(Optional.of(expectedProductDto));
+        assertThat(actualProductDto).isNotNull();
+        assertThat(actualProductDto).isEqualTo(expectedProductDto);
+    }
+
+    @Test
+    public void getProductDtoBySlug_ProductOptionalIsEmpty_ThrowsProductNotFoundException() {
+        String productSlug = "lyalka-klaymber";
+        String productNotFoundExceptionMsg = String.format("The product with slug: %s is not found.", productSlug);
+
+        when(productRepository.findBySlug(eq(productSlug))).thenReturn(Optional.empty());
+
+        assertException(ProductNotFoundException.class, productNotFoundExceptionMsg,
+                () -> productService.getProductDtoBySlug(productSlug));
     }
 
 
     @Test
     public void getFilteringProductCategories_FilteringCriteria_ReturnsFilteringProductCategoriesDto() {
-        var expectedFilteringProductCategoriesDto = FilteringProductCategoriesDto.builder().build();
+        var expectedFilteringProductCategoriesDto = FilteringCategoriesDto.builder().build();
 
         when(productSpecifications.filterByProductNamePriceAndCategories(eq(productName), eq(minProductPrice),
                 eq(maxProductPrice), eq(originCategories), eq(brandCategories), eq(ageCategories))).thenReturn(spec);
-        when(productCategoryRepository.findUniqueFilteringProductCategories(eq(spec)))
+        when(categoryRepository.findUniqueFilteringProductCategories(eq(spec)))
                 .thenReturn(expectedFilteringProductCategoriesDto);
 
-        var actualFilteringProductCategoriesDto = productService.getFilteringProductCategories(productName,
+        var actualFilteringProductCategoriesDto = productService.getFilteringCategories(productName,
                 minProductPrice, maxProductPrice, originCategories, brandCategories, ageCategories);
 
         assertThat(actualFilteringProductCategoriesDto).isNotNull();
         assertThat(actualFilteringProductCategoriesDto).isEqualTo(expectedFilteringProductCategoriesDto);
+    }
+
+    private void assertException(Class<? extends Exception> expectedExceptionType,
+                                 String expectedMessage, Executable executable) {
+        Exception exception = assertThrows(expectedExceptionType, executable);
+        String actualMessage = exception.getMessage();
+        assertEquals(expectedMessage, actualMessage);
     }
 }

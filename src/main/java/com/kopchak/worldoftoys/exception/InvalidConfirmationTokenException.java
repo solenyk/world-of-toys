@@ -1,10 +1,7 @@
 package com.kopchak.worldoftoys.exception;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
-
-public class InvalidConfirmationTokenException extends ResponseStatusException {
-    public InvalidConfirmationTokenException(HttpStatus status, String reason) {
-        super(status, reason);
+public class InvalidConfirmationTokenException extends Exception {
+    public InvalidConfirmationTokenException(String reason) {
+        super(reason);
     }
 }

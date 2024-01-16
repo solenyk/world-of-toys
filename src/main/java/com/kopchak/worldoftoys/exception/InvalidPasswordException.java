@@ -1,10 +1,7 @@
 package com.kopchak.worldoftoys.exception;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
-
-public class InvalidPasswordException extends ResponseStatusException {
-    public InvalidPasswordException(HttpStatus status, String reason) {
-        super(status, reason);
+public class InvalidPasswordException extends Exception {
+    public InvalidPasswordException(String message) {
+        super(message);
     }
 }

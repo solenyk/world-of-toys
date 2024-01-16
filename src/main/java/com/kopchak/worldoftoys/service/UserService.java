@@ -1,14 +1,17 @@
 package com.kopchak.worldoftoys.service;
 
+import com.kopchak.worldoftoys.dto.token.AccessAndRefreshTokensDto;
+import com.kopchak.worldoftoys.dto.user.UserAuthDto;
 import com.kopchak.worldoftoys.dto.user.UserRegistrationDto;
-import com.kopchak.worldoftoys.model.user.AppUser;
+import com.kopchak.worldoftoys.exception.AccountActivationException;
+import com.kopchak.worldoftoys.exception.InvalidPasswordException;
+import com.kopchak.worldoftoys.exception.UserNotFoundException;
+import com.kopchak.worldoftoys.exception.UsernameAlreadyExistException;
+import com.kopchak.worldoftoys.domain.user.AppUser;
 
 public interface UserService {
-    void registerUser(UserRegistrationDto userRegistrationDto);
-    boolean isUserRegistered(String email);
-    boolean isUserActivated(String email);
-    boolean isNewPasswordMatchOldPassword(String resetPasswordToken, String newPassword);
-    boolean isPasswordsMatch(String username, String password);
-    void activateUserAccount(AppUser user);
-    void changeUserPassword(AppUser user, String newPassword);
+    void registerUser(UserRegistrationDto userRegistrationDto) throws UsernameAlreadyExistException;
+    void changeUserPassword(AppUser user, String newPassword) throws InvalidPasswordException;
+    AccessAndRefreshTokensDto authenticateUser(UserAuthDto userAuthDto)
+            throws UserNotFoundException, AccountActivationException;
 }

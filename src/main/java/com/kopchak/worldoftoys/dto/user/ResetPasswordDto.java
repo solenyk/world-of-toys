@@ -6,6 +6,7 @@ import jakarta.validation.GroupSequence;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.Builder;
+
 @Builder
 @Schema(description = "Set new password")
 @GroupSequence({ResetPasswordDto.class, ValidationStepTwo.class})

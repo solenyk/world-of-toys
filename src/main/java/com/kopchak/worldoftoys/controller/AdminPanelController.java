@@ -3,21 +3,17 @@ package com.kopchak.worldoftoys.controller;
 import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminFilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
-import com.kopchak.worldoftoys.dto.admin.product.category.AdminProductCategoryDto;
-import com.kopchak.worldoftoys.dto.admin.product.category.AdminProductCategoryNameDto;
+import com.kopchak.worldoftoys.dto.admin.product.category.AdminCategoryDto;
+import com.kopchak.worldoftoys.dto.admin.product.category.CategoryNameDto;
 import com.kopchak.worldoftoys.dto.admin.product.order.FilteredOrdersPageDto;
 import com.kopchak.worldoftoys.dto.admin.product.order.FilteringOrderOptionsDto;
 import com.kopchak.worldoftoys.dto.admin.product.order.StatusDto;
 import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
-import com.kopchak.worldoftoys.exception.ProductNotFoundException;
-import com.kopchak.worldoftoys.exception.exception.CategoryException;
-import com.kopchak.worldoftoys.exception.exception.ImageException;
-import com.kopchak.worldoftoys.exception.exception.OrderException;
-import com.kopchak.worldoftoys.exception.exception.ProductException;
-import com.kopchak.worldoftoys.model.order.OrderStatus;
-import com.kopchak.worldoftoys.model.order.payment.PaymentStatus;
+import com.kopchak.worldoftoys.exception.*;
+import com.kopchak.worldoftoys.domain.order.OrderStatus;
+import com.kopchak.worldoftoys.domain.order.payment.PaymentStatus;
 import com.kopchak.worldoftoys.service.OrderService;
 import com.kopchak.worldoftoys.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,7 +26,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -39,7 +34,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 @RestController
@@ -48,7 +42,6 @@ import java.util.Set;
 @RequiredArgsConstructor
 @Tag(name = "admin-panel-controller", description = "")
 @SecurityRequirement(name = "Bearer Authentication")
-@Slf4j
 public class AdminPanelController {
 
     private final ProductService productService;
@@ -83,18 +76,24 @@ public class AdminPanelController {
                     description = "Product was successfully fetched",
                     content = @Content(schema = @Schema(implementation = ProductDto.class))),
             @ApiResponse(
+                    responseCode = "400",
+                    description = "The product image cannot be decompressed",
+                    content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class))),
+            @ApiResponse(
                     responseCode = "404",
                     description = "Product with this id is not found",
                     content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class)))
     })
     @GetMapping("/products/{productId}")
     public ResponseEntity<AdminProductDto> getAdminProductDtoById(@PathVariable(name = "productId") Integer productId) {
-        Optional<AdminProductDto> productDtoOptional = productService.getAdminProductDtoById(productId);
-        if (productDtoOptional.isEmpty()) {
-            log.error("Product with id: '{}' is not found.", productId);
-            throw new ProductNotFoundException(HttpStatus.NOT_FOUND, "Product doesn't exist");
+        try {
+            AdminProductDto product = productService.getAdminProductDtoById(productId);
+            return new ResponseEntity<>(product, HttpStatus.OK);
+        } catch (ImageDecompressionException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        } catch (ProductNotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         }
-        return new ResponseEntity<>(productDtoOptional.get(), HttpStatus.OK);
     }
 
     @Operation(summary = "Update product")
@@ -115,8 +114,8 @@ public class AdminPanelController {
                                               @RequestPart("images") List<MultipartFile> imageFilesList) {
         try {
             productService.updateProduct(productId, addUpdateProductDto, mainImageFile, imageFilesList);
-        } catch (ProductException | CategoryException | ImageException e) {
-            log.error("The error: {} occurred while updating the product with id: {}", e.getMessage(), productId);
+        } catch (ProductNotFoundException | InvalidCategoryTypeException | InvalidImageFileFormatException |
+                 ImageExceedsMaxSizeException | ImageCompressionException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -139,9 +138,8 @@ public class AdminPanelController {
                                            @RequestPart("images") List<MultipartFile> imageFilesList) {
         try {
             productService.addProduct(addUpdateProductDto, mainImageFile, imageFilesList);
-        } catch (ProductException | CategoryException | ImageException e) {
-            log.error("The error: {} occurred while creating the product with name: {}",
-                    e.getMessage(), addUpdateProductDto.name());
+        } catch (ProductNotFoundException | InvalidCategoryTypeException | InvalidImageFileFormatException |
+                 ImageExceedsMaxSizeException | ImageCompressionException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
         return new ResponseEntity<>(HttpStatus.CREATED);
@@ -167,7 +165,7 @@ public class AdminPanelController {
                             @Content(
                                     mediaType = "application/json",
                                     array = @ArraySchema(
-                                            schema = @Schema(implementation = AdminProductCategoryDto.class))
+                                            schema = @Schema(implementation = AdminCategoryDto.class))
                             )
                     }),
             @ApiResponse(
@@ -176,12 +174,12 @@ public class AdminPanelController {
                     content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class)))
     })
     @GetMapping("/categories/{categoryType}")
-    public ResponseEntity<Set<AdminProductCategoryDto>> getProductCategories(
+    public ResponseEntity<Set<AdminCategoryDto>> getProductCategories(
             @PathVariable("categoryType") String categoryType) {
         try {
-            Set<AdminProductCategoryDto> categoryDtoSet = productService.getAdminProductCategories(categoryType);
+            Set<AdminCategoryDto> categoryDtoSet = productService.getAdminCategories(categoryType);
             return new ResponseEntity<>(categoryDtoSet, HttpStatus.OK);
-        } catch (CategoryException e) {
+        } catch (InvalidCategoryTypeException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
     }
@@ -202,7 +200,7 @@ public class AdminPanelController {
                                                @PathVariable(name = "categoryId") Integer categoryId) {
         try {
             productService.deleteCategory(categoryType, categoryId);
-        } catch (CategoryException e) {
+        } catch (InvalidCategoryTypeException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -211,10 +209,10 @@ public class AdminPanelController {
     @PutMapping("/categories/{categoryType}/{categoryId}")
     public ResponseEntity<Void> updateCategory(@PathVariable("categoryType") String categoryType,
                                                @PathVariable(name = "categoryId") Integer categoryId,
-                                               @Valid @RequestBody AdminProductCategoryNameDto categoryNameDto) {
+                                               @Valid @RequestBody CategoryNameDto categoryNameDto) {
         try {
             productService.updateCategory(categoryType, categoryId, categoryNameDto);
-        } catch (CategoryException e) {
+        } catch (InvalidCategoryTypeException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -222,10 +220,10 @@ public class AdminPanelController {
 
     @PostMapping("/categories/{categoryType}/add")
     public ResponseEntity<Void> addCategory(@PathVariable("categoryType") String categoryType,
-                                            @Valid @RequestBody AdminProductCategoryNameDto categoryNameDto) {
+                                            @Valid @RequestBody CategoryNameDto categoryNameDto) {
         try {
             productService.addCategory(categoryType, categoryNameDto);
-        } catch (CategoryException e) {
+        } catch (InvalidCategoryTypeException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
         return new ResponseEntity<>(HttpStatus.CREATED);
@@ -255,7 +253,7 @@ public class AdminPanelController {
                                                   @RequestBody StatusDto statusDto) {
         try {
             orderService.updateOrderStatus(orderId, statusDto);
-        } catch (OrderException e) {
+        } catch (OrderCreationException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);

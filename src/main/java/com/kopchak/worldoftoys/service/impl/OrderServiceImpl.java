@@ -5,21 +5,22 @@ import com.kopchak.worldoftoys.dto.admin.product.order.FilteringOrderOptionsDto;
 import com.kopchak.worldoftoys.dto.admin.product.order.StatusDto;
 import com.kopchak.worldoftoys.dto.order.OrderDto;
 import com.kopchak.worldoftoys.dto.order.OrderRecipientDto;
-import com.kopchak.worldoftoys.exception.exception.OrderException;
+import com.kopchak.worldoftoys.exception.OrderCreationException;
 import com.kopchak.worldoftoys.mapper.order.OrderMapper;
 import com.kopchak.worldoftoys.mapper.order.OrderRecipientMapper;
-import com.kopchak.worldoftoys.model.cart.CartItem;
-import com.kopchak.worldoftoys.model.order.Order;
-import com.kopchak.worldoftoys.model.order.OrderStatus;
-import com.kopchak.worldoftoys.model.order.payment.PaymentStatus;
-import com.kopchak.worldoftoys.model.order.recipient.OrderRecipient;
-import com.kopchak.worldoftoys.model.user.AppUser;
+import com.kopchak.worldoftoys.domain.cart.CartItem;
+import com.kopchak.worldoftoys.domain.order.Order;
+import com.kopchak.worldoftoys.domain.order.OrderStatus;
+import com.kopchak.worldoftoys.domain.order.payment.PaymentStatus;
+import com.kopchak.worldoftoys.domain.order.recipient.OrderRecipient;
+import com.kopchak.worldoftoys.domain.user.AppUser;
 import com.kopchak.worldoftoys.repository.cart.CartItemRepository;
 import com.kopchak.worldoftoys.repository.order.OrderDetailsRepository;
 import com.kopchak.worldoftoys.repository.order.OrderRepository;
 import com.kopchak.worldoftoys.repository.specifications.OrderSpecifications;
 import com.kopchak.worldoftoys.service.OrderService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -32,6 +33,7 @@ import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class OrderServiceImpl implements OrderService {
     private final OrderRecipientMapper orderRecipientMapper;
     private final OrderMapper orderMapper;
@@ -41,11 +43,12 @@ public class OrderServiceImpl implements OrderService {
     private final OrderSpecifications orderSpecifications;
 
     @Override
-    public void createOrder(OrderRecipientDto orderRecipientDto, AppUser user) throws OrderException {
+    public void createOrder(OrderRecipientDto orderRecipientDto, AppUser user) throws OrderCreationException {
         Set<CartItem> cartItems = cartItemRepository.deleteAllById_User(user);
+        String username = user.getUsername();
         if (cartItems.isEmpty()) {
-            throw new OrderException(String.format("Impossible to create an order for the user: %s " +
-                    "because there are no products in the user's cart.", user.getUsername()));
+            throw new OrderCreationException("It is impossible to create an order for the user " +
+                    "because there are no products in the user's cart.");
         }
         OrderRecipient orderRecipient = orderRecipientMapper.toOrderRecipient(orderRecipientDto);
         Order order = Order
@@ -56,6 +59,7 @@ public class OrderServiceImpl implements OrderService {
         order = orderRepository.save(order);
         var orderDetails = orderMapper.toOrderDetails(cartItems, order);
         orderDetailsRepository.saveAll(orderDetails);
+        log.info("The order for user with username: {} has been successfully created.", username);
     }
 
     @Override
@@ -82,12 +86,12 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public void updateOrderStatus(String orderId, StatusDto statusDto) throws OrderException {
+    public void updateOrderStatus(String orderId, StatusDto statusDto) throws OrderCreationException {
         Order order = orderRepository.findById(orderId).orElseThrow(() ->
-                new OrderException(String.format("Order with id: %s doesn't exist!", orderId)));
+                new OrderCreationException(String.format("Order with id: %s doesn't exist!", orderId)));
         OrderStatus orderStatus = orderMapper.toOrderStatus(statusDto);
         if (!order.getOrderStatus().equals(orderStatus)) {
-            throw new OrderException(String.format("The status: %s of the order with id: %s " +
+            throw new OrderCreationException(String.format("The status: %s of the order with id: %s " +
                     "is the same as the current status", statusDto.status(), orderId));
         }
         order.setOrderStatus(orderStatus);
@@ -97,7 +101,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Set<StatusDto> getAllOrderStatuses(){
+    public Set<StatusDto> getAllOrderStatuses() {
         return orderMapper.toStatusDtoSet(Arrays.asList(OrderStatus.values()));
     }
 }

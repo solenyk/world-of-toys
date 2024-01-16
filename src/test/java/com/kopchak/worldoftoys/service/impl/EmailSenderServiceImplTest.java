@@ -1,23 +1,27 @@
 package com.kopchak.worldoftoys.service.impl;
 
+import com.kopchak.worldoftoys.domain.order.OrderStatus;
+import com.kopchak.worldoftoys.domain.order.payment.PaymentStatus;
+import com.kopchak.worldoftoys.domain.token.ConfirmationTokenType;
+import com.kopchak.worldoftoys.domain.user.AppUser;
+import com.kopchak.worldoftoys.exception.MessageSendingException;
 import com.kopchak.worldoftoys.exception.UserNotFoundException;
-import com.kopchak.worldoftoys.model.token.ConfirmationTokenType;
-import com.kopchak.worldoftoys.model.user.AppUser;
 import com.kopchak.worldoftoys.repository.user.UserRepository;
 import jakarta.mail.Message;
 import jakarta.mail.MessagingException;
 import jakarta.mail.Session;
 import jakarta.mail.internet.MimeMessage;
-import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.function.Executable;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.thymeleaf.ITemplateEngine;
 import org.thymeleaf.context.Context;
 
@@ -37,33 +41,41 @@ class EmailSenderServiceImplTest {
     private UserRepository userRepository;
     @Mock
     private ITemplateEngine templateEngine;
-    @Mock
-    private HttpServletRequest request;
 
     @InjectMocks
     private EmailSenderServiceImpl emailSenderService;
 
+    private static final String FIRSTNAME = "Firstname";
+    private static final String ORDER_ID = "1";
+
+    private AppUser user;
     private MimeMessage mimeMessage;
     private String emailRecipient;
     private String emailContent;
     private String msgSubject;
     private String userEmail;
     private String confirmToken;
-    private ConfirmationTokenType resetPasswordTokenType;
 
     @BeforeEach
     void setUp() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        ServletRequestAttributes attributes = new ServletRequestAttributes(request);
+        RequestContextHolder.setRequestAttributes(attributes);
+        user = AppUser
+                .builder()
+                .firstname(FIRSTNAME)
+                .lastname("Lastname")
+                .build();
         mimeMessage = new MimeMessage((Session) null);
         emailRecipient = "recipient@example.com";
         emailContent = "Test email content";
         msgSubject = "Test Subject";
         userEmail = "user@example.com";
         confirmToken = "testConfirmationToken";
-        resetPasswordTokenType = ConfirmationTokenType.RESET_PASSWORD;
     }
 
     @Test
-    public void send_ValidEmail_SuccessfulSend() throws MessagingException, IOException {
+    public void send_ValidEmail_SuccessfulSend() throws MessageSendingException, MessagingException, IOException {
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
 
         emailSenderService.send(emailRecipient, emailContent, msgSubject);
@@ -77,68 +89,82 @@ class EmailSenderServiceImplTest {
     }
 
     @Test
-    public void send_InvalidEmail_ThrowsIllegalStateException() {
+    public void send_InvalidEmail_ThrowsMessageSendingException() {
+        String messagingExceptionMsg = "Simulated email sending failure";
+
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
         doAnswer(invocation -> {
-            throw new MessagingException("Simulated email sending failure");
+            throw new MessagingException(messagingExceptionMsg);
         }).when(mailSender).send(mimeMessage);
 
-        IllegalStateException exception = assertThrows(IllegalStateException.class, () ->
-                emailSenderService.send(emailRecipient, emailContent, msgSubject));
-        String expectedMessage = "Failed to send email";
-        String actualMessage = exception.getMessage();
+        String expectedMessage = String.format("Failed to send the email: %s", messagingExceptionMsg);
 
-        assertEquals(expectedMessage, actualMessage);
+        assertException(MessageSendingException.class, expectedMessage,
+                () -> emailSenderService.send(emailRecipient, emailContent, msgSubject));
+
     }
 
     @Test
-    public void sendEmail_ActivationToken_SuccessfulSend(){
-        mockMethodsCallForSendEmail();
+    public void sendEmail_ActivationTokenType() throws UserNotFoundException, MessageSendingException {
+        when(userRepository.findByEmail(userEmail)).thenReturn(java.util.Optional.of(user));
+        mockEmailProcessing();
 
         emailSenderService.sendEmail(userEmail, confirmToken, ConfirmationTokenType.ACTIVATION);
 
-        verify(templateEngine).process(eq("email-template"), any(Context.class));
+        verify(templateEngine).process(eq("email"), any(Context.class));
         verify(mailSender).send(any(MimeMessage.class));
     }
 
     @Test
-    public void sendEmail_ResetPasswordToken_SuccessfulSend(){
-        mockMethodsCallForSendEmail();
-
-        emailSenderService.sendEmail(userEmail, confirmToken, resetPasswordTokenType);
-
-        verify(templateEngine).process(eq("email-template"), any(Context.class));
-        verify(mailSender).send(any(MimeMessage.class));
-    }
-
-    @Test
-    public void sendEmail_ResetPasswordToken_ThrowsUserNotFoundException(){
-        ResponseStatusException exception = assertThrows(UserNotFoundException.class, () ->
-                emailSenderService.sendEmail(userEmail, confirmToken, resetPasswordTokenType));
-
-        String expectedMessage = "User with this username does not exist!";
-        String actualMessage = exception.getReason();
-        int expectedStatusCode = HttpStatus.NOT_FOUND.value();
-        int actualStatusCode = exception.getStatusCode().value();
-
-        assertEquals(expectedMessage, actualMessage);
-        assertEquals(expectedStatusCode, actualStatusCode);
-    }
-
-    private void mockMethodsCallForSendEmail(){
-        AppUser user = AppUser
-                .builder()
-                .firstname("Firstname")
-                .lastname("Lastname")
-                .build();
-        String requestUrl = "Test-string-request-url";
-        String servletPath = "Test-servlet-path";
-        String expectedEmailContent = "Expected Email Content";
-
+    public void sendEmail_ResetPasswordTokenType() throws UserNotFoundException, MessageSendingException {
         when(userRepository.findByEmail(userEmail)).thenReturn(java.util.Optional.of(user));
-        when(request.getRequestURL()).thenReturn(new StringBuffer(requestUrl));
-        when(request.getServletPath()).thenReturn(servletPath);
-        when(templateEngine.process(eq("email-template"), any(Context.class))).thenReturn(expectedEmailContent);
+        mockEmailProcessing();
+
+        emailSenderService.sendEmail(userEmail, confirmToken, ConfirmationTokenType.RESET_PASSWORD);
+
+        verify(templateEngine).process(eq("email"), any(Context.class));
+        verify(mailSender).send(any(MimeMessage.class));
+    }
+
+    @Test
+    public void sendEmail_NonExistentUser_ThrowsUserNotFoundException() {
+        String userNotFoundExceptionMsg = String.format("The user with username: %s does not exist!", userEmail);
+        assertException(UserNotFoundException.class, userNotFoundExceptionMsg,
+                () -> emailSenderService.sendEmail(userEmail, confirmToken, ConfirmationTokenType.RESET_PASSWORD));
+    }
+
+    @Test
+    public void sendEmail_PaymentStatus() throws MessageSendingException {
+        PaymentStatus paymentStatus = PaymentStatus.COMPLETE;
+        mockEmailProcessing();
+
+        emailSenderService.sendEmail(userEmail, FIRSTNAME, ORDER_ID, paymentStatus);
+
+        verify(templateEngine).process(eq("email"), any(Context.class));
+        verify(mailSender).send(any(MimeMessage.class));
+    }
+
+    @Test
+    public void sendEmail_OrderStatus() throws MessageSendingException {
+        OrderStatus orderStatus = OrderStatus.CANCELED;
+        mockEmailProcessing();
+
+        emailSenderService.sendEmail(userEmail, FIRSTNAME, ORDER_ID, orderStatus);
+
+        verify(templateEngine).process(eq("email"), any(Context.class));
+        verify(mailSender).send(any(MimeMessage.class));
+    }
+
+    private void assertException(Class<? extends Exception> expectedExceptionType,
+                                 String expectedMessage, Executable executable) {
+        Exception exception = assertThrows(expectedExceptionType, executable);
+        String actualMessage = exception.getMessage();
+        assertEquals(expectedMessage, actualMessage);
+    }
+
+    private void mockEmailProcessing() {
+        String expectedEmailContent = "Expected Email Content";
+        when(templateEngine.process(eq("email"), any(Context.class))).thenReturn(expectedEmailContent);
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
     }
 }

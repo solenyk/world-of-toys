@@ -2,18 +2,19 @@ package com.kopchak.worldoftoys.service;
 
 import com.kopchak.worldoftoys.dto.token.AccessAndRefreshTokensDto;
 import com.kopchak.worldoftoys.dto.token.AuthTokenDto;
-import com.kopchak.worldoftoys.model.token.AuthTokenType;
-
-import java.util.Optional;
+import com.kopchak.worldoftoys.exception.JwtTokenException;
+import com.kopchak.worldoftoys.exception.TokenAlreadyExistException;
+import com.kopchak.worldoftoys.domain.token.AuthTokenType;
+import com.kopchak.worldoftoys.domain.user.AppUser;
 
 public interface JwtTokenService {
-    Optional<String> extractUsername(String token);
+    String extractUsername(String token) throws JwtTokenException;
 
-    boolean isAuthTokenValid(String token, AuthTokenType tokenType);
+    boolean isAuthTokenValid(String token, AuthTokenType tokenType) throws JwtTokenException;
 
-    boolean isActiveAuthTokenExists(String refreshToken, AuthTokenType tokenType);
+    AuthTokenDto refreshAccessToken(AuthTokenDto refreshTokenDto) throws JwtTokenException, TokenAlreadyExistException;
 
-    AuthTokenDto refreshAccessToken(AuthTokenDto refreshTokenDto);
-    void revokeAllUserAuthTokens(String username);
-    AccessAndRefreshTokensDto generateAuthTokens(String email);
+    void revokeAllUserAuthTokens(AppUser user);
+
+    AccessAndRefreshTokensDto generateAuthTokens(AppUser user);
 }

@@ -1,6 +1,6 @@
 package com.kopchak.worldoftoys.repository.product;
 
-import com.kopchak.worldoftoys.model.product.Product;
+import com.kopchak.worldoftoys.domain.product.Product;
 import com.kopchak.worldoftoys.repository.specifications.ProductSpecifications;
 import com.kopchak.worldoftoys.repository.specifications.impl.ProductSpecificationsImpl;
 import org.junit.jupiter.api.Test;

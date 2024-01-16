@@ -1,10 +1,7 @@
 package com.kopchak.worldoftoys.exception;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
-
-public class UserNotFoundException extends ResponseStatusException {
-    public UserNotFoundException(HttpStatus status, String reason) {
-        super(status, reason);
+public class UserNotFoundException extends Exception {
+    public UserNotFoundException(String reason) {
+        super(reason);
     }
 }

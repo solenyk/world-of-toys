@@ -1,8 +1,12 @@
 package com.kopchak.worldoftoys.service.impl;
 
-import com.kopchak.worldoftoys.exception.exception.ImageException;
-import com.kopchak.worldoftoys.model.image.Image;
-import com.kopchak.worldoftoys.model.product.Product;
+import com.kopchak.worldoftoys.dto.product.image.ImageDto;
+import com.kopchak.worldoftoys.exception.ImageCompressionException;
+import com.kopchak.worldoftoys.exception.ImageDecompressionException;
+import com.kopchak.worldoftoys.exception.ImageExceedsMaxSizeException;
+import com.kopchak.worldoftoys.exception.InvalidImageFileFormatException;
+import com.kopchak.worldoftoys.domain.image.Image;
+import com.kopchak.worldoftoys.domain.product.Product;
 import com.kopchak.worldoftoys.repository.product.image.ImageRepository;
 import com.kopchak.worldoftoys.service.ImageService;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.Objects;
+import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 
@@ -22,49 +26,47 @@ import java.util.zip.Inflater;
 @Slf4j
 public class ImageServiceImpl implements ImageService {
     private final ImageRepository imageRepository;
+    private final static int MAX_IMG_COMPRESSION_SIZE = 100_000;
+    private final static String IMAGE_CONTENT_TYPE_PREFIX = "image/";
 
     @Override
-    public Image convertMultipartFileToImage(MultipartFile multipartFile, Product product) throws ImageException {
+    public Image convertMultipartFileToImage(MultipartFile multipartFile, Product product)
+            throws InvalidImageFileFormatException, ImageCompressionException, ImageExceedsMaxSizeException {
+        String fileName = multipartFile.getOriginalFilename();
         if (isNonImageFile(multipartFile)) {
-            String fileName = multipartFile.getOriginalFilename();
-            log.error("File with name: {} must have an image type", fileName);
-            throw new ImageException(String.format("File with name: %s must have an image type", fileName));
+            String errMsg = String.format("The file with name: %s must have an image type", fileName);
+            log.error(errMsg);
+            throw new InvalidImageFileFormatException(errMsg);
         }
-        String generatedName = Objects.requireNonNull(multipartFile.getOriginalFilename())
-                .concat(RandomStringUtils.randomAlphanumeric(4));
-        Image.ImageBuilder imageBuilder = Image.builder()
-                .name(generatedName)
-                .type(multipartFile.getContentType())
-                .product(product);
-        Image image;
-        if (product.getId() != null) {
-            image = imageRepository.findByNameAndProduct_Id(multipartFile.getOriginalFilename(), product.getId())
-                    .orElse(imageBuilder.build());
-        } else {
-            image = imageBuilder.build();
+        byte[] compressedImg = compressImage(multipartFile, fileName);
+        if (compressedImg.length > MAX_IMG_COMPRESSION_SIZE) {
+            String errMsg = String.format("The image with name: %s is too large", fileName);
+            log.error(errMsg);
+            throw new ImageExceedsMaxSizeException(errMsg);
         }
-        image.setImage(compressImage(multipartFile));
-        return image;
+        return buildProductImage(product, fileName, multipartFile, compressedImg);
     }
 
     @Override
-    public byte[] decompressImage(byte[] data) {
-        Inflater inflater = new Inflater();
-        inflater.setInput(data);
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream(data.length);
-        byte[] tmp = new byte[4 * 1024];
-        try {
-            while (!inflater.finished()) {
-                int count = inflater.inflate(tmp);
-                outputStream.write(tmp, 0, count);
-            }
-            outputStream.close();
-        } catch (Exception exception) {
-        }
-        return outputStream.toByteArray();
+    public ImageDto generateDecompressedImageDto(Image image) throws ImageDecompressionException {
+        String imageName = image.getName();
+        byte[] decompressedImg = decompressImage(image.getImage(), imageName);
+        return ImageDto.builder()
+                .name(imageName)
+                .type(image.getType())
+                .image(decompressedImg)
+                .build();
     }
 
-    private byte[] compressImage(MultipartFile multipartFile) throws ImageException {
+    private boolean isNonImageFile(MultipartFile file) {
+        String contentType = file.getContentType();
+        if (contentType != null) {
+            return !contentType.startsWith(IMAGE_CONTENT_TYPE_PREFIX);
+        }
+        return true;
+    }
+
+    private byte[] compressImage(MultipartFile multipartFile, String fileName) throws ImageCompressionException {
         try {
             byte[] data = multipartFile.getBytes();
             Deflater deflater = new Deflater();
@@ -75,11 +77,12 @@ public class ImageServiceImpl implements ImageService {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream(data.length);
             byte[] compressedData = compressData(deflater, outputStream);
             outputStream.close();
+            log.info("The image with name: {} was successfully compressed", fileName);
             return compressedData;
         } catch (IOException e) {
-            String fileName = multipartFile.getOriginalFilename();
-            log.error("File with name: {} cannot be compressed", fileName);
-            throw new ImageException(String.format("File with name: %s cannot be compressed", fileName));
+            String errorMsg = String.format("The image with name: %s cannot be compressed", fileName);
+            log.error(errorMsg);
+            throw new ImageCompressionException(errorMsg);
         }
     }
 
@@ -92,11 +95,47 @@ public class ImageServiceImpl implements ImageService {
         return outputStream.toByteArray();
     }
 
-    private boolean isNonImageFile(MultipartFile file) {
-        String contentType = file.getContentType();
-        if (contentType != null) {
-            return !contentType.startsWith("image/");
+    private byte[] decompressImage(byte[] data, String fileName) throws ImageDecompressionException {
+        Inflater inflater = new Inflater();
+        inflater.setInput(data);
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream(data.length);
+        byte[] tmp = new byte[4 * 1024];
+        try {
+            while (!inflater.finished()) {
+                int count = inflater.inflate(tmp);
+                outputStream.write(tmp, 0, count);
+            }
+            outputStream.close();
+        } catch (DataFormatException | IOException e) {
+            String errorMsg = String.format("The image with name: %s cannot be decompressed", fileName);
+            log.error(errorMsg);
+            throw new ImageDecompressionException(errorMsg);
         }
-        return true;
+        log.info("The image with name: {} was successfully decompressed", fileName);
+        return outputStream.toByteArray();
+    }
+
+    private String generateImageName(MultipartFile multipartFile) {
+        String originalFilename = multipartFile.getOriginalFilename();
+        String randString = RandomStringUtils.randomAlphanumeric(4);
+        return originalFilename != null ? originalFilename.concat(randString) : randString;
+    }
+
+    private Image buildProductImage(Product product, String originalFileName,
+                                    MultipartFile multipartFile, byte[] compressedImg) {
+        String generatedName = generateImageName(multipartFile);
+        Image.ImageBuilder imageBuilder = Image.builder()
+                .name(generatedName)
+                .type(multipartFile.getContentType())
+                .product(product);
+        Image image;
+        if (product.getId() != null) {
+            image = imageRepository.findByNameAndProduct_Id(originalFileName, product.getId())
+                    .orElse(imageBuilder.build());
+        } else {
+            image = imageBuilder.build();
+        }
+        image.setImage(compressedImg);
+        return image;
     }
 }

@@ -1,6 +1,7 @@
 package com.kopchak.worldoftoys.filter;
 
-import com.kopchak.worldoftoys.model.token.AuthTokenType;
+import com.kopchak.worldoftoys.exception.JwtTokenException;
+import com.kopchak.worldoftoys.domain.token.AuthTokenType;
 import com.kopchak.worldoftoys.service.JwtTokenService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -16,15 +17,16 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.servlet.HandlerExceptionResolver;
 
 import java.io.IOException;
-import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtTokenService jwtTokenService;
     private final UserDetailsService userDetailsService;
+    private final HandlerExceptionResolver handlerExceptionResolver;
     private static final String BEARER = "Bearer ";
 
     @Override
@@ -37,23 +39,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (authHeader != null && authHeader.startsWith(BEARER)) {
             final String jwt = authHeader.substring(BEARER.length());
 
-            if (jwtTokenService.isAuthTokenValid(jwt, AuthTokenType.ACCESS)) {
-                final Optional<String> userEmail = jwtTokenService.extractUsername(jwt);
+            try {
+                if (jwtTokenService.isAuthTokenValid(jwt, AuthTokenType.ACCESS)) {
+                    final String userEmail = jwtTokenService.extractUsername(jwt);
 
-                if (userEmail.isPresent() && SecurityContextHolder.getContext().getAuthentication() == null) {
-                    UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail.get());
+                    if (SecurityContextHolder.getContext().getAuthentication() == null) {
+                        UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
 
-                    if (userEmail.get().equals(userDetails.getUsername())) {
-                        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                                userDetails,
-                                null,
-                                userDetails.getAuthorities()
-                        );
+                        if (userEmail.equals(userDetails.getUsername())) {
+                            UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                                    userDetails,
+                                    null,
+                                    userDetails.getAuthorities()
+                            );
 
-                        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                        SecurityContextHolder.getContext().setAuthentication(authToken);
+                            authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                            SecurityContextHolder.getContext().setAuthentication(authToken);
+                        }
                     }
                 }
+            } catch (JwtTokenException e) {
+                handlerExceptionResolver.resolveException(request, response, null, e);
             }
         }
 
