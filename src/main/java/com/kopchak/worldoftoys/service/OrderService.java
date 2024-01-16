@@ -5,6 +5,8 @@ import com.kopchak.worldoftoys.dto.admin.product.order.FilteringOrderOptionsDto;
 import com.kopchak.worldoftoys.dto.admin.product.order.StatusDto;
 import com.kopchak.worldoftoys.dto.order.OrderDto;
 import com.kopchak.worldoftoys.dto.order.OrderRecipientDto;
+import com.kopchak.worldoftoys.exception.InvalidOrderStatusException;
+import com.kopchak.worldoftoys.exception.MessageSendingException;
 import com.kopchak.worldoftoys.exception.OrderCreationException;
 import com.kopchak.worldoftoys.domain.order.OrderStatus;
 import com.kopchak.worldoftoys.domain.order.payment.PaymentStatus;
@@ -23,7 +25,7 @@ public interface OrderService {
     FilteredOrdersPageDto filterOrdersByStatusesAndDate(int pageNumber, int pageSize, List<OrderStatus> orderStatuses,
                                                         List<PaymentStatus> paymentStatuses, String dateSortOrder);
 
-    void updateOrderStatus(String orderId, StatusDto statusDto) throws OrderCreationException;
+    void updateOrderStatus(String orderId, StatusDto statusDto) throws OrderCreationException, InvalidOrderStatusException, MessageSendingException;
 
     Set<StatusDto> getAllOrderStatuses();
 }

@@ -247,14 +247,20 @@ public class AdminPanelController {
         return new ResponseEntity<>(filteredOrdersPageDto, HttpStatus.OK);
     }
 
-    //ToDo: add method which return all OrderStatuses
+    @GetMapping("/orders/statuses")
+    public ResponseEntity<Set<StatusDto>> getAllOrderStatuses() {
+        return new ResponseEntity<>(orderService.getAllOrderStatuses(), HttpStatus.OK);
+    }
+
     @PatchMapping("/orders/{orderId}")
     public ResponseEntity<Void> updateOrderStatus(@PathVariable(name = "orderId") String orderId,
                                                   @RequestBody StatusDto statusDto) {
         try {
             orderService.updateOrderStatus(orderId, statusDto);
-        } catch (OrderCreationException e) {
+        } catch (OrderCreationException | InvalidOrderStatusException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        } catch (MessageSendingException e) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, e.getMessage());
         }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }

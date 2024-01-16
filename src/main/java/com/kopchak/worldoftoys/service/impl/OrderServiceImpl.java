@@ -5,6 +5,8 @@ import com.kopchak.worldoftoys.dto.admin.product.order.FilteringOrderOptionsDto;
 import com.kopchak.worldoftoys.dto.admin.product.order.StatusDto;
 import com.kopchak.worldoftoys.dto.order.OrderDto;
 import com.kopchak.worldoftoys.dto.order.OrderRecipientDto;
+import com.kopchak.worldoftoys.exception.InvalidOrderStatusException;
+import com.kopchak.worldoftoys.exception.MessageSendingException;
 import com.kopchak.worldoftoys.exception.OrderCreationException;
 import com.kopchak.worldoftoys.mapper.order.OrderMapper;
 import com.kopchak.worldoftoys.mapper.order.OrderRecipientMapper;
@@ -18,6 +20,7 @@ import com.kopchak.worldoftoys.repository.cart.CartItemRepository;
 import com.kopchak.worldoftoys.repository.order.OrderDetailsRepository;
 import com.kopchak.worldoftoys.repository.order.OrderRepository;
 import com.kopchak.worldoftoys.repository.specifications.OrderSpecifications;
+import com.kopchak.worldoftoys.service.EmailSenderService;
 import com.kopchak.worldoftoys.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,11 +38,12 @@ import java.util.Set;
 @RequiredArgsConstructor
 @Slf4j
 public class OrderServiceImpl implements OrderService {
+    private final OrderRepository orderRepository;
+    private final CartItemRepository cartItemRepository;
+    private final OrderDetailsRepository orderDetailsRepository;
+    private final EmailSenderService emailSenderService;
     private final OrderRecipientMapper orderRecipientMapper;
     private final OrderMapper orderMapper;
-    private final CartItemRepository cartItemRepository;
-    private final OrderRepository orderRepository;
-    private final OrderDetailsRepository orderDetailsRepository;
     private final OrderSpecifications orderSpecifications;
 
     @Override
@@ -86,18 +90,19 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public void updateOrderStatus(String orderId, StatusDto statusDto) throws OrderCreationException {
+    public void updateOrderStatus(String orderId, StatusDto statusDto)
+            throws OrderCreationException, InvalidOrderStatusException, MessageSendingException {
         Order order = orderRepository.findById(orderId).orElseThrow(() ->
                 new OrderCreationException(String.format("Order with id: %s doesn't exist!", orderId)));
         OrderStatus orderStatus = orderMapper.toOrderStatus(statusDto);
         if (!order.getOrderStatus().equals(orderStatus)) {
-            throw new OrderCreationException(String.format("The status: %s of the order with id: %s " +
+            throw new InvalidOrderStatusException(String.format("The status: %s of the order with id: %s " +
                     "is the same as the current status", statusDto.status(), orderId));
         }
         order.setOrderStatus(orderStatus);
         orderRepository.save(order);
         AppUser user = order.getUser();
-        //ToDo:send email
+        emailSenderService.sendEmail(user.getEmail(), user.getFirstname(), orderId, orderStatus);
     }
 
     @Override
