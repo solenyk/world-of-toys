@@ -1,7 +1,5 @@
 package com.kopchak.worldoftoys.service.impl;
 
-import com.kopchak.worldoftoys.exception.MessageSendingException;
-import com.kopchak.worldoftoys.exception.UserNotFoundException;
 import com.kopchak.worldoftoys.domain.email.EmailType;
 import com.kopchak.worldoftoys.domain.email.confirm.ConfirmEmailType;
 import com.kopchak.worldoftoys.domain.email.confirm.impl.AccountActivationEmail;
@@ -13,12 +11,15 @@ import com.kopchak.worldoftoys.domain.order.StatusProvider;
 import com.kopchak.worldoftoys.domain.order.payment.PaymentStatus;
 import com.kopchak.worldoftoys.domain.token.ConfirmationTokenType;
 import com.kopchak.worldoftoys.domain.user.AppUser;
+import com.kopchak.worldoftoys.exception.MessageSendingException;
+import com.kopchak.worldoftoys.exception.UserNotFoundException;
 import com.kopchak.worldoftoys.repository.user.UserRepository;
 import com.kopchak.worldoftoys.service.EmailSenderService;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
@@ -47,7 +48,7 @@ public class EmailSenderServiceImpl implements EmailSenderService {
             helper.setFrom(SENDER_EMAIL);
             mailSender.send(mimeMessage);
             log.info("The email with subject: {} sent to the: {}", msgSubject, emailRecipient);
-        } catch (MessagingException e) {
+        } catch (MessagingException | MailException e) {
             log.error("Failed to send the email to the user with username: {}", emailRecipient);
             throw new MessageSendingException(String.format("Failed to send the email: %s", e.getMessage()));
         }

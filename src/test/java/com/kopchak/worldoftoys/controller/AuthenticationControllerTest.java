@@ -136,25 +136,6 @@ class AuthenticationControllerTest {
     }
 
     @Test
-    public void registerUser_ThrowUserNotFoundException_ReturnsNotFoundStatusAndResponseStatusExceptionDto() throws Exception {
-        doThrow(new UserNotFoundException(USER_NOT_FOUND_EXCEPTION_MSG))
-                .when(confirmationTokenService).createConfirmationToken(any(), any());
-
-        ResultActions response = mockMvc.perform(post("/api/v1/auth/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(userRegistrationDto)));
-
-        verify(userService).registerUser(any());
-        verify(emailSenderService, never()).sendEmail(any(), any(), any());
-
-        var responseStatusExceptionDto = getResponseStatusExceptionDto(HttpStatus.NOT_FOUND,
-                USER_NOT_FOUND_EXCEPTION_MSG);
-
-        response.andExpect(MockMvcResultMatchers.status().isNotFound())
-                .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)));
-    }
-
-    @Test
     public void registerUser_ThrowMessageSendingException_ReturnsServiceUnavailableStatusAndResponseStatusExceptionDto() throws Exception {
         doNothing().when(userService).registerUser(userRegistrationDto);
         when(confirmationTokenService.createConfirmationToken(USERNAME, activationTokenType)).thenReturn(confirmTokenDto);

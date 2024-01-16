@@ -51,11 +51,6 @@ public class AuthenticationController {
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = ResponseStatusExceptionDto.class))),
-            @ApiResponse(responseCode = "404",
-                    description = "The user is not found",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ResponseStatusExceptionDto.class))),
             @ApiResponse(responseCode = "503",
                     description = "It is not possible to send a message, the service is not unavailable",
                     content = @Content(
@@ -69,10 +64,9 @@ public class AuthenticationController {
             userService.registerUser(userRegistrationDto);
             var confirmToken = confirmTokenService.createConfirmationToken(username, ConfirmationTokenType.ACTIVATION);
             emailSenderService.sendEmail(username, confirmToken.token(), ConfirmationTokenType.ACTIVATION);
-        } catch (UsernameAlreadyExistException | TokenAlreadyExistException | AccountActivationException e) {
+        } catch (UsernameAlreadyExistException | TokenAlreadyExistException |
+                 AccountActivationException | UserNotFoundException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
-        } catch (UserNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         } catch (MessageSendingException e) {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, e.getMessage());
         }
