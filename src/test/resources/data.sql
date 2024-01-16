@@ -56,6 +56,13 @@ VALUES (1, 2),
        (2, 3),
        (3, 2);
 
+INSERT INTO image(id, name, type, image, product_id)
+VALUES (1, 'lyalka-klaymber1.png', 'image/png', X'1F8B', 1);
+
+UPDATE product
+SET image_id = 1
+WHERE id = 1;
+
 INSERT INTO cart_item(user_id, product_id, quantity)
 VALUES(1000, 2, 1),
       (1000, 4, 4);

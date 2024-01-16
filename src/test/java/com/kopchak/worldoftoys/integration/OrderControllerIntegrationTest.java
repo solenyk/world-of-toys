@@ -82,6 +82,26 @@ public class OrderControllerIntegrationTest {
     }
 
     @Test
+    @WithUserDetails("alice.johnson@example.com")
+    public void createOrder_AuthUserWithEmptyCart_ReturnsBadRequestStatus() throws Exception {
+        HttpStatus httpStatus = HttpStatus.BAD_REQUEST;
+        String orderCreationExceptionMsg =
+                "It is impossible to create an order for the user because there are no products in the user's cart.";
+
+        ResultActions response = mockMvc.perform(post("/api/v1/order")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(orderRecipientDto))
+                .with(csrf()));
+
+        var responseStatusExceptionDto = new ResponseStatusExceptionDto(httpStatus.value(), httpStatus.name(),
+                orderCreationExceptionMsg);
+
+        response.andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
     @WithAnonymousUser
     public void createOrder_AnonymousUser_ReturnsUnauthorizedStatus() throws Exception {
         ResultActions response = mockMvc.perform(post("/api/v1/order")

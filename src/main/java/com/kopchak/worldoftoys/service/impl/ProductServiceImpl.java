@@ -71,8 +71,10 @@ public class ProductServiceImpl implements ProductService {
         }
         Product product = productOptional.get();
         Image mainImage = product.getMainImage();
-        ImageDto mainImageDto = imageService.generateDecompressedImageDto(mainImage);
-        List<ImageDto> imageDtoList = getDecompressedProductImageDtoList(product.getImages(), mainImage);
+        Set<Image> images = product.getImages();
+        ImageDto mainImageDto = mainImage == null ? null : imageService.generateDecompressedImageDto(mainImage);
+        List<ImageDto> imageDtoList = (images == null || images.isEmpty()) ? new ArrayList<>() :
+                getDecompressedProductImageDtoList(product.getImages(), mainImage);
         log.info("Fetched product by slug: '{}'", productSlug);
         return productMapper.toProductDto(product, mainImageDto, imageDtoList);
     }
