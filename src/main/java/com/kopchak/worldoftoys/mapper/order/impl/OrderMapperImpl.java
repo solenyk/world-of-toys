@@ -11,7 +11,7 @@ import com.kopchak.worldoftoys.domain.product.Product;
 import com.kopchak.worldoftoys.dto.admin.product.order.*;
 import com.kopchak.worldoftoys.dto.order.OrderDto;
 import com.kopchak.worldoftoys.dto.order.OrderProductDto;
-import com.kopchak.worldoftoys.exception.OrderCreationException;
+import com.kopchak.worldoftoys.exception.InvalidOrderStatusException;
 import com.kopchak.worldoftoys.mapper.order.OrderMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
@@ -61,11 +61,12 @@ public class OrderMapperImpl implements OrderMapper {
     }
 
     @Override
-    public OrderStatus toOrderStatus(StatusDto statusDto) throws OrderCreationException {
+    public OrderStatus toOrderStatus(StatusDto statusDto) throws InvalidOrderStatusException {
         try {
             return OrderStatus.valueOf(statusDto.name());
         } catch (IllegalArgumentException e) {
-            throw new OrderCreationException(String.format("Order status with name: %s doesn't exist!", statusDto.status()));
+            throw new InvalidOrderStatusException(
+                    String.format("Order status with name: %s doesn't exist!", statusDto.status()));
         }
     }
 

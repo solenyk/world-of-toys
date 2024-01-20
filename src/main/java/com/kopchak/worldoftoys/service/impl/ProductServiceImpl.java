@@ -144,8 +144,8 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public void addProduct(AddUpdateProductDto addUpdateProductDto, MultipartFile mainImageFile,
-                           List<MultipartFile> imageFileList) throws InvalidCategoryTypeException, ProductNotFoundException, ImageCompressionException, ImageExceedsMaxSizeException, InvalidImageFileFormatException {
+    public void createProduct(AddUpdateProductDto addUpdateProductDto, MultipartFile mainImageFile,
+                              List<MultipartFile> imageFileList) throws InvalidCategoryTypeException, ProductNotFoundException, ImageCompressionException, ImageExceedsMaxSizeException, InvalidImageFileFormatException {
         String productName = addUpdateProductDto.name();
         if (productRepository.findByName(productName).isPresent()) {
             throw new ProductNotFoundException(String.format("The product with name: %s is already exist", productName));
@@ -176,7 +176,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public void addCategory(String categoryType, CategoryNameDto categoryNameDto) throws InvalidCategoryTypeException {
+    public void createCategory(String categoryType, CategoryNameDto categoryNameDto) throws InvalidCategoryTypeException {
         Class<? extends ProductCategory> categoryClass = getCategoryByCategoryType(categoryType);
         categoryRepository.addCategory(categoryClass, categoryNameDto.name());
     }

@@ -37,8 +37,8 @@ public interface ProductService {
                        List<MultipartFile> imageFileList)
             throws InvalidCategoryTypeException, ProductNotFoundException, ImageCompressionException, ImageExceedsMaxSizeException, InvalidImageFileFormatException;
 
-    void addProduct(AddUpdateProductDto addUpdateProductDto, MultipartFile mainImageFile,
-                    List<MultipartFile> imageFileList)
+    void createProduct(AddUpdateProductDto addUpdateProductDto, MultipartFile mainImageFile,
+                       List<MultipartFile> imageFileList)
             throws InvalidCategoryTypeException, ProductNotFoundException, ImageCompressionException, ImageExceedsMaxSizeException, InvalidImageFileFormatException;
 
     Set<AdminCategoryDto> getAdminCategories(String categoryType) throws InvalidCategoryTypeException;
@@ -48,5 +48,5 @@ public interface ProductService {
     void updateCategory(String categoryType, Integer categoryId, CategoryNameDto categoryNameDto)
             throws InvalidCategoryTypeException;
 
-    void addCategory(String categoryType, CategoryNameDto categoryNameDto) throws InvalidCategoryTypeException;
+    void createCategory(String categoryType, CategoryNameDto categoryNameDto) throws InvalidCategoryTypeException;
 }

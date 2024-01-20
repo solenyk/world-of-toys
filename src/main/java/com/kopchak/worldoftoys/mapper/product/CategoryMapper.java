@@ -1,11 +1,10 @@
 package com.kopchak.worldoftoys.mapper.product;
 
+import com.kopchak.worldoftoys.domain.product.category.ProductCategory;
 import com.kopchak.worldoftoys.dto.admin.product.category.AdminCategoryDto;
 import com.kopchak.worldoftoys.dto.product.category.CategoryDto;
-import com.kopchak.worldoftoys.domain.product.category.ProductCategory;
 import com.kopchak.worldoftoys.dto.product.category.FilteringCategoriesDto;
 import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
 
 import java.util.LinkedHashSet;
 import java.util.List;
