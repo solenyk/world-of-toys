@@ -1,5 +1,7 @@
 package com.kopchak.worldoftoys.controller;
 
+import com.kopchak.worldoftoys.domain.order.OrderStatus;
+import com.kopchak.worldoftoys.domain.order.payment.PaymentStatus;
 import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminFilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
@@ -12,8 +14,6 @@ import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.exception.*;
-import com.kopchak.worldoftoys.domain.order.OrderStatus;
-import com.kopchak.worldoftoys.domain.order.payment.PaymentStatus;
 import com.kopchak.worldoftoys.service.OrderService;
 import com.kopchak.worldoftoys.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -40,7 +40,8 @@ import java.util.Set;
 @RequestMapping("/api/v1/admin")
 @CrossOrigin
 @RequiredArgsConstructor
-@Tag(name = "admin-panel-controller", description = "")
+@Tag(name = "admin-panel-controller", description = "The admin panel controller manages administrative tasks related " +
+        "to products and orders. It provides endpoints for filtering and managing products, categories, and orders.")
 @SecurityRequirement(name = "Bearer Authentication")
 public class AdminPanelController {
 
@@ -123,7 +124,7 @@ public class AdminPanelController {
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
-    @Operation(summary = "Add product")
+    @Operation(summary = "Create product")
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "201",
@@ -135,11 +136,11 @@ public class AdminPanelController {
                     content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class)))
     })
     @PostMapping("/products/add")
-    public ResponseEntity<Void> addProduct(@Valid @RequestPart("product") AddUpdateProductDto addUpdateProductDto,
-                                           @RequestPart("image") MultipartFile mainImageFile,
-                                           @RequestPart("images") List<MultipartFile> imageFilesList) {
+    public ResponseEntity<Void> createProduct(@Valid @RequestPart("product") AddUpdateProductDto addUpdateProductDto,
+                                              @RequestPart("image") MultipartFile mainImageFile,
+                                              @RequestPart("images") List<MultipartFile> imageFilesList) {
         try {
-            productService.addProduct(addUpdateProductDto, mainImageFile, imageFilesList);
+            productService.createProduct(addUpdateProductDto, mainImageFile, imageFilesList);
         } catch (ProductNotFoundException | InvalidCategoryTypeException | InvalidImageFileFormatException |
                  ImageExceedsMaxSizeException | ImageCompressionException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
@@ -184,7 +185,7 @@ public class AdminPanelController {
             @ApiResponse(
                     responseCode = "400",
                     description = "Product category is incorrect",
-                    content = @Content(schema = @Schema(hidden = true)))
+                    content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class)))
     })
     @DeleteMapping("/categories/{categoryType}/{categoryId}")
     public ResponseEntity<Void> deleteCategory(@PathVariable("categoryType") String categoryType,
@@ -197,6 +198,17 @@ public class AdminPanelController {
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
+    @Operation(summary = "Update product category")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "204",
+                    description = "Product category was successfully updated",
+                    content = @Content(schema = @Schema(hidden = true))),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Product category type is incorrect",
+                    content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class)))
+    })
     @PutMapping("/categories/{categoryType}/{categoryId}")
     public ResponseEntity<Void> updateCategory(@PathVariable("categoryType") String categoryType,
                                                @PathVariable(name = "categoryId") Integer categoryId,
@@ -209,22 +221,43 @@ public class AdminPanelController {
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
+    @Operation(summary = "Create product category")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "204",
+                    description = "Product category was successfully created",
+                    content = @Content(schema = @Schema(hidden = true))),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Product category type is incorrect",
+                    content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class)))
+    })
     @PostMapping("/categories/{categoryType}/add")
-    public ResponseEntity<Void> addCategory(@PathVariable("categoryType") String categoryType,
-                                            @Valid @RequestBody CategoryNameDto categoryNameDto) {
+    public ResponseEntity<Void> createCategory(@PathVariable("categoryType") String categoryType,
+                                               @Valid @RequestBody CategoryNameDto categoryNameDto) {
         try {
-            productService.addCategory(categoryType, categoryNameDto);
+            productService.createCategory(categoryType, categoryNameDto);
         } catch (InvalidCategoryTypeException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
+    @Operation(summary = "Get order filtering options")
+    @ApiResponse(
+            responseCode = "200",
+            description = "Order filtering options were successfully fetched",
+            content = @Content(schema = @Schema(implementation = FilteringOrderOptionsDto.class)))
     @GetMapping("/orders/filtering-options")
     public ResponseEntity<FilteringOrderOptionsDto> getOrderFilteringOptions() {
         return new ResponseEntity<>(orderService.getOrderFilteringOptions(), HttpStatus.OK);
     }
 
+    @Operation(summary = "Fetch filtered orders")
+    @ApiResponse(
+            responseCode = "200",
+            description = "Filtered orders were successfully fetched",
+            content = @Content(schema = @Schema(implementation = FilteredOrdersPageDto.class)))
     @GetMapping("/orders")
     public ResponseEntity<FilteredOrdersPageDto> filterOrdersByStatusesAndDate(
             @RequestParam(name = "page", defaultValue = "0") int page,
@@ -238,17 +271,43 @@ public class AdminPanelController {
         return new ResponseEntity<>(filteredOrdersPageDto, HttpStatus.OK);
     }
 
+    @Operation(summary = "Get order statuses")
+    @ApiResponse(
+            responseCode = "200",
+            description = "Order statuses were successfully fetched",
+            content = {
+                    @Content(
+                            mediaType = "application/json",
+                            array = @ArraySchema(
+                                    schema = @Schema(implementation = StatusDto.class))
+                    )
+            })
     @GetMapping("/orders/statuses")
     public ResponseEntity<Set<StatusDto>> getAllOrderStatuses() {
         return new ResponseEntity<>(orderService.getAllOrderStatuses(), HttpStatus.OK);
     }
 
+    @Operation(summary = "Update order status")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "204",
+                    description = "Order status was successfully updated",
+                    content = @Content(schema = @Schema(hidden = true))),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid order id or status",
+                    content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class))),
+            @ApiResponse(
+                    responseCode = "503",
+                    description = "Service unavailable",
+                    content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class)))
+    })
     @PatchMapping("/orders/{orderId}")
     public ResponseEntity<Void> updateOrderStatus(@PathVariable(name = "orderId") String orderId,
                                                   @RequestBody StatusDto statusDto) {
         try {
             orderService.updateOrderStatus(orderId, statusDto);
-        } catch (OrderCreationException | InvalidOrderStatusException e) {
+        } catch (InvalidOrderStatusException | InvalidOrderException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         } catch (MessageSendingException e) {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, e.getMessage());
