@@ -2,6 +2,7 @@ package com.kopchak.worldoftoys.repository.product.impl;
 
 import com.kopchak.worldoftoys.dto.product.category.CategoryDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringCategoriesDto;
+import com.kopchak.worldoftoys.exception.CategoryContainsProductsException;
 import com.kopchak.worldoftoys.exception.InvalidCategoryTypeException;
 import com.kopchak.worldoftoys.mapper.product.CategoryMapper;
 import com.kopchak.worldoftoys.domain.product.Product;
@@ -64,10 +65,10 @@ public class CategoryRepositoryImpl implements CategoryRepository {
     @Override
     @Transactional
     public <T extends ProductCategory> void deleteCategory(Class<T> productCategoryType, Integer id)
-            throws InvalidCategoryTypeException {
+            throws InvalidCategoryTypeException, CategoryContainsProductsException {
         if (containsProductsInCategory(productCategoryType, id)) {
-            throw new InvalidCategoryTypeException(String.format("It is not possible to delete a category with id: %d " +
-                    "because it contains products.", id));
+            throw new CategoryContainsProductsException(String.format("It is not possible to delete a category with id: %d " +
+                    "because there are products in this category.", id));
         }
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
         CriteriaDelete<T> criteriaQuery = criteriaBuilder.createCriteriaDelete(productCategoryType);

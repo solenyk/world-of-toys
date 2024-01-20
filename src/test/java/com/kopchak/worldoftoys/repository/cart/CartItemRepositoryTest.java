@@ -14,6 +14,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -61,8 +62,9 @@ class CartItemRepositoryTest {
     public void findAllUserCartItems_UserEmail_ReturnsSetOfCartItemDto() {
         int expectedProductAmount = 2;
         List<CartItemDto> expectedCartItemDtos = new ArrayList<>() {{
-            add(new CartItemDto("Лялька Даринка", "lyalka-darynka", BigDecimal.valueOf(900), 1));
-            add(new CartItemDto("Пупсик Оксанка", "pupsik_oksanka", BigDecimal.valueOf(2000), 4));
+            add(new CartItemDto("Лялька Даринка", "lyalka-darynka", BigDecimal.valueOf(900), BigInteger.ONE));
+            add(new CartItemDto("Пупсик Оксанка", "pupsik_oksanka", BigDecimal.valueOf(2000),
+                    BigInteger.valueOf(4)));
         }};
 
         List<CartItemDto> actualCartItemDtos = cartItemRepository.findAllUserCartItems(user)

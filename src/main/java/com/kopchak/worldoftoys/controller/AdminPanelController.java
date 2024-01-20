@@ -62,10 +62,12 @@ public class AdminPanelController {
             @RequestParam(name = "origin", required = false) List<String> originCategories,
             @RequestParam(name = "brand", required = false) List<String> brandCategories,
             @RequestParam(name = "age", required = false) List<String> ageCategories,
-            @RequestParam(name = "price-sort", required = false) String priceSortOrder
+            @RequestParam(name = "price-sort", required = false) String priceSortOrder,
+            @RequestParam(name = "availability", required = false) String availability
+
     ) {
         var productsPage = productService.getAdminFilteredProducts(page, size, productName, minPrice, maxPrice,
-                originCategories, brandCategories, ageCategories, priceSortOrder);
+                originCategories, brandCategories, ageCategories, priceSortOrder, availability);
         return new ResponseEntity<>(productsPage, HttpStatus.OK);
     }
 
@@ -200,7 +202,7 @@ public class AdminPanelController {
                                                @PathVariable(name = "categoryId") Integer categoryId) {
         try {
             productService.deleteCategory(categoryType, categoryId);
-        } catch (InvalidCategoryTypeException e) {
+        } catch (InvalidCategoryTypeException | CategoryContainsProductsException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);

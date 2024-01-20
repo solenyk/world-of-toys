@@ -10,9 +10,9 @@ public interface ProductSpecifications {
     Specification<Product> filterByProductNamePriceAndCategories(String productName, BigDecimal minPrice,
                                                                  BigDecimal maxPrice, List<String> originCategories,
                                                                  List<String> brandCategories,
-                                                                 List<String> ageCategories);
+                                                                 List<String> ageCategories, String availability);
 
     Specification<Product> filterByAllCriteria(String productName, BigDecimal minPrice, BigDecimal maxPrice,
                                                List<String> originCategories, List<String> brandCategories,
-                                               List<String> ageCategories, String priceSortOrder);
+                                               List<String> ageCategories, String priceSortOrder, String availability);
 }

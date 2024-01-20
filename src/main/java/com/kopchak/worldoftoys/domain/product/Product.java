@@ -50,7 +50,8 @@ public class Product {
     private BigDecimal price;
 
     @Column(nullable = false, columnDefinition = "boolean default true")
-    private boolean isAvailable = true;
+    @NotNull(message = "Invalid availability: product availability is mandatory")
+    private Boolean isAvailable = true;
 
     @Column(nullable = false)
     @NotNull(message = "Invalid quantity: product quantity is mandatory")

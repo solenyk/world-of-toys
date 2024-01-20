@@ -45,4 +45,5 @@ public abstract class ProductMapper {
     protected abstract List<FilteredProductDto> toFilteredProductDtoList(List<Product> products);
 
     protected abstract List<AdminFilteredProductDto> toAdminFilteredProductDtoList(List<Product> products);
+
 }

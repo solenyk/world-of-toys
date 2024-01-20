@@ -1,6 +1,7 @@
 package com.kopchak.worldoftoys.repository.product;
 
 import com.kopchak.worldoftoys.dto.product.category.FilteringCategoriesDto;
+import com.kopchak.worldoftoys.exception.CategoryContainsProductsException;
 import com.kopchak.worldoftoys.exception.InvalidCategoryTypeException;
 import com.kopchak.worldoftoys.domain.product.Product;
 import com.kopchak.worldoftoys.domain.product.category.ProductCategory;
@@ -16,7 +17,7 @@ public interface CategoryRepository {
     <T extends ProductCategory> Set<T> findAllCategories(Class<T> productCategoryType);
 
     <T extends ProductCategory> void deleteCategory(Class<T> productCategoryType, Integer id)
-            throws InvalidCategoryTypeException;
+            throws InvalidCategoryTypeException, CategoryContainsProductsException;
 
     <T extends ProductCategory> void updateCategory(Class<T> categoryType, Integer id, String name)
             throws InvalidCategoryTypeException;

@@ -20,11 +20,11 @@ public class ProductSpecificationsImpl implements ProductSpecifications {
                                                                         BigDecimal maxPrice,
                                                                         List<String> originCategories,
                                                                         List<String> brandCategories,
-                                                                        List<String> ageCategories) {
+                                                                        List<String> ageCategories,
+                                                                        String availability) {
         return Specification
                 .where(hasProductName(productName))
-                //не для адмін-панелі
-                .and(isAvailable())
+                .and(isAvailable(availability))
                 .and(hasPriceGreaterThanOrEqualTo(minPrice))
                 .and(hasPriceLessThanOrEqualTo(maxPrice))
                 .and(hasProductInOriginCategory(originCategories))
@@ -35,17 +35,27 @@ public class ProductSpecificationsImpl implements ProductSpecifications {
     @Override
     public Specification<Product> filterByAllCriteria(String productName, BigDecimal minPrice, BigDecimal maxPrice,
                                                       List<String> originCategories, List<String> brandCategories,
-                                                      List<String> ageCategories, String priceSortOrder) {
-        return filterByProductNamePriceAndCategories(productName, minPrice, maxPrice, originCategories, brandCategories, ageCategories)
+                                                      List<String> ageCategories, String priceSortOrder,
+                                                      String availability) {
+        return filterByProductNamePriceAndCategories(productName, minPrice, maxPrice, originCategories, brandCategories,
+                ageCategories, availability)
                 .and(sortByPrice(priceSortOrder));
     }
 
-    private Specification<Product> isAvailable() {
+    private Specification<Product> isAvailable(String availability) {
         return (root, query, criteriaBuilder) -> {
-            Predicate isAvailablePredicate = criteriaBuilder.equal(root.get(Product_.isAvailable), true);
-            Predicate quantityGreaterThanZeroPredicate =
-                    criteriaBuilder.greaterThan(root.get(Product_.availableQuantity), BigInteger.ZERO);
-            return criteriaBuilder.and(isAvailablePredicate, quantityGreaterThanZeroPredicate);
+            if ("available".equalsIgnoreCase(availability)) {
+                Predicate isAvailablePredicate = criteriaBuilder.isTrue(root.get(Product_.isAvailable));
+                Predicate quantityGreaterThanZeroPredicate =
+                        criteriaBuilder.greaterThan(root.get(Product_.availableQuantity), BigInteger.ZERO);
+                return criteriaBuilder.and(isAvailablePredicate, quantityGreaterThanZeroPredicate);
+            } else if ("unavailable".equalsIgnoreCase(availability)) {
+                Predicate isUnavailablePredicate = criteriaBuilder.isFalse(root.get(Product_.isAvailable));
+                Predicate quantityEqualZeroPredicate =
+                        criteriaBuilder.equal(root.get(Product_.availableQuantity), BigInteger.ZERO);
+                return criteriaBuilder.or(isUnavailablePredicate, quantityEqualZeroPredicate);
+            }
+            return query.getRestriction();
         };
     }
 

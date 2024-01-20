@@ -29,7 +29,7 @@ public interface ProductService {
     AdminFilteredProductsPageDto getAdminFilteredProducts(int page, int size, String productName, BigDecimal minPrice,
                                                           BigDecimal maxPrice, List<String> originCategories,
                                                           List<String> brandCategories, List<String> ageCategories,
-                                                          String priceSortOrder);
+                                                          String priceSortOrder, String availability);
 
     AdminProductDto getAdminProductDtoById(Integer productId) throws ProductNotFoundException, ImageDecompressionException;
 
@@ -45,7 +45,7 @@ public interface ProductService {
 
     Set<AdminCategoryDto> getAdminCategories(String categoryType) throws InvalidCategoryTypeException;
 
-    void deleteCategory(String category, Integer categoryId) throws InvalidCategoryTypeException;
+    void deleteCategory(String category, Integer categoryId) throws InvalidCategoryTypeException, CategoryContainsProductsException;
 
     void updateCategory(String categoryType, Integer categoryId, CategoryNameDto categoryNameDto)
             throws InvalidCategoryTypeException;

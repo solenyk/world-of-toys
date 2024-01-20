@@ -8,5 +8,5 @@ import java.math.BigInteger;
 
 @Builder
 public record AdminFilteredProductDto(Integer id, String name, BigDecimal price, BigInteger availableQuantity,
-                                      ImageDto mainImage) {
+                                      Boolean isAvailable, ImageDto mainImage) {
 }

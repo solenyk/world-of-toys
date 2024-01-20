@@ -58,8 +58,9 @@ public class ProductServiceImpl implements ProductService {
                                                        BigDecimal maxPrice, List<String> originCategories,
                                                        List<String> brandCategories, List<String> ageCategories,
                                                        String priceSortOrder) {
+        String availability = "available";
         Page<Product> productPage = getFilteredProductPage(page, size, productName, minPrice, maxPrice,
-                originCategories, brandCategories, ageCategories, priceSortOrder);
+                originCategories, brandCategories, ageCategories, priceSortOrder, availability);
         return productMapper.toFilteredProductsPageDto(productPage);
     }
 
@@ -87,8 +88,9 @@ public class ProductServiceImpl implements ProductService {
                                                          List<String> originCategories,
                                                          List<String> brandCategories,
                                                          List<String> ageCategories) {
+        String availability = "available";
         Specification<Product> spec = productSpecifications.filterByProductNamePriceAndCategories(productName, minPrice,
-                maxPrice, originCategories, brandCategories, ageCategories);
+                maxPrice, originCategories, brandCategories, ageCategories, availability);
         var filteringProductCategoriesDto = categoryRepository.findUniqueFilteringProductCategories(spec);
         log.info("Fetched filtering product categories - Product Name: '{}', Min Price: {}, Max Price: {}, " +
                         "Origin Categories: {}, Brand Categories: {}, Age Categories: {}",
@@ -101,9 +103,11 @@ public class ProductServiceImpl implements ProductService {
                                                                  BigDecimal minPrice, BigDecimal maxPrice,
                                                                  List<String> originCategories,
                                                                  List<String> brandCategories,
-                                                                 List<String> ageCategories, String priceSortOrder) {
+                                                                 List<String> ageCategories, String priceSortOrder,
+                                                                 String availability) {
+
         Page<Product> productPage = getFilteredProductPage(page, size, productName, minPrice, maxPrice,
-                originCategories, brandCategories, ageCategories, priceSortOrder);
+                originCategories, brandCategories, ageCategories, priceSortOrder, availability);
         return productMapper.toAdminFilteredProductsPageDto(productPage);
     }
 
@@ -154,7 +158,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public void deleteProduct(Integer productId) {
         Optional<Product> productOptional = productRepository.findById(productId);
-        if (productOptional.isPresent()){
+        if (productOptional.isPresent()) {
             cartItemRepository.deleteAllById_Product(productOptional.get());
             productRepository.deleteById(productId);
         }
@@ -168,7 +172,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public void deleteCategory(String categoryType, Integer categoryId) throws InvalidCategoryTypeException {
+    public void deleteCategory(String categoryType, Integer categoryId) throws InvalidCategoryTypeException, CategoryContainsProductsException {
         Class<? extends ProductCategory> categoryClass = getCategoryByCategoryType(categoryType);
         categoryRepository.deleteCategory(categoryClass, categoryId);
     }
@@ -189,10 +193,10 @@ public class ProductServiceImpl implements ProductService {
     private Page<Product> getFilteredProductPage(int page, int size, String productName, BigDecimal minPrice,
                                                  BigDecimal maxPrice, List<String> originCategories,
                                                  List<String> brandCategories, List<String> ageCategories,
-                                                 String priceSortOrder) {
+                                                 String priceSortOrder, String availability) {
         Pageable pageable = PageRequest.of(page, size);
         Specification<Product> spec = productSpecifications.filterByAllCriteria(productName, minPrice,
-                maxPrice, originCategories, brandCategories, ageCategories, priceSortOrder);
+                maxPrice, originCategories, brandCategories, ageCategories, priceSortOrder, availability);
         Page<Product> productPage = productRepository.findAll(spec, pageable);
         log.info("Fetched filtered products - Page: {}, Size: {}, Product Name: '{}', Min Price: {}, Max Price: {}, " +
                         "Origin Categories: {}, Brand Categories: {}, Age Categories: {}, Price Sort Order: '{}'",
