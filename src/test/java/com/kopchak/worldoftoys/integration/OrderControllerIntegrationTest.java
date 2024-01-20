@@ -23,6 +23,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.util.Set;
 
@@ -135,7 +136,8 @@ public class OrderControllerIntegrationTest {
                 .id("4c980930-16eb-41cd-b998-29d03118d67c")
                 .dateTime(LocalDateTime.of(2023, 11, 19, 18, 9, 52))
                 .orderStatus(OrderStatus.AWAITING_PAYMENT)
-                .products(Set.of(new OrderProductDto("Лялька Клаймбер", BigDecimal.valueOf(1700), 2)))
+                .products(Set.of(new OrderProductDto("Лялька Клаймбер", "lyalka-klaymber",
+                        BigInteger.valueOf(2))))
                 .totalPrice(BigDecimal.valueOf(1700))
                 .build());
         ResultActions response = mockMvc.perform(get("/api/v1/order")

@@ -28,6 +28,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.HashSet;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -62,7 +63,7 @@ class CartControllerTest {
 
     @BeforeEach
     public void setUp() {
-        requestCartItemDto = new RequestCartItemDto(PRODUCT_SLUG, 2);
+        requestCartItemDto = new RequestCartItemDto(PRODUCT_SLUG, BigInteger.valueOf(2));
     }
 
 

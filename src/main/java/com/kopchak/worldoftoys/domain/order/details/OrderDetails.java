@@ -6,8 +6,8 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
+
+import java.math.BigInteger;
 
 @Getter
 @Setter
@@ -25,12 +25,11 @@ public class OrderDetails {
     @Id
     @ManyToOne(cascade = CascadeType.MERGE)
     @JoinColumn(name = "product_id", referencedColumnName = "id")
-    @OnDelete(action = OnDeleteAction.CASCADE)
     private Product product;
 
     @Column(columnDefinition = "integer default 1", nullable = false)
     @NotNull(message = "Invalid cart item quantity: quantity is null")
     @Min(value = 1,
             message = "Invalid cart item quantity: quantity '${validatedValue}' must be greater than or equal to {status}")
-    private Integer quantity = 1;
+    private BigInteger quantity = BigInteger.ONE;
 }

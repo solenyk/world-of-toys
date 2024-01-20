@@ -6,6 +6,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
 
+import java.math.BigInteger;
+
 @Builder
 @Schema(description = "Add, update or delete cart item")
 public record RequestCartItemDto(
@@ -22,5 +24,5 @@ public record RequestCartItemDto(
         @Min(
                 value = 1,
                 message = "Invalid quantity: quantity '${validatedValue}' must be greater than or equal to {status}"
-        ) Integer quantity) {
+        ) BigInteger quantity) {
 }

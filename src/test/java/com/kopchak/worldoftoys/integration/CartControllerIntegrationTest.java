@@ -24,6 +24,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -56,8 +57,8 @@ public class CartControllerIntegrationTest {
         mockMvc = MockMvcBuilders.webAppContextSetup(context)
                 .apply(springSecurity())
                 .build();
-        validRequestCartItemDto = new RequestCartItemDto("lyalka-klaymber", 2);
-        invalidRequestCartItemDto = new RequestCartItemDto(NON_EXISTENT_PRODUCT_SLUG, 2);
+        validRequestCartItemDto = new RequestCartItemDto("lyalka-klaymber", BigInteger.valueOf(2));
+        invalidRequestCartItemDto = new RequestCartItemDto(NON_EXISTENT_PRODUCT_SLUG, BigInteger.valueOf(2));
         accessDeniedErrorResponse = new ResponseStatusExceptionDto(HttpStatus.FORBIDDEN.value(),
                 HttpStatus.FORBIDDEN.name(), "Access Denied");
         unauthorizedErrorResponse = new ResponseStatusExceptionDto(HttpStatus.UNAUTHORIZED.value(),
@@ -118,8 +119,9 @@ public class CartControllerIntegrationTest {
     @WithUserDetails("john.doe@example.com")
     public void getUserCartDetails_AuthUser_ReturnsOkStatusAndUserCartDetailsDto() throws Exception {
         Set<CartItemDto> expectedContent = new LinkedHashSet<>() {{
-            add(new CartItemDto("Лялька Даринка", "lyalka-darynka", BigDecimal.valueOf(900), 1));
-            add(new CartItemDto("Пупсик Оксанка", "pupsik_oksanka", BigDecimal.valueOf(2000), 4));
+            add(new CartItemDto("Лялька Даринка", "lyalka-darynka", BigDecimal.valueOf(900), BigInteger.ONE));
+            add(new CartItemDto("Пупсик Оксанка", "pupsik_oksanka", BigDecimal.valueOf(2000),
+                    BigInteger.valueOf(4)));
         }};
         BigDecimal expectedTotalCost = BigDecimal.valueOf(2900);
         UserCartDetailsDto expectedCartDetailsDto = new UserCartDetailsDto(expectedContent, expectedTotalCost);

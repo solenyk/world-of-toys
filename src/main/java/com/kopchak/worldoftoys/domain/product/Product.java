@@ -49,6 +49,9 @@ public class Product {
             message = "Invalid price: price '${formatter.format('%1$.2f', validatedValue)}' must not be greater than {status}")
     private BigDecimal price;
 
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    private boolean isAvailable = true;
+
     @Column(nullable = false)
     @NotNull(message = "Invalid quantity: product quantity is mandatory")
     @Min(value = 0, message = "Invalid quantity: product quantity '${validatedValue}' must not be less than {status}")
@@ -79,7 +82,7 @@ public class Product {
             inverseJoinColumns = @JoinColumn(name = "age_category_id"))
     private Set<AgeCategory> ageCategories;
 
-    @OneToMany(mappedBy = "product", cascade = {CascadeType.REFRESH, CascadeType.MERGE, CascadeType.REMOVE})
+    @OneToMany(mappedBy = "product", cascade = {CascadeType.REFRESH, CascadeType.MERGE})
     private Set<OrderDetails> orderDetails;
 
     @PrePersist

@@ -19,6 +19,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.HashSet;
 import java.util.Optional;
 
@@ -46,16 +47,16 @@ class CartServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        requestCartItemDto = new RequestCartItemDto(PRODUCT_SLUG, 2);
+        requestCartItemDto = new RequestCartItemDto(PRODUCT_SLUG, BigInteger.valueOf(2));
         user = new AppUser();
         product = new Product();
         cartItemId = new CartItemId(user, product);
-        cartItem = new CartItem(cartItemId, 3);
+        cartItem = new CartItem(cartItemId, BigInteger.valueOf(3));
     }
 
     @Test
     public void addProductToCart_ExistentCartItem() throws ProductNotFoundException {
-        int expectedCartItemQuantity = requestCartItemDto.quantity() + cartItem.getQuantity();
+        BigInteger expectedCartItemQuantity = requestCartItemDto.quantity().add(cartItem.getQuantity());
 
         when(productRepository.findBySlug(PRODUCT_SLUG)).thenReturn(Optional.of(product));
         when(cartItemRepository.findById(cartItemId)).thenReturn(Optional.of(cartItem));
