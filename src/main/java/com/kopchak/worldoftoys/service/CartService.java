@@ -2,6 +2,7 @@ package com.kopchak.worldoftoys.service;
 
 import com.kopchak.worldoftoys.dto.cart.RequestCartItemDto;
 import com.kopchak.worldoftoys.dto.cart.UserCartDetailsDto;
+import com.kopchak.worldoftoys.exception.CartValidationException;
 import com.kopchak.worldoftoys.exception.ProductNotFoundException;
 import com.kopchak.worldoftoys.domain.user.AppUser;
 
@@ -13,4 +14,5 @@ public interface CartService {
     void updateUserCartItem(RequestCartItemDto requestCartItemDto, AppUser user) throws ProductNotFoundException;
 
     void deleteUserCartItem(RequestCartItemDto requestCartItemDto, AppUser user) throws ProductNotFoundException;
+    void verifyCartBeforeOrderCreation(AppUser user) throws CartValidationException;
 }

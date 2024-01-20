@@ -20,6 +20,7 @@ import com.kopchak.worldoftoys.dto.product.image.ImageDto;
 import com.kopchak.worldoftoys.exception.*;
 import com.kopchak.worldoftoys.mapper.product.CategoryMapper;
 import com.kopchak.worldoftoys.mapper.product.ProductMapper;
+import com.kopchak.worldoftoys.repository.cart.CartItemRepository;
 import com.kopchak.worldoftoys.repository.product.CategoryRepository;
 import com.kopchak.worldoftoys.repository.product.ProductRepository;
 import com.kopchak.worldoftoys.repository.product.image.ImageRepository;
@@ -45,6 +46,7 @@ import java.util.stream.Collectors;
 public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final CartItemRepository cartItemRepository;
     private final ProductSpecificationsImpl productSpecifications;
     private final CategoryMapper categoryMapper;
     private final ProductMapper productMapper;
@@ -151,7 +153,11 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public void deleteProduct(Integer productId) {
-        productRepository.deleteById(productId);
+        Optional<Product> productOptional = productRepository.findById(productId);
+        if (productOptional.isPresent()){
+            cartItemRepository.deleteAllById_Product(productOptional.get());
+            productRepository.deleteById(productId);
+        }
     }
 
     @Override

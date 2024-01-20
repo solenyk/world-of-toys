@@ -10,6 +10,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.List;
 
 @Component
@@ -22,6 +23,8 @@ public class ProductSpecificationsImpl implements ProductSpecifications {
                                                                         List<String> ageCategories) {
         return Specification
                 .where(hasProductName(productName))
+                //не для адмін-панелі
+                .and(isAvailable())
                 .and(hasPriceGreaterThanOrEqualTo(minPrice))
                 .and(hasPriceLessThanOrEqualTo(maxPrice))
                 .and(hasProductInOriginCategory(originCategories))
@@ -35,6 +38,15 @@ public class ProductSpecificationsImpl implements ProductSpecifications {
                                                       List<String> ageCategories, String priceSortOrder) {
         return filterByProductNamePriceAndCategories(productName, minPrice, maxPrice, originCategories, brandCategories, ageCategories)
                 .and(sortByPrice(priceSortOrder));
+    }
+
+    private Specification<Product> isAvailable() {
+        return (root, query, criteriaBuilder) -> {
+            Predicate isAvailablePredicate = criteriaBuilder.equal(root.get(Product_.isAvailable), true);
+            Predicate quantityGreaterThanZeroPredicate =
+                    criteriaBuilder.greaterThan(root.get(Product_.availableQuantity), BigInteger.ZERO);
+            return criteriaBuilder.and(isAvailablePredicate, quantityGreaterThanZeroPredicate);
+        };
     }
 
     private Specification<Product> hasProductName(String productName) {

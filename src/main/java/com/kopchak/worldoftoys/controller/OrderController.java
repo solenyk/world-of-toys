@@ -2,8 +2,10 @@ package com.kopchak.worldoftoys.controller;
 
 import com.kopchak.worldoftoys.dto.order.OrderDto;
 import com.kopchak.worldoftoys.dto.order.OrderRecipientDto;
+import com.kopchak.worldoftoys.exception.CartValidationException;
 import com.kopchak.worldoftoys.exception.OrderCreationException;
 import com.kopchak.worldoftoys.domain.user.AppUser;
+import com.kopchak.worldoftoys.service.CartService;
 import com.kopchak.worldoftoys.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -33,6 +35,17 @@ import java.util.Set;
 public class OrderController {
 
     private final OrderService orderService;
+    private final CartService cartService;
+
+    @GetMapping("/verify-cart")
+    public ResponseEntity<Void> verifyCartBeforeOrderCreation(@AuthenticationPrincipal AppUser user) {
+        try {
+            cartService.verifyCartBeforeOrderCreation(user);
+        } catch (CartValidationException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
 
     @Operation(summary = "Create order")
     @ApiResponses(value = {

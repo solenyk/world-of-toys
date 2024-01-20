@@ -1,5 +1,12 @@
 package com.kopchak.worldoftoys.service.impl;
 
+import com.kopchak.worldoftoys.domain.cart.CartItem;
+import com.kopchak.worldoftoys.domain.order.Order;
+import com.kopchak.worldoftoys.domain.order.OrderStatus;
+import com.kopchak.worldoftoys.domain.order.payment.PaymentStatus;
+import com.kopchak.worldoftoys.domain.order.recipient.OrderRecipient;
+import com.kopchak.worldoftoys.domain.product.Product;
+import com.kopchak.worldoftoys.domain.user.AppUser;
 import com.kopchak.worldoftoys.dto.admin.product.order.FilteredOrdersPageDto;
 import com.kopchak.worldoftoys.dto.admin.product.order.FilteringOrderOptionsDto;
 import com.kopchak.worldoftoys.dto.admin.product.order.StatusDto;
@@ -10,15 +17,10 @@ import com.kopchak.worldoftoys.exception.MessageSendingException;
 import com.kopchak.worldoftoys.exception.OrderCreationException;
 import com.kopchak.worldoftoys.mapper.order.OrderMapper;
 import com.kopchak.worldoftoys.mapper.order.OrderRecipientMapper;
-import com.kopchak.worldoftoys.domain.cart.CartItem;
-import com.kopchak.worldoftoys.domain.order.Order;
-import com.kopchak.worldoftoys.domain.order.OrderStatus;
-import com.kopchak.worldoftoys.domain.order.payment.PaymentStatus;
-import com.kopchak.worldoftoys.domain.order.recipient.OrderRecipient;
-import com.kopchak.worldoftoys.domain.user.AppUser;
 import com.kopchak.worldoftoys.repository.cart.CartItemRepository;
 import com.kopchak.worldoftoys.repository.order.OrderDetailsRepository;
 import com.kopchak.worldoftoys.repository.order.OrderRepository;
+import com.kopchak.worldoftoys.repository.product.ProductRepository;
 import com.kopchak.worldoftoys.repository.specifications.OrderSpecifications;
 import com.kopchak.worldoftoys.service.EmailSenderService;
 import com.kopchak.worldoftoys.service.OrderService;
@@ -30,9 +32,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -40,6 +44,7 @@ import java.util.Set;
 public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final CartItemRepository cartItemRepository;
+    private final ProductRepository productRepository;
     private final OrderDetailsRepository orderDetailsRepository;
     private final EmailSenderService emailSenderService;
     private final OrderRecipientMapper orderRecipientMapper;
@@ -48,22 +53,24 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public void createOrder(OrderRecipientDto orderRecipientDto, AppUser user) throws OrderCreationException {
+        BigDecimal orderTotalPrice = cartItemRepository.calculateUserCartTotalPrice(user);
         Set<CartItem> cartItems = cartItemRepository.deleteAllById_User(user);
-        String username = user.getUsername();
         if (cartItems.isEmpty()) {
             throw new OrderCreationException("It is impossible to create an order for the user " +
                     "because there are no products in the user's cart.");
         }
+        updateProductsAvailableQuantity(cartItems);
         OrderRecipient orderRecipient = orderRecipientMapper.toOrderRecipient(orderRecipientDto);
         Order order = Order
                 .builder()
                 .orderRecipient(orderRecipient)
+                .totalPrice(orderTotalPrice)
                 .user(user)
                 .build();
         order = orderRepository.save(order);
         var orderDetails = orderMapper.toOrderDetails(cartItems, order);
         orderDetailsRepository.saveAll(orderDetails);
-        log.info("The order for user with username: {} has been successfully created.", username);
+        log.info("The order for user with username: {} has been successfully created.", user.getUsername());
     }
 
     @Override
@@ -95,7 +102,7 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(orderId).orElseThrow(() ->
                 new OrderCreationException(String.format("Order with id: %s doesn't exist!", orderId)));
         OrderStatus orderStatus = orderMapper.toOrderStatus(statusDto);
-        if (!order.getOrderStatus().equals(orderStatus)) {
+        if (order.getOrderStatus().equals(orderStatus)) {
             throw new InvalidOrderStatusException(String.format("The status: %s of the order with id: %s " +
                     "is the same as the current status", statusDto.status(), orderId));
         }
@@ -108,5 +115,17 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public Set<StatusDto> getAllOrderStatuses() {
         return orderMapper.toStatusDtoSet(Arrays.asList(OrderStatus.values()));
+    }
+
+    private void updateProductsAvailableQuantity(Set<CartItem> cartItems) {
+        Set<Product> products = cartItems
+                .stream()
+                .map(cartItem -> {
+                    Product product = cartItem.getId().getProduct();
+                    product.setAvailableQuantity(product.getAvailableQuantity().subtract(cartItem.getQuantity()));
+                    return product;
+                })
+                .collect(Collectors.toSet());
+        productRepository.saveAll(products);
     }
 }
