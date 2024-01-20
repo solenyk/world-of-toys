@@ -50,6 +50,10 @@ public record AddUpdateProductDto(
                 message = "Invalid quantity: product quantity '${validatedValue}' must not be less than {status}"
         ) BigInteger availableQuantity,
 
+        @Schema(example = "true", requiredMode = Schema.RequiredMode.REQUIRED)
+        @NotNull(message = "Invalid availability: product availability is mandatory")
+        Boolean isAvailable,
+
         @Valid
         @NotNull(message = "Invalid origin category: origin category is mandatory")
         CategoryIdDto originCategory,

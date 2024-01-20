@@ -41,8 +41,6 @@ public interface ProductService {
                     List<MultipartFile> imageFileList)
             throws InvalidCategoryTypeException, ProductNotFoundException, ImageCompressionException, ImageExceedsMaxSizeException, InvalidImageFileFormatException;
 
-    void deleteProduct(Integer productId);
-
     Set<AdminCategoryDto> getAdminCategories(String categoryType) throws InvalidCategoryTypeException;
 
     void deleteCategory(String category, Integer categoryId) throws InvalidCategoryTypeException, CategoryContainsProductsException;

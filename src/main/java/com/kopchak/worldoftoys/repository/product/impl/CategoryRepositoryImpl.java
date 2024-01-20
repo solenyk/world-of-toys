@@ -1,15 +1,11 @@
 package com.kopchak.worldoftoys.repository.product.impl;
 
-import com.kopchak.worldoftoys.dto.product.category.CategoryDto;
-import com.kopchak.worldoftoys.dto.product.category.FilteringCategoriesDto;
-import com.kopchak.worldoftoys.exception.CategoryContainsProductsException;
-import com.kopchak.worldoftoys.exception.InvalidCategoryTypeException;
-import com.kopchak.worldoftoys.mapper.product.CategoryMapper;
 import com.kopchak.worldoftoys.domain.product.Product;
 import com.kopchak.worldoftoys.domain.product.Product_;
-import com.kopchak.worldoftoys.domain.product.category.AgeCategory;
 import com.kopchak.worldoftoys.domain.product.category.ProductCategory;
 import com.kopchak.worldoftoys.domain.product.category.ProductCategory_;
+import com.kopchak.worldoftoys.exception.CategoryContainsProductsException;
+import com.kopchak.worldoftoys.exception.InvalidCategoryTypeException;
 import com.kopchak.worldoftoys.repository.product.CategoryRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
@@ -23,23 +19,13 @@ import org.springframework.stereotype.Repository;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.function.Function;
 
 @Repository
 @RequiredArgsConstructor
 @Slf4j
 public class CategoryRepositoryImpl implements CategoryRepository {
     private final EntityManager entityManager;
-    private final CategoryMapper categoryMapper;
-
-    @Override
-    public FilteringCategoriesDto findUniqueFilteringProductCategories(Specification<Product> spec) {
-        return FilteringCategoriesDto
-                .builder()
-                .originCategories(findUniqueProductCategoryDtoList(spec, Product_.ORIGIN_CATEGORY))
-                .brandCategories(findUniqueProductCategoryDtoList(spec, Product_.BRAND_CATEGORY))
-                .ageCategories(findUniqueProductCategoryDtoList(spec, Product_.AGE_CATEGORIES))
-                .build();
-    }
 
     @Override
     public <T extends ProductCategory> T findById(Integer id, Class<T> productCategoryType)
@@ -67,8 +53,8 @@ public class CategoryRepositoryImpl implements CategoryRepository {
     public <T extends ProductCategory> void deleteCategory(Class<T> productCategoryType, Integer id)
             throws InvalidCategoryTypeException, CategoryContainsProductsException {
         if (containsProductsInCategory(productCategoryType, id)) {
-            throw new CategoryContainsProductsException(String.format("It is not possible to delete a category with id: %d " +
-                    "because there are products in this category.", id));
+            throw new CategoryContainsProductsException(String.format("It is not possible to delete a category " +
+                    "with id: %d because there are products in this category.", id));
         }
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
         CriteriaDelete<T> criteriaQuery = criteriaBuilder.createCriteriaDelete(productCategoryType);
@@ -109,34 +95,50 @@ public class CategoryRepositoryImpl implements CategoryRepository {
         }
     }
 
-    private List<CategoryDto> findUniqueProductCategoryDtoList(Specification<Product> spec,
-                                                               String productCategoryAttribute) {
+    @Override
+    public List<ProductCategory> findUniqueBrandCategoryList(Specification<Product> spec) {
+        return findUniqueProductCategoryList(
+                spec,
+                root -> root.get(Product_.BRAND_CATEGORY)
+        );
+    }
+
+    @Override
+    public List<ProductCategory> findUniqueOriginCategoryList(Specification<Product> spec) {
+        return findUniqueProductCategoryList(
+                spec,
+                root -> root.get(Product_.ORIGIN_CATEGORY)
+        );
+    }
+
+    @Override
+    public List<ProductCategory> findUniqueAgeCategoryList(Specification<Product> spec) {
+        return findUniqueProductCategoryList(
+                spec,
+                root -> root.join(Product_.AGE_CATEGORIES, JoinType.INNER)
+        );
+    }
+
+    private List<ProductCategory> findUniqueProductCategoryList(Specification<Product> spec,
+                                                                Function<Root<Product>, Path<ProductCategory>>
+                                                                        categoryAttributeExtractor) {
 
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
         CriteriaQuery<ProductCategory> criteriaQuery = criteriaBuilder.createQuery(ProductCategory.class);
         Root<Product> root = criteriaQuery.from(Product.class);
 
-        if (productCategoryAttribute.equals(Product_.ORIGIN_CATEGORY) ||
-                productCategoryAttribute.equals(Product_.BRAND_CATEGORY)) {
-            criteriaQuery.select(root.get(productCategoryAttribute));
-        } else if (productCategoryAttribute.equals(Product_.AGE_CATEGORIES)) {
-            Join<Product, AgeCategory> join = root.join(productCategoryAttribute, JoinType.INNER);
-            criteriaQuery.select(join);
-        }
+        Path<ProductCategory> categoryAttribute = categoryAttributeExtractor.apply(root);
 
+        criteriaQuery.select(categoryAttribute);
         criteriaQuery.distinct(true);
-        criteriaQuery.orderBy(criteriaBuilder.asc(root.get(productCategoryAttribute).get(ProductCategory_.SLUG)));
+        criteriaQuery.orderBy(criteriaBuilder.asc(categoryAttribute));
 
         if (spec != null) {
             criteriaQuery.where(spec.toPredicate(root, criteriaQuery, criteriaBuilder));
         }
 
         TypedQuery<ProductCategory> query = entityManager.createQuery(criteriaQuery);
-        List<CategoryDto> categoryDtoList = categoryMapper
-                .toCategoryDtoList(query.getResultList());
-        log.info("Found {} unique product categories for category: {}", categoryDtoList.size(),
-                productCategoryAttribute);
-        return categoryDtoList;
+        return query.getResultList();
     }
 
     private <T extends ProductCategory> boolean containsProductsInCategory(Class<T> categoryType, Integer id)

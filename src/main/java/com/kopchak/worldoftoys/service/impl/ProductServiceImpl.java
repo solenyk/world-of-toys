@@ -20,7 +20,6 @@ import com.kopchak.worldoftoys.dto.product.image.ImageDto;
 import com.kopchak.worldoftoys.exception.*;
 import com.kopchak.worldoftoys.mapper.product.CategoryMapper;
 import com.kopchak.worldoftoys.mapper.product.ProductMapper;
-import com.kopchak.worldoftoys.repository.cart.CartItemRepository;
 import com.kopchak.worldoftoys.repository.product.CategoryRepository;
 import com.kopchak.worldoftoys.repository.product.ProductRepository;
 import com.kopchak.worldoftoys.repository.product.image.ImageRepository;
@@ -46,7 +45,6 @@ import java.util.stream.Collectors;
 public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
-    private final CartItemRepository cartItemRepository;
     private final ProductSpecificationsImpl productSpecifications;
     private final CategoryMapper categoryMapper;
     private final ProductMapper productMapper;
@@ -58,9 +56,8 @@ public class ProductServiceImpl implements ProductService {
                                                        BigDecimal maxPrice, List<String> originCategories,
                                                        List<String> brandCategories, List<String> ageCategories,
                                                        String priceSortOrder) {
-        String availability = "available";
         Page<Product> productPage = getFilteredProductPage(page, size, productName, minPrice, maxPrice,
-                originCategories, brandCategories, ageCategories, priceSortOrder, availability);
+                originCategories, brandCategories, ageCategories, priceSortOrder, null);
         return productMapper.toFilteredProductsPageDto(productPage);
     }
 
@@ -88,10 +85,13 @@ public class ProductServiceImpl implements ProductService {
                                                          List<String> originCategories,
                                                          List<String> brandCategories,
                                                          List<String> ageCategories) {
-        String availability = "available";
         Specification<Product> spec = productSpecifications.filterByProductNamePriceAndCategories(productName, minPrice,
-                maxPrice, originCategories, brandCategories, ageCategories, availability);
-        var filteringProductCategoriesDto = categoryRepository.findUniqueFilteringProductCategories(spec);
+                maxPrice, originCategories, brandCategories, ageCategories, null);
+        var filteringProductCategoriesDto = categoryMapper.toFilteringCategoriesDto(
+                categoryRepository.findUniqueOriginCategoryList(spec),
+                categoryRepository.findUniqueBrandCategoryList(spec),
+                categoryRepository.findUniqueAgeCategoryList(spec)
+        );
         log.info("Fetched filtering product categories - Product Name: '{}', Min Price: {}, Max Price: {}, " +
                         "Origin Categories: {}, Brand Categories: {}, Age Categories: {}",
                 productName, minPrice, maxPrice, originCategories, brandCategories, ageCategories);
@@ -156,15 +156,6 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public void deleteProduct(Integer productId) {
-        Optional<Product> productOptional = productRepository.findById(productId);
-        if (productOptional.isPresent()) {
-            cartItemRepository.deleteAllById_Product(productOptional.get());
-            productRepository.deleteById(productId);
-        }
-    }
-
-    @Override
     public Set<AdminCategoryDto> getAdminCategories(String categoryType) throws InvalidCategoryTypeException {
         Class<? extends ProductCategory> categoryClass = getCategoryByCategoryType(categoryType);
         var categories = categoryRepository.findAllCategories(categoryClass);
@@ -199,9 +190,9 @@ public class ProductServiceImpl implements ProductService {
                 maxPrice, originCategories, brandCategories, ageCategories, priceSortOrder, availability);
         Page<Product> productPage = productRepository.findAll(spec, pageable);
         log.info("Fetched filtered products - Page: {}, Size: {}, Product Name: '{}', Min Price: {}, Max Price: {}, " +
-                        "Origin Categories: {}, Brand Categories: {}, Age Categories: {}, Price Sort Order: '{}'",
-                page, size, productName, minPrice, maxPrice, originCategories, brandCategories, ageCategories,
-                priceSortOrder);
+                        "Origin Categories: {}, Brand Categories: {}, Age Categories: {}, Availability: {}, " +
+                        "Price Sort Order: '{}'", page, size, productName, minPrice, maxPrice, originCategories,
+                brandCategories, ageCategories, availability, priceSortOrder);
         return productPage;
     }
 

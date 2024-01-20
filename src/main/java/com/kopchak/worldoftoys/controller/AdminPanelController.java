@@ -147,17 +147,6 @@ public class AdminPanelController {
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
-    @Operation(summary = "Delete product")
-    @ApiResponse(
-            responseCode = "204",
-            description = "Product was successfully deleted",
-            content = @Content(schema = @Schema(hidden = true)))
-    @DeleteMapping("/products/{productId}")
-    public ResponseEntity<Void> deleteProduct(@PathVariable(name = "productId") Integer productId) {
-        productService.deleteProduct(productId);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-    }
-
     @Operation(summary = "Get all categories")
     @ApiResponses(value = {
             @ApiResponse(
