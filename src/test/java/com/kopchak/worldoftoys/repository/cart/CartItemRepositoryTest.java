@@ -82,4 +82,17 @@ class CartItemRepositoryTest {
             assertThat(actualCartItemDtos.get(i).quantity()).isEqualTo(expectedCartItemDtos.get(i).quantity());
         }
     }
+
+    @Test
+    public void updateCartItems_deleteUnavailableItems_ReturnsInt() {
+        user.setId(1003);
+        int expectedUpdatedCartItemsAmount = 1;
+        int expectedDeletedCartItemsAmount = 1;
+
+        int actualDeletedCartItemsAmount = cartItemRepository.deleteUnavailableItems(user);
+        int actualUpdatedCartItemsAmount = cartItemRepository.updateCartItems(user);
+
+        assertThat(actualDeletedCartItemsAmount).isEqualTo(expectedDeletedCartItemsAmount);
+        assertThat(actualUpdatedCartItemsAmount).isEqualTo(expectedUpdatedCartItemsAmount);
+    }
 }

@@ -29,9 +29,9 @@ public interface OrderRepository extends JpaRepository<Order, String>, JpaSpecif
     @EntityGraph(type = EntityGraph.EntityGraphType.FETCH, attributePaths = {"orderDetails.product", "payments"})
     @NotNull Page<Order> findAll(Specification<Order> spec, @NotNull Pageable pageable);
 
-    @Query("SELECT DISTINCT o.orderStatus FROM Order o")
+    @Query("SELECT DISTINCT o.orderStatus FROM Order o WHERE o.orderStatus IS NOT NULL")
     Set<OrderStatus> findAllOrderStatuses();
 
-    @Query("SELECT DISTINCT p.status FROM Order o LEFT JOIN o.payments p")
+    @Query("SELECT DISTINCT p.status FROM Order o LEFT JOIN o.payments p WHERE p IS NOT NULL")
     Set<PaymentStatus> findAllPaymentStatuses();
 }

@@ -1,13 +1,22 @@
 package com.kopchak.worldoftoys.repository.order;
 
 import com.kopchak.worldoftoys.domain.order.Order;
+import com.kopchak.worldoftoys.domain.order.OrderStatus;
+import com.kopchak.worldoftoys.domain.order.payment.PaymentStatus;
 import com.kopchak.worldoftoys.domain.user.AppUser;
+import com.kopchak.worldoftoys.repository.specifications.OrderSpecifications;
+import com.kopchak.worldoftoys.repository.specifications.impl.OrderSpecificationsImpl;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.Optional;
@@ -17,11 +26,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
 @ActiveProfiles("integrationtest")
+@Import(OrderSpecificationsImpl.class)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Transactional
 class OrderRepositoryTest {
     @Autowired
     private OrderRepository orderRepository;
+
+    @Autowired
+    OrderSpecifications orderSpecifications;
     private AppUser user;
     private static final String EXISTENT_ORDER_ID = "4c980930-16eb-41cd-b998-29d03118d67c";
 
@@ -68,5 +81,42 @@ class OrderRepositoryTest {
         Optional<Order> actualOrder = orderRepository.findById(nonExistentOrderId);
 
         assertThat(actualOrder).isEmpty();
+    }
+
+    @Test
+    public void findAll_ReturnsPageOfOrder() {
+        int pageNumber = 0;
+        int pageSize = 2;
+        int expectedAmountOfPages = 1;
+        int expectedAmountOfElements = 1;
+        int expectedContentSize = 1;
+        Pageable pageable = PageRequest.of(pageNumber, pageSize);
+        Specification<Order> spec = orderSpecifications.filterByStatusesAndDate(null, null, null);
+
+        Page<Order> returnedOrderPage = orderRepository.findAll(spec, pageable);
+
+        assertThat(returnedOrderPage).isNotNull();
+        assertThat(returnedOrderPage.getTotalElements()).isEqualTo(expectedAmountOfElements);
+        assertThat(returnedOrderPage.getTotalPages()).isEqualTo(expectedAmountOfPages);
+        assertThat(returnedOrderPage.getContent().size()).isEqualTo(expectedContentSize);
+    }
+
+    @Test
+    public void findAllOrderStatuses_ReturnsSetOfOrderStatuses() {
+        Set<OrderStatus> expectedOrderStatusSet = Set.of(OrderStatus.AWAITING_PAYMENT);
+
+        Set<OrderStatus> returnedOrderStatusSet = orderRepository.findAllOrderStatuses();
+
+        assertThat(returnedOrderStatusSet).isNotNull();
+        assertThat(returnedOrderStatusSet).isNotEmpty();
+        assertThat(returnedOrderStatusSet).isEqualTo(expectedOrderStatusSet);
+    }
+
+    @Test
+    public void findAllPaymentStatuses_ReturnsSetOfPaymentStatuses() {
+        Set<PaymentStatus> returnedPaymentStatusSet = orderRepository.findAllPaymentStatuses();
+
+        assertThat(returnedPaymentStatusSet).isNotNull();
+        assertThat(returnedPaymentStatusSet).isEmpty();
     }
 }

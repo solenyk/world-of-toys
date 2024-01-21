@@ -2,7 +2,6 @@ package com.kopchak.worldoftoys.repository.cart;
 
 import com.kopchak.worldoftoys.domain.cart.CartItem;
 import com.kopchak.worldoftoys.domain.cart.CartItemId;
-import com.kopchak.worldoftoys.domain.product.Product;
 import com.kopchak.worldoftoys.domain.user.AppUser;
 import com.kopchak.worldoftoys.dto.cart.CartItemDto;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -35,10 +34,6 @@ public interface CartItemRepository extends JpaRepository<CartItem, CartItemId> 
 
     @Modifying
     @Transactional
-    void deleteAllById_Product(Product product);
-
-    @Modifying
-    @Transactional
     @Query("UPDATE CartItem c " +
             "SET c.quantity = (SELECT p.availableQuantity FROM Product p WHERE c.id.product = p) " +
             "WHERE c.quantity > (SELECT p.availableQuantity FROM Product p WHERE c.id.product = p) " +
@@ -53,5 +48,4 @@ public interface CartItemRepository extends JpaRepository<CartItem, CartItemId> 
             " (SELECT p FROM Product p " +
             " WHERE p.availableQuantity = 0 OR NOT p.isAvailable)")
     int deleteUnavailableItems(@Param("user") AppUser user);
-
 }
