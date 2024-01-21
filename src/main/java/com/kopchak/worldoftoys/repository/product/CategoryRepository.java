@@ -2,6 +2,7 @@ package com.kopchak.worldoftoys.repository.product;
 
 import com.kopchak.worldoftoys.domain.product.Product;
 import com.kopchak.worldoftoys.domain.product.category.ProductCategory;
+import com.kopchak.worldoftoys.exception.CategoryAlreadyExistsException;
 import com.kopchak.worldoftoys.exception.CategoryContainsProductsException;
 import com.kopchak.worldoftoys.exception.CategoryNotFoundException;
 import org.springframework.data.jpa.domain.Specification;
@@ -15,10 +16,10 @@ public interface CategoryRepository {
     <T extends ProductCategory> Set<T> findAllCategories(Class<T> productCategoryType);
 
     <T extends ProductCategory> void deleteCategory(Class<T> productCategoryType, Integer id)
-            throws CategoryNotFoundException, CategoryContainsProductsException;
+            throws CategoryContainsProductsException;
 
     <T extends ProductCategory> void updateCategory(Class<T> categoryType, Integer id, String name)
-            throws CategoryNotFoundException;
+            throws CategoryNotFoundException, CategoryAlreadyExistsException;
 
     <T extends ProductCategory> void createCategory(Class<T> categoryType, String name) throws CategoryNotFoundException;
 

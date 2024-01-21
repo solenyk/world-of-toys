@@ -170,7 +170,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public void updateCategory(String categoryType, Integer categoryId, CategoryNameDto categoryNameDto)
-            throws CategoryNotFoundException {
+            throws CategoryNotFoundException, CategoryAlreadyExistsException {
         Class<? extends ProductCategory> categoryClass = getCategoryByCategoryType(categoryType);
         categoryRepository.updateCategory(categoryClass, categoryId, categoryNameDto.name());
     }

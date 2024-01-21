@@ -46,7 +46,7 @@ public interface ProductService {
     void deleteCategory(String category, Integer categoryId) throws CategoryNotFoundException, CategoryContainsProductsException;
 
     void updateCategory(String categoryType, Integer categoryId, CategoryNameDto categoryNameDto)
-            throws CategoryNotFoundException;
+            throws CategoryNotFoundException, CategoryAlreadyExistsException;
 
     void createCategory(String categoryType, CategoryNameDto categoryNameDto) throws CategoryNotFoundException;
 }
