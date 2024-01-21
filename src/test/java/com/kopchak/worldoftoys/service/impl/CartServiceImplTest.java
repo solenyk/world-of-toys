@@ -6,6 +6,7 @@ import com.kopchak.worldoftoys.domain.product.Product;
 import com.kopchak.worldoftoys.domain.user.AppUser;
 import com.kopchak.worldoftoys.dto.cart.RequestCartItemDto;
 import com.kopchak.worldoftoys.dto.cart.UserCartDetailsDto;
+import com.kopchak.worldoftoys.exception.CartValidationException;
 import com.kopchak.worldoftoys.exception.ProductNotFoundException;
 import com.kopchak.worldoftoys.repository.cart.CartItemRepository;
 import com.kopchak.worldoftoys.repository.product.ProductRepository;
@@ -38,6 +39,8 @@ class CartServiceImplTest {
     @InjectMocks
     private CartServiceImpl cartService;
     private final static String PRODUCT_SLUG = "product-slug";
+    private final static String PRODUCT_NOT_FOUND_MSG =
+            String.format("Product with slug: %s doesn't exist.", PRODUCT_SLUG);
 
     private RequestCartItemDto requestCartItemDto;
     private AppUser user;
@@ -82,7 +85,31 @@ class CartServiceImplTest {
 
     @Test
     public void addProductToCart_NonExistentProductSlug() {
-        assertException(() -> cartService.addProductToCart(requestCartItemDto, user));
+        assertException(ProductNotFoundException.class, PRODUCT_NOT_FOUND_MSG,
+                () -> cartService.addProductToCart(requestCartItemDto, user));
+    }
+
+    @Test
+    public void verifyCartBeforeOrderCreation_InvalidCartItems_ThrowsCartValidationException() {
+        String cartValidationExceptionMsg = "Some products in the cart are not available in the selected quantity " +
+                "because one or more products are out of stock";
+
+        when(cartItemRepository.deleteUnavailableItems(user)).thenReturn(1);
+        when(cartItemRepository.updateCartItems(user)).thenReturn(0);
+
+        assertException(CartValidationException.class, cartValidationExceptionMsg,
+                () -> cartService.verifyCartBeforeOrderCreation(user));
+    }
+
+    @Test
+    public void verifyCartBeforeOrderCreation_ValidCartItems() throws CartValidationException {
+        when(cartItemRepository.deleteUnavailableItems(user)).thenReturn(0);
+        when(cartItemRepository.updateCartItems(user)).thenReturn(0);
+
+        cartService.verifyCartBeforeOrderCreation(user);
+
+        verify(cartItemRepository).deleteUnavailableItems(user);
+        verify(cartItemRepository).updateCartItems(user);
     }
 
     @Test
@@ -113,7 +140,8 @@ class CartServiceImplTest {
 
     @Test
     public void updateUserCartItem_NonExistentProductSlug() {
-        assertException(() -> cartService.updateUserCartItem(requestCartItemDto, user));
+        assertException(ProductNotFoundException.class, PRODUCT_NOT_FOUND_MSG,
+                () -> cartService.updateUserCartItem(requestCartItemDto, user));
     }
 
     @Test
@@ -132,13 +160,14 @@ class CartServiceImplTest {
 
     @Test
     public void deleteUserCartItem_NonExistentProductSlug() {
-        assertException(() -> cartService.deleteUserCartItem(requestCartItemDto, user));
+        assertException(ProductNotFoundException.class, PRODUCT_NOT_FOUND_MSG,
+                () -> cartService.deleteUserCartItem(requestCartItemDto, user));
     }
 
-    private void assertException(Executable executable) {
-        Exception exception = assertThrows(ProductNotFoundException.class, executable);
+    private void assertException(Class<? extends Exception> expectedExceptionType, String expectedMessage,
+                                 Executable executable) {
+        Exception exception = assertThrows(expectedExceptionType, executable);
         String actualMessage = exception.getMessage();
-        String expectedMessage = String.format("Product with slug: %s doesn't exist.", PRODUCT_SLUG);
         assertEquals(expectedMessage, actualMessage);
     }
 }
