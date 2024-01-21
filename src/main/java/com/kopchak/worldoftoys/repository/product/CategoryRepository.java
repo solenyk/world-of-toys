@@ -4,6 +4,7 @@ import com.kopchak.worldoftoys.domain.product.Product;
 import com.kopchak.worldoftoys.domain.product.category.ProductCategory;
 import com.kopchak.worldoftoys.exception.CategoryAlreadyExistsException;
 import com.kopchak.worldoftoys.exception.CategoryContainsProductsException;
+import com.kopchak.worldoftoys.exception.CategoryCreationException;
 import com.kopchak.worldoftoys.exception.CategoryNotFoundException;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -21,7 +22,8 @@ public interface CategoryRepository {
     <T extends ProductCategory> void updateCategory(Class<T> categoryType, Integer id, String name)
             throws CategoryNotFoundException, CategoryAlreadyExistsException;
 
-    <T extends ProductCategory> void createCategory(Class<T> categoryType, String name) throws CategoryNotFoundException;
+    <T extends ProductCategory> void createCategory(Class<T> categoryType, String name)
+            throws CategoryAlreadyExistsException, CategoryCreationException;
 
     List<ProductCategory> findUniqueBrandCategoryList(Specification<Product> spec);
 

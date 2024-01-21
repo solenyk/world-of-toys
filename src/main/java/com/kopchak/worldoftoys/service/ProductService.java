@@ -41,12 +41,12 @@ public interface ProductService {
                        List<MultipartFile> imageFileList)
             throws CategoryNotFoundException, ProductNotFoundException, ImageCompressionException, ImageExceedsMaxSizeException, InvalidImageFileFormatException;
 
-    Set<AdminCategoryDto> getAdminCategories(String categoryType) throws CategoryNotFoundException;
+    Set<AdminCategoryDto> getAdminCategories(String categoryType) throws CategoryNotFoundException, InvalidCategoryTypeException;
 
-    void deleteCategory(String category, Integer categoryId) throws CategoryNotFoundException, CategoryContainsProductsException;
+    void deleteCategory(String category, Integer categoryId) throws CategoryContainsProductsException, InvalidCategoryTypeException;
 
     void updateCategory(String categoryType, Integer categoryId, CategoryNameDto categoryNameDto)
-            throws CategoryNotFoundException, CategoryAlreadyExistsException;
+            throws CategoryNotFoundException, CategoryAlreadyExistsException, InvalidCategoryTypeException;
 
-    void createCategory(String categoryType, CategoryNameDto categoryNameDto) throws CategoryNotFoundException;
+    void createCategory(String categoryType, CategoryNameDto categoryNameDto) throws CategoryAlreadyExistsException, CategoryCreationException, InvalidCategoryTypeException;
 }

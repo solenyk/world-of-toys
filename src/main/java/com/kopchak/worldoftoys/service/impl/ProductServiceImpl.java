@@ -112,7 +112,8 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public AdminProductDto getAdminProductDtoById(Integer productId) throws ProductNotFoundException, ImageDecompressionException {
+    public AdminProductDto getAdminProductDtoById(Integer productId)
+            throws ProductNotFoundException, ImageDecompressionException {
         Optional<Product> productOptional = productRepository.findById(productId);
         if (productOptional.isEmpty()) {
             String errMsg = String.format("The product with id: %d is not found.", productId);
@@ -130,7 +131,8 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public void updateProduct(Integer productId, AddUpdateProductDto addUpdateProductDto, MultipartFile mainImageFile,
                               List<MultipartFile> imageFilesList)
-            throws CategoryNotFoundException, ProductNotFoundException, ImageCompressionException, ImageExceedsMaxSizeException, InvalidImageFileFormatException {
+            throws CategoryNotFoundException, ProductNotFoundException, ImageCompressionException,
+            ImageExceedsMaxSizeException, InvalidImageFileFormatException {
         String productName = addUpdateProductDto.name();
         Optional<Product> productOptional = productRepository.findByName(productName);
         if (productOptional.isPresent() && !productOptional.get().getId().equals(productId)) {
@@ -145,7 +147,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public void createProduct(AddUpdateProductDto addUpdateProductDto, MultipartFile mainImageFile,
-                              List<MultipartFile> imageFileList) throws CategoryNotFoundException, ProductNotFoundException, ImageCompressionException, ImageExceedsMaxSizeException, InvalidImageFileFormatException {
+                              List<MultipartFile> imageFileList)
+            throws CategoryNotFoundException, ProductNotFoundException, ImageCompressionException,
+            ImageExceedsMaxSizeException, InvalidImageFileFormatException {
         String productName = addUpdateProductDto.name();
         if (productRepository.findByName(productName).isPresent()) {
             throw new ProductNotFoundException(String.format("The product with name: %s is already exist", productName));
@@ -156,27 +160,29 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Set<AdminCategoryDto> getAdminCategories(String categoryType) throws CategoryNotFoundException {
+    public Set<AdminCategoryDto> getAdminCategories(String categoryType) throws InvalidCategoryTypeException {
         Class<? extends ProductCategory> categoryClass = getCategoryByCategoryType(categoryType);
         var categories = categoryRepository.findAllCategories(categoryClass);
         return categoryMapper.toAdminCategoryDtoSet(categories);
     }
 
     @Override
-    public void deleteCategory(String categoryType, Integer categoryId) throws CategoryNotFoundException, CategoryContainsProductsException {
+    public void deleteCategory(String categoryType, Integer categoryId)
+            throws CategoryContainsProductsException, InvalidCategoryTypeException {
         Class<? extends ProductCategory> categoryClass = getCategoryByCategoryType(categoryType);
         categoryRepository.deleteCategory(categoryClass, categoryId);
     }
 
     @Override
     public void updateCategory(String categoryType, Integer categoryId, CategoryNameDto categoryNameDto)
-            throws CategoryNotFoundException, CategoryAlreadyExistsException {
+            throws CategoryNotFoundException, CategoryAlreadyExistsException, InvalidCategoryTypeException {
         Class<? extends ProductCategory> categoryClass = getCategoryByCategoryType(categoryType);
         categoryRepository.updateCategory(categoryClass, categoryId, categoryNameDto.name());
     }
 
     @Override
-    public void createCategory(String categoryType, CategoryNameDto categoryNameDto) throws CategoryNotFoundException {
+    public void createCategory(String categoryType, CategoryNameDto categoryNameDto)
+            throws CategoryAlreadyExistsException, CategoryCreationException, InvalidCategoryTypeException {
         Class<? extends ProductCategory> categoryClass = getCategoryByCategoryType(categoryType);
         categoryRepository.createCategory(categoryClass, categoryNameDto.name());
     }
@@ -196,8 +202,7 @@ public class ProductServiceImpl implements ProductService {
         return productPage;
     }
 
-    private Class<? extends ProductCategory> getCategoryByCategoryType(String categoryType)
-            throws CategoryNotFoundException {
+    private Class<? extends ProductCategory> getCategoryByCategoryType(String categoryType) throws InvalidCategoryTypeException {
         return switch (CategoryType.findByValue(categoryType)) {
             case BRANDS -> BrandCategory.class;
             case ORIGINS -> OriginCategory.class;

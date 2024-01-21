@@ -6,6 +6,7 @@ import com.kopchak.worldoftoys.domain.product.category.ProductCategory;
 import com.kopchak.worldoftoys.domain.product.category.ProductCategory_;
 import com.kopchak.worldoftoys.exception.CategoryAlreadyExistsException;
 import com.kopchak.worldoftoys.exception.CategoryContainsProductsException;
+import com.kopchak.worldoftoys.exception.CategoryCreationException;
 import com.kopchak.worldoftoys.exception.CategoryNotFoundException;
 import com.kopchak.worldoftoys.repository.product.CategoryRepository;
 import jakarta.persistence.EntityManager;
@@ -81,9 +82,10 @@ public class CategoryRepositoryImpl implements CategoryRepository {
 
     @Override
     @Transactional
-    public <T extends ProductCategory> void createCategory(Class<T> categoryType, String name) throws CategoryNotFoundException {
+    public <T extends ProductCategory> void createCategory(Class<T> categoryType, String name)
+            throws CategoryAlreadyExistsException, CategoryCreationException {
         if (isCategoryWithNameExists(categoryType, name)) {
-            throw new CategoryNotFoundException(String.format("Category with name: %s already exist", name));
+            throw new CategoryAlreadyExistsException(String.format("Category with name: %s already exist", name));
         }
         try {
             T newCategory = categoryType.getDeclaredConstructor().newInstance();
@@ -91,7 +93,7 @@ public class CategoryRepositoryImpl implements CategoryRepository {
             entityManager.persist(newCategory);
         } catch (InstantiationException | IllegalAccessException | NoSuchMethodException |
                  InvocationTargetException e) {
-            throw new CategoryNotFoundException(String.format("Failed to save category with name: %s. " +
+            throw new CategoryCreationException(String.format("Failed to save category with name: %s. " +
                     "Error: %s. Please try a different name or contact support.", name, e.getMessage()));
         }
     }

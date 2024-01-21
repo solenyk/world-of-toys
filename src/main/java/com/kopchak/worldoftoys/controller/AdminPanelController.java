@@ -171,7 +171,7 @@ public class AdminPanelController {
         try {
             Set<AdminCategoryDto> categoryDtoSet = productService.getAdminCategories(categoryType);
             return new ResponseEntity<>(categoryDtoSet, HttpStatus.OK);
-        } catch (CategoryNotFoundException e) {
+        } catch (CategoryNotFoundException | InvalidCategoryTypeException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
     }
@@ -192,7 +192,7 @@ public class AdminPanelController {
                                                @PathVariable(name = "categoryId") Integer categoryId) {
         try {
             productService.deleteCategory(categoryType, categoryId);
-        } catch (CategoryNotFoundException | CategoryContainsProductsException e) {
+        } catch (InvalidCategoryTypeException | CategoryContainsProductsException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -215,7 +215,7 @@ public class AdminPanelController {
                                                @Valid @RequestBody CategoryNameDto categoryNameDto) {
         try {
             productService.updateCategory(categoryType, categoryId, categoryNameDto);
-        } catch (CategoryNotFoundException | CategoryAlreadyExistsException e) {
+        } catch (CategoryNotFoundException | CategoryAlreadyExistsException | InvalidCategoryTypeException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -237,7 +237,8 @@ public class AdminPanelController {
                                                @Valid @RequestBody CategoryNameDto categoryNameDto) {
         try {
             productService.createCategory(categoryType, categoryNameDto);
-        } catch (CategoryNotFoundException e) {
+        } catch (CategoryCreationException | CategoryAlreadyExistsException |
+                 InvalidCategoryTypeException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
         return new ResponseEntity<>(HttpStatus.CREATED);
