@@ -61,7 +61,7 @@ public class ShopControllerIntegrationTest {
 
         List<FilteredProductDto> expectedFilteredProductsPageDtoContent = new ArrayList<>() {{
             add(new FilteredProductDto("Лялька Русалочка", "lyalka-rusalochka", BigDecimal.valueOf(550),
-                    BigInteger.valueOf(150), null));
+                    BigInteger.valueOf(0), null));
             add(new FilteredProductDto("Лялька Даринка", "lyalka-darynka", BigDecimal.valueOf(900),
                     BigInteger.valueOf(200), null));
         }};

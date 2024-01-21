@@ -5,7 +5,7 @@ import com.kopchak.worldoftoys.domain.product.Product_;
 import com.kopchak.worldoftoys.domain.product.category.ProductCategory;
 import com.kopchak.worldoftoys.domain.product.category.ProductCategory_;
 import com.kopchak.worldoftoys.exception.CategoryContainsProductsException;
-import com.kopchak.worldoftoys.exception.InvalidCategoryTypeException;
+import com.kopchak.worldoftoys.exception.CategoryNotFoundException;
 import com.kopchak.worldoftoys.repository.product.CategoryRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
@@ -29,10 +29,10 @@ public class CategoryRepositoryImpl implements CategoryRepository {
 
     @Override
     public <T extends ProductCategory> T findById(Integer id, Class<T> productCategoryType)
-            throws InvalidCategoryTypeException {
+            throws CategoryNotFoundException {
         T category = entityManager.find(productCategoryType, id);
         if (category == null) {
-            throw new InvalidCategoryTypeException(String.format("%s with id: %d does not exist",
+            throw new CategoryNotFoundException(String.format("%s with id: %d does not exist",
                     productCategoryType.getSimpleName(), id));
         }
         return category;
@@ -51,7 +51,7 @@ public class CategoryRepositoryImpl implements CategoryRepository {
     @Override
     @Transactional
     public <T extends ProductCategory> void deleteCategory(Class<T> productCategoryType, Integer id)
-            throws InvalidCategoryTypeException, CategoryContainsProductsException {
+            throws CategoryNotFoundException, CategoryContainsProductsException {
         if (containsProductsInCategory(productCategoryType, id)) {
             throw new CategoryContainsProductsException(String.format("It is not possible to delete a category " +
                     "with id: %d because there are products in this category.", id));
@@ -66,13 +66,13 @@ public class CategoryRepositoryImpl implements CategoryRepository {
     @Override
     @Transactional
     public <T extends ProductCategory> void updateCategory(Class<T> categoryType, Integer id, String name)
-            throws InvalidCategoryTypeException {
+            throws CategoryNotFoundException {
         if (isCategoryWithNameExists(categoryType, name)) {
-            throw new InvalidCategoryTypeException(String.format("Category with name: %s already exist", name));
+            throw new CategoryNotFoundException(String.format("Category with name: %s already exist", name));
         }
         T entityToUpdate = entityManager.find(categoryType, id);
         if (entityToUpdate == null) {
-            throw new InvalidCategoryTypeException(String.format("Category with id: %d doesn't exist", id));
+            throw new CategoryNotFoundException(String.format("Category with id: %d doesn't exist", id));
         }
         entityToUpdate.setName(name);
         entityManager.merge(entityToUpdate);
@@ -80,9 +80,9 @@ public class CategoryRepositoryImpl implements CategoryRepository {
 
     @Override
     @Transactional
-    public <T extends ProductCategory> void addCategory(Class<T> categoryType, String name) throws InvalidCategoryTypeException {
+    public <T extends ProductCategory> void createCategory(Class<T> categoryType, String name) throws CategoryNotFoundException {
         if (isCategoryWithNameExists(categoryType, name)) {
-            throw new InvalidCategoryTypeException(String.format("Category with name: %s already exist", name));
+            throw new CategoryNotFoundException(String.format("Category with name: %s already exist", name));
         }
         try {
             T newCategory = categoryType.getDeclaredConstructor().newInstance();
@@ -90,7 +90,7 @@ public class CategoryRepositoryImpl implements CategoryRepository {
             entityManager.persist(newCategory);
         } catch (InstantiationException | IllegalAccessException | NoSuchMethodException |
                  InvocationTargetException e) {
-            throw new InvalidCategoryTypeException(String.format("Failed to save category with name: %s. " +
+            throw new CategoryNotFoundException(String.format("Failed to save category with name: %s. " +
                     "Error: %s. Please try a different name or contact support.", name, e.getMessage()));
         }
     }
@@ -142,7 +142,7 @@ public class CategoryRepositoryImpl implements CategoryRepository {
     }
 
     private <T extends ProductCategory> boolean containsProductsInCategory(Class<T> categoryType, Integer id)
-            throws InvalidCategoryTypeException {
+            throws CategoryNotFoundException {
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
         CriteriaQuery<Product> criteriaQuery = criteriaBuilder.createQuery(Product.class);
         Root<Product> root = criteriaQuery.from(Product.class);
@@ -154,7 +154,7 @@ public class CategoryRepositoryImpl implements CategoryRepository {
     }
 
     private <T extends ProductCategory> String categoryTypeToJoinField(Class<T> productCategoryType)
-            throws InvalidCategoryTypeException {
+            throws CategoryNotFoundException {
         Map<Class<?>, String> categoryTypeToJoinField = new HashMap<>() {{
             put(Product_.brandCategory.getJavaType(), Product_.BRAND_CATEGORY);
             put(Product_.originCategory.getJavaType(), Product_.ORIGIN_CATEGORY);
@@ -163,7 +163,7 @@ public class CategoryRepositoryImpl implements CategoryRepository {
         if (categoryTypeToJoinField.containsKey(productCategoryType)) {
             return categoryTypeToJoinField.get(productCategoryType);
         }
-        throw new InvalidCategoryTypeException(String.format("Product category type: %s is incorrect",
+        throw new CategoryNotFoundException(String.format("Product category type: %s is incorrect",
                 productCategoryType.getSimpleName()));
     }
 

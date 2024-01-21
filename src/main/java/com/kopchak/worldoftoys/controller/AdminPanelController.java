@@ -117,7 +117,7 @@ public class AdminPanelController {
                                               @RequestPart("images") List<MultipartFile> imageFilesList) {
         try {
             productService.updateProduct(productId, addUpdateProductDto, mainImageFile, imageFilesList);
-        } catch (ProductNotFoundException | InvalidCategoryTypeException | InvalidImageFileFormatException |
+        } catch (ProductNotFoundException | CategoryNotFoundException | InvalidImageFileFormatException |
                  ImageExceedsMaxSizeException | ImageCompressionException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
@@ -141,7 +141,7 @@ public class AdminPanelController {
                                               @RequestPart("images") List<MultipartFile> imageFilesList) {
         try {
             productService.createProduct(addUpdateProductDto, mainImageFile, imageFilesList);
-        } catch (ProductNotFoundException | InvalidCategoryTypeException | InvalidImageFileFormatException |
+        } catch (ProductNotFoundException | CategoryNotFoundException | InvalidImageFileFormatException |
                  ImageExceedsMaxSizeException | ImageCompressionException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
@@ -171,7 +171,7 @@ public class AdminPanelController {
         try {
             Set<AdminCategoryDto> categoryDtoSet = productService.getAdminCategories(categoryType);
             return new ResponseEntity<>(categoryDtoSet, HttpStatus.OK);
-        } catch (InvalidCategoryTypeException e) {
+        } catch (CategoryNotFoundException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
     }
@@ -192,7 +192,7 @@ public class AdminPanelController {
                                                @PathVariable(name = "categoryId") Integer categoryId) {
         try {
             productService.deleteCategory(categoryType, categoryId);
-        } catch (InvalidCategoryTypeException | CategoryContainsProductsException e) {
+        } catch (CategoryNotFoundException | CategoryContainsProductsException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -215,7 +215,7 @@ public class AdminPanelController {
                                                @Valid @RequestBody CategoryNameDto categoryNameDto) {
         try {
             productService.updateCategory(categoryType, categoryId, categoryNameDto);
-        } catch (InvalidCategoryTypeException e) {
+        } catch (CategoryNotFoundException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -237,7 +237,7 @@ public class AdminPanelController {
                                                @Valid @RequestBody CategoryNameDto categoryNameDto) {
         try {
             productService.createCategory(categoryType, categoryNameDto);
-        } catch (InvalidCategoryTypeException e) {
+        } catch (CategoryNotFoundException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
         return new ResponseEntity<>(HttpStatus.CREATED);

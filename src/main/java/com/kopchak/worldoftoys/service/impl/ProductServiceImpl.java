@@ -130,7 +130,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public void updateProduct(Integer productId, AddUpdateProductDto addUpdateProductDto, MultipartFile mainImageFile,
                               List<MultipartFile> imageFilesList)
-            throws InvalidCategoryTypeException, ProductNotFoundException, ImageCompressionException, ImageExceedsMaxSizeException, InvalidImageFileFormatException {
+            throws CategoryNotFoundException, ProductNotFoundException, ImageCompressionException, ImageExceedsMaxSizeException, InvalidImageFileFormatException {
         String productName = addUpdateProductDto.name();
         Optional<Product> productOptional = productRepository.findByName(productName);
         if (productOptional.isPresent() && !productOptional.get().getId().equals(productId)) {
@@ -145,7 +145,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public void createProduct(AddUpdateProductDto addUpdateProductDto, MultipartFile mainImageFile,
-                              List<MultipartFile> imageFileList) throws InvalidCategoryTypeException, ProductNotFoundException, ImageCompressionException, ImageExceedsMaxSizeException, InvalidImageFileFormatException {
+                              List<MultipartFile> imageFileList) throws CategoryNotFoundException, ProductNotFoundException, ImageCompressionException, ImageExceedsMaxSizeException, InvalidImageFileFormatException {
         String productName = addUpdateProductDto.name();
         if (productRepository.findByName(productName).isPresent()) {
             throw new ProductNotFoundException(String.format("The product with name: %s is already exist", productName));
@@ -156,29 +156,29 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Set<AdminCategoryDto> getAdminCategories(String categoryType) throws InvalidCategoryTypeException {
+    public Set<AdminCategoryDto> getAdminCategories(String categoryType) throws CategoryNotFoundException {
         Class<? extends ProductCategory> categoryClass = getCategoryByCategoryType(categoryType);
         var categories = categoryRepository.findAllCategories(categoryClass);
         return categoryMapper.toAdminCategoryDtoSet(categories);
     }
 
     @Override
-    public void deleteCategory(String categoryType, Integer categoryId) throws InvalidCategoryTypeException, CategoryContainsProductsException {
+    public void deleteCategory(String categoryType, Integer categoryId) throws CategoryNotFoundException, CategoryContainsProductsException {
         Class<? extends ProductCategory> categoryClass = getCategoryByCategoryType(categoryType);
         categoryRepository.deleteCategory(categoryClass, categoryId);
     }
 
     @Override
     public void updateCategory(String categoryType, Integer categoryId, CategoryNameDto categoryNameDto)
-            throws InvalidCategoryTypeException {
+            throws CategoryNotFoundException {
         Class<? extends ProductCategory> categoryClass = getCategoryByCategoryType(categoryType);
         categoryRepository.updateCategory(categoryClass, categoryId, categoryNameDto.name());
     }
 
     @Override
-    public void createCategory(String categoryType, CategoryNameDto categoryNameDto) throws InvalidCategoryTypeException {
+    public void createCategory(String categoryType, CategoryNameDto categoryNameDto) throws CategoryNotFoundException {
         Class<? extends ProductCategory> categoryClass = getCategoryByCategoryType(categoryType);
-        categoryRepository.addCategory(categoryClass, categoryNameDto.name());
+        categoryRepository.createCategory(categoryClass, categoryNameDto.name());
     }
 
     private Page<Product> getFilteredProductPage(int page, int size, String productName, BigDecimal minPrice,
@@ -197,7 +197,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private Class<? extends ProductCategory> getCategoryByCategoryType(String categoryType)
-            throws InvalidCategoryTypeException {
+            throws CategoryNotFoundException {
         return switch (CategoryType.findByValue(categoryType)) {
             case BRANDS -> BrandCategory.class;
             case ORIGINS -> OriginCategory.class;
@@ -206,7 +206,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private Product buildProductFromDtoAndImages(AddUpdateProductDto addUpdateProductDto, MultipartFile mainImageFile,
-                                                 List<MultipartFile> imageFilesList) throws InvalidCategoryTypeException,
+                                                 List<MultipartFile> imageFilesList) throws CategoryNotFoundException,
             ImageCompressionException, ImageExceedsMaxSizeException, InvalidImageFileFormatException {
         Product product = productMapper.toProduct(addUpdateProductDto);
         setProductCategories(product, addUpdateProductDto);
@@ -215,7 +215,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private void setProductCategories(Product product, AddUpdateProductDto productDto)
-            throws InvalidCategoryTypeException {
+            throws CategoryNotFoundException {
         product.setBrandCategory(categoryRepository.findById(productDto.brandCategory().id(), BrandCategory.class));
         product.setOriginCategory(categoryRepository.findById(productDto.originCategory().id(), OriginCategory.class));
         Set<AgeCategory> ageCategories = new LinkedHashSet<>();

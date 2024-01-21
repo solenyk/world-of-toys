@@ -1,10 +1,8 @@
 package com.kopchak.worldoftoys.repository.cart;
 
 import com.kopchak.worldoftoys.domain.cart.CartItem;
-import com.kopchak.worldoftoys.domain.cart.CartItemId;
-import com.kopchak.worldoftoys.domain.product.Product;
-import com.kopchak.worldoftoys.dto.cart.CartItemDto;
 import com.kopchak.worldoftoys.domain.user.AppUser;
+import com.kopchak.worldoftoys.dto.cart.CartItemDto;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,7 +14,6 @@ import org.springframework.test.context.ActiveProfiles;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
