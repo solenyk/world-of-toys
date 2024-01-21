@@ -72,6 +72,59 @@ public class OrderControllerIntegrationTest {
 
     @Test
     @WithUserDetails("john.doe@example.com")
+    public void verifyCartBeforeOrderCreation_AuthUser_ReturnsOkStatus() throws Exception {
+        ResultActions response = mockMvc.perform(get("/api/v1/order/verify-cart")
+                .contentType(MediaType.APPLICATION_JSON)
+                .with(csrf()));
+
+        response.andExpect(MockMvcResultMatchers.status().isOk())
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    @WithUserDetails("mark.anderson@example.com")
+    public void verifyCartBeforeOrderCreation_AuthUserThrowCartValidationException_ReturnsBadRequestStatusAndResponseStatusExceptionDto() throws Exception {
+        String cartValidationExceptionMsg = "Some products in the cart are not available in the selected quantity " +
+                "because one or more products are out of stock";
+        HttpStatus httpStatus = HttpStatus.BAD_REQUEST;
+        var responseStatusExceptionDto =
+                new ResponseStatusExceptionDto(httpStatus.value(), httpStatus.name(), cartValidationExceptionMsg);
+
+        ResultActions response = mockMvc.perform(get("/api/v1/order/verify-cart")
+                .contentType(MediaType.APPLICATION_JSON)
+                .with(csrf()));
+
+        response.andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    @WithAnonymousUser
+    public void verifyCartBeforeOrderCreation_AnonymousUser_ReturnsUnauthorizedStatusAndResponseStatusExceptionDto() throws Exception {
+        ResultActions response = mockMvc.perform(get("/api/v1/order/verify-cart")
+                .contentType(MediaType.APPLICATION_JSON)
+                .with(csrf()));
+
+        response.andExpect(MockMvcResultMatchers.status().isUnauthorized())
+                .andExpect(content().json(objectMapper.writeValueAsString(unauthorizedErrorResponse)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    @WithUserDetails("jane.smith@example.com")
+    public void verifyCartBeforeOrderCreation_AuthAdminUser_ReturnsForbiddenStatusAndResponseStatusExceptionDto() throws Exception {
+        ResultActions response = mockMvc.perform(get("/api/v1/order/verify-cart")
+                .contentType(MediaType.APPLICATION_JSON)
+                .with(csrf()));
+
+        response.andExpect(MockMvcResultMatchers.status().isForbidden())
+                .andExpect(content().json(objectMapper.writeValueAsString(accessDeniedErrorResponse)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    @WithUserDetails("john.doe@example.com")
     public void createOrder_AuthUser_ReturnsCreatedStatus() throws Exception {
         ResultActions response = mockMvc.perform(post("/api/v1/order")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -84,7 +137,7 @@ public class OrderControllerIntegrationTest {
 
     @Test
     @WithUserDetails("alice.johnson@example.com")
-    public void createOrder_AuthUserWithEmptyCart_ReturnsBadRequestStatus() throws Exception {
+    public void createOrder_AuthUserWithEmptyCart_ReturnsBadRequestStatusAndResponseStatusExceptionDto() throws Exception {
         HttpStatus httpStatus = HttpStatus.BAD_REQUEST;
         String orderCreationExceptionMsg =
                 "It is impossible to create an order for the user because there are no products in the user's cart.";
@@ -104,7 +157,7 @@ public class OrderControllerIntegrationTest {
 
     @Test
     @WithAnonymousUser
-    public void createOrder_AnonymousUser_ReturnsUnauthorizedStatus() throws Exception {
+    public void createOrder_AnonymousUser_ReturnsUnauthorizedStatusAndResponseStatusExceptionDto() throws Exception {
         ResultActions response = mockMvc.perform(post("/api/v1/order")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(orderRecipientDto))
@@ -117,7 +170,7 @@ public class OrderControllerIntegrationTest {
 
     @Test
     @WithUserDetails("jane.smith@example.com")
-    public void createOrder_AuthAdminUser_ReturnsForbiddenStatus() throws Exception {
+    public void createOrder_AuthAdminUser_ReturnsForbiddenStatusAndResponseStatusExceptionDto() throws Exception {
         ResultActions response = mockMvc.perform(post("/api/v1/order")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(orderRecipientDto))
@@ -138,7 +191,7 @@ public class OrderControllerIntegrationTest {
                 .orderStatus(OrderStatus.AWAITING_PAYMENT)
                 .products(Set.of(new OrderProductDto("Лялька Клаймбер", "lyalka-klaymber",
                         BigInteger.valueOf(2))))
-                .totalPrice(BigDecimal.valueOf(1700))
+                .totalPrice(BigDecimal.valueOf(1000))
                 .build());
         ResultActions response = mockMvc.perform(get("/api/v1/order")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -151,7 +204,7 @@ public class OrderControllerIntegrationTest {
 
     @Test
     @WithAnonymousUser
-    public void getAllUserOrders_AnonymousUser_ReturnsUnauthorizedStatus() throws Exception {
+    public void getAllUserOrders_AnonymousUser_ReturnsUnauthorizedStatusAndResponseStatusExceptionDto() throws Exception {
         ResultActions response = mockMvc.perform(get("/api/v1/order")
                 .contentType(MediaType.APPLICATION_JSON)
                 .with(csrf()));
@@ -163,7 +216,7 @@ public class OrderControllerIntegrationTest {
 
     @Test
     @WithUserDetails("jane.smith@example.com")
-    public void getAllUserOrders_AuthAdminUser_ReturnsForbiddenStatus() throws Exception {
+    public void getAllUserOrders_AuthAdminUser_ReturnsForbiddenStatusAndResponseStatusExceptionDto() throws Exception {
         ResultActions response = mockMvc.perform(get("/api/v1/order")
                 .contentType(MediaType.APPLICATION_JSON)
                 .with(csrf()));

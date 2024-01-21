@@ -5,7 +5,9 @@ VALUES (1000, 'John', 'Doe', 'john.doe@example.com', '$2a$10$bITm.1PZYpJXip2Rijl
         'ROLE_ADMIN', false, true),
        (1002, 'Alice', 'Johnson', 'alice.johnson@example.com',
         '$2a$10$bITm.1PZYpJXip2RijlP3OfTWiE0NRK0.BhgJAf2ivnZFfSKnSQuW',
-        'ROLE_USER', false, false);
+        'ROLE_USER', false, false),
+       (1003, 'Mark', 'Anderson', 'mark.anderson@example.com', '$2a$10$bITm.1PZYpJXip2RijlP3OfTWiE0NRK0.BhgJAf2ivnZFfSKnSQuW',
+        'ROLE_USER', false, true);
 
 INSERT INTO authentication_token(id, token, token_type, revoked, expired, user_id)
 VALUES (1000,
@@ -69,7 +71,8 @@ WHERE id = 1;
 
 INSERT INTO cart_item(user_id, product_id, quantity)
 VALUES (1000, 2, 1),
-       (1000, 4, 4);
+       (1000, 4, 4),
+       (1003, 1, 4);
 
 INSERT INTO address(id, region, settlement, street, house, apartment)
 VALUES (1000, 'Київська обл.', 'м. Київ', 'вул. Івана Франка', 12, 158);
