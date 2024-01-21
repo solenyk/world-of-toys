@@ -88,8 +88,8 @@ public class ProductServiceImpl implements ProductService {
         Specification<Product> spec = productSpecifications.filterByProductNamePriceAndCategories(productName, minPrice,
                 maxPrice, originCategories, brandCategories, ageCategories, null);
         var filteringProductCategoriesDto = categoryMapper.toFilteringCategoriesDto(
-                categoryRepository.findUniqueOriginCategoryList(spec),
                 categoryRepository.findUniqueBrandCategoryList(spec),
+                categoryRepository.findUniqueOriginCategoryList(spec),
                 categoryRepository.findUniqueAgeCategoryList(spec)
         );
         log.info("Fetched filtering product categories - Product Name: '{}', Min Price: {}, Max Price: {}, " +
