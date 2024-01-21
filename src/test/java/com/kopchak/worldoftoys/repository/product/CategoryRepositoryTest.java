@@ -2,6 +2,8 @@ package com.kopchak.worldoftoys.repository.product;
 
 import com.kopchak.worldoftoys.domain.product.category.BrandCategory;
 import com.kopchak.worldoftoys.domain.product.category.OriginCategory;
+import com.kopchak.worldoftoys.exception.CategoryAlreadyExistsException;
+import com.kopchak.worldoftoys.exception.CategoryContainsProductsException;
 import com.kopchak.worldoftoys.exception.CategoryNotFoundException;
 import com.kopchak.worldoftoys.mapper.product.CategoryMapperImpl;
 import com.kopchak.worldoftoys.repository.product.impl.CategoryRepositoryImpl;
@@ -70,6 +72,72 @@ class CategoryRepositoryTest {
         assertThat(actualOriginCategories).isNotNull();
         assertThat(actualOriginCategories).isNotEmpty();
         assertThat(actualOriginCategories.size()).isEqualTo(expectedOriginCategoriesSetSize);
+    }
+
+    @Test
+    public void deleteCategory_CategoryWithoutProducts() throws Exception {
+        Class<BrandCategory> productCategoryType = BrandCategory.class;
+        Integer id = 5;
+
+        categoryRepository.deleteCategory(productCategoryType, id);
+
+        String categoryNotFoundExceptionMsg = String.format("%s with id: %d does not exist",
+                productCategoryType.getSimpleName(), id);
+
+        assertException(CategoryNotFoundException.class, categoryNotFoundExceptionMsg,
+                () -> categoryRepository.findById(id, productCategoryType));
+    }
+
+    @Test
+    public void deleteCategory_CategoryWithProducts_ThrowsCategoryContainsProductsException() {
+        Class<BrandCategory> productCategoryType = BrandCategory.class;
+        Integer id = 2;
+
+        String categoryContainsProductsExceptionMsg = String.format("It is not possible to delete a category " +
+                "with id: %d because there are products in this category.", id);
+
+        assertException(CategoryContainsProductsException.class, categoryContainsProductsExceptionMsg,
+                () -> categoryRepository.deleteCategory(productCategoryType, id));
+    }
+
+    @Test
+    public void updateCategory_NonExistingCategoryName() throws CategoryAlreadyExistsException, CategoryNotFoundException {
+        Class<BrandCategory> productCategoryType = BrandCategory.class;
+        Integer id = 2;
+        String newCategoryName = "new-name";
+
+        categoryRepository.updateCategory(productCategoryType, id, newCategoryName);
+
+        var updatedBrandCategory = categoryRepository.findById(id, productCategoryType);
+
+        assertThat(updatedBrandCategory).isNotNull();
+        assertThat(updatedBrandCategory).isInstanceOf(productCategoryType);
+        assertThat(updatedBrandCategory.getName()).isEqualTo(newCategoryName);
+    }
+
+    @Test
+    public void updateCategory_ExistingCategoryName_ThrowsCategoryAlreadyExistsException() {
+        Class<BrandCategory> productCategoryType = BrandCategory.class;
+        Integer id = 2;
+        String existingCategoryName = "Devilon";
+
+        String categoryAlreadyExistsExceptionMsg = String.format("Category with name: %s already exist",
+                existingCategoryName);
+
+        assertException(CategoryAlreadyExistsException.class, categoryAlreadyExistsExceptionMsg,
+                () -> categoryRepository.updateCategory(productCategoryType, id, existingCategoryName));
+    }
+
+    @Test
+    public void updateCategory_NonExistingCategoryId_ThrowsCategoryNotFoundException() {
+        Class<BrandCategory> productCategoryType = BrandCategory.class;
+        Integer id = 8;
+        String newCategoryName = "new-name";
+
+        String categoryNotFoundExceptionMsg = String.format("Category with id: %d doesn't exist", id);
+
+        assertException(CategoryNotFoundException.class, categoryNotFoundExceptionMsg,
+                () -> categoryRepository.updateCategory(productCategoryType, id, newCategoryName));
     }
 
     private void assertException(Class<? extends Exception> expectedExceptionType,
