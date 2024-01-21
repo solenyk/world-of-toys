@@ -182,7 +182,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public void createCategory(String categoryType, CategoryNameDto categoryNameDto)
-            throws CategoryAlreadyExistsException, CategoryCreationException, InvalidCategoryTypeException {
+            throws CategoryAlreadyExistsException, InvalidCategoryTypeException, CategoryCreationException{
         Class<? extends ProductCategory> categoryClass = getCategoryByCategoryType(categoryType);
         categoryRepository.createCategory(categoryClass, categoryNameDto.name());
     }

@@ -19,7 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.function.Function;
 
@@ -91,10 +90,8 @@ public class CategoryRepositoryImpl implements CategoryRepository {
             T newCategory = categoryType.getDeclaredConstructor().newInstance();
             newCategory.setName(name);
             entityManager.persist(newCategory);
-        } catch (InstantiationException | IllegalAccessException | NoSuchMethodException |
-                 InvocationTargetException e) {
-            throw new CategoryCreationException(String.format("Failed to save category with name: %s. " +
-                    "Error: %s. Please try a different name or contact support.", name, e.getMessage()));
+        } catch (ReflectiveOperationException e) {
+            throw new CategoryCreationException(e.getMessage());
         }
     }
 

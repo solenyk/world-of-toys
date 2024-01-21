@@ -1,22 +1,28 @@
 package com.kopchak.worldoftoys.repository.product;
 
+import com.kopchak.worldoftoys.domain.product.Product;
 import com.kopchak.worldoftoys.domain.product.category.BrandCategory;
 import com.kopchak.worldoftoys.domain.product.category.OriginCategory;
 import com.kopchak.worldoftoys.exception.CategoryAlreadyExistsException;
 import com.kopchak.worldoftoys.exception.CategoryContainsProductsException;
+import com.kopchak.worldoftoys.exception.CategoryCreationException;
 import com.kopchak.worldoftoys.exception.CategoryNotFoundException;
 import com.kopchak.worldoftoys.mapper.product.CategoryMapperImpl;
 import com.kopchak.worldoftoys.repository.product.impl.CategoryRepositoryImpl;
 import com.kopchak.worldoftoys.repository.specifications.ProductSpecifications;
 import com.kopchak.worldoftoys.repository.specifications.impl.ProductSpecificationsImpl;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.math.BigDecimal;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -33,17 +39,33 @@ class CategoryRepositoryTest {
     @Autowired
     ProductSpecifications productSpecifications;
 
+    private Specification<Product> productSpecification;
+
+    @BeforeEach
+    public void setUp() {
+        String productName = "Лялька";
+        BigDecimal minPrice = BigDecimal.valueOf(600);
+        BigDecimal maxPrice = BigDecimal.valueOf(850);
+        List<String> originCategoriesSlugList = List.of("china");
+        List<String> brandCategoriesSlugList = List.of("сoсomelon", "сurlimals", "devilon");
+        List<String> ageCategoriesSlugList = List.of("do-1-roku", "vid-1-do-3-rokiv", "vid-6-do-9-rokiv");
+        productSpecification = productSpecifications.filterByProductNamePriceAndCategories(
+                productName, minPrice, maxPrice, originCategoriesSlugList, brandCategoriesSlugList,
+                ageCategoriesSlugList, null);
+    }
+
     @Test
     public void findById_ReturnsProductCategory() throws CategoryNotFoundException {
         Class<BrandCategory> productCategoryType = BrandCategory.class;
+        Integer id = 1004;
 
         BrandCategory expectedBrandCategory = new BrandCategory();
-        expectedBrandCategory.setId(5);
+        expectedBrandCategory.setId(id);
         expectedBrandCategory.setName("comelon");
         expectedBrandCategory.setSlug("сomelon");
         expectedBrandCategory.setProducts(new HashSet<>());
 
-        BrandCategory actualBrandCategory = categoryRepository.findById(5, productCategoryType);
+        BrandCategory actualBrandCategory = categoryRepository.findById(id, productCategoryType);
 
         assertThat(actualBrandCategory).isNotNull();
         assertThat(actualBrandCategory).isInstanceOf(productCategoryType);
@@ -91,7 +113,7 @@ class CategoryRepositoryTest {
     @Test
     public void deleteCategory_CategoryWithProducts_ThrowsCategoryContainsProductsException() {
         Class<BrandCategory> productCategoryType = BrandCategory.class;
-        Integer id = 2;
+        Integer id = 1001;
 
         String categoryContainsProductsExceptionMsg = String.format("It is not possible to delete a category " +
                 "with id: %d because there are products in this category.", id);
@@ -103,7 +125,7 @@ class CategoryRepositoryTest {
     @Test
     public void updateCategory_NonExistingCategoryName() throws CategoryAlreadyExistsException, CategoryNotFoundException {
         Class<BrandCategory> productCategoryType = BrandCategory.class;
-        Integer id = 2;
+        Integer id = 1001;
         String newCategoryName = "new-name";
 
         categoryRepository.updateCategory(productCategoryType, id, newCategoryName);
@@ -138,6 +160,63 @@ class CategoryRepositoryTest {
 
         assertException(CategoryNotFoundException.class, categoryNotFoundExceptionMsg,
                 () -> categoryRepository.updateCategory(productCategoryType, id, newCategoryName));
+    }
+
+    @Test
+    public void createCategory_NonExistingCategoryName() throws CategoryAlreadyExistsException, CategoryNotFoundException, CategoryCreationException {
+        Class<BrandCategory> productCategoryType = BrandCategory.class;
+        Integer id = 1;
+        String newCategoryName = "new-name";
+
+        categoryRepository.createCategory(productCategoryType, newCategoryName);
+        var createdBrandCategory = categoryRepository.findById(id, productCategoryType);
+
+        assertThat(createdBrandCategory).isNotNull();
+        assertThat(createdBrandCategory).isInstanceOf(productCategoryType);
+        assertThat(createdBrandCategory.getName()).isEqualTo(newCategoryName);
+    }
+
+    @Test
+    public void createCategory_ExistingCategoryName_ThrowsCategoryAlreadyExistsException() {
+        Class<BrandCategory> productCategoryType = BrandCategory.class;
+        String existingCategoryName = "Devilon";
+
+        String categoryAlreadyExistsExceptionMsg = String.format("Category with name: %s already exist",
+                existingCategoryName);
+
+        assertException(CategoryAlreadyExistsException.class, categoryAlreadyExistsExceptionMsg,
+                () -> categoryRepository.createCategory(productCategoryType, existingCategoryName));
+    }
+
+    @Test
+    public void findUniqueBrandCategoryList_ReturnsListOfProductsCategory() {
+        var brandCategoryList = categoryRepository.findUniqueBrandCategoryList(productSpecification);
+
+        assertThat(brandCategoryList).isNotNull();
+        assertThat(brandCategoryList).isNotEmpty();
+        assertThat(brandCategoryList.size()).isEqualTo(1);
+        assertThat(brandCategoryList.get(0).getId()).isEqualTo(1000);
+    }
+
+    @Test
+    public void findUniqueOriginCategoryList_ReturnsListOfProductsCategory() {
+        var originCategoryList = categoryRepository.findUniqueOriginCategoryList(productSpecification);
+
+        assertThat(originCategoryList).isNotNull();
+        assertThat(originCategoryList).isNotEmpty();
+        assertThat(originCategoryList.size()).isEqualTo(1);
+        assertThat(originCategoryList.get(0).getId()).isEqualTo(1000);
+    }
+
+    @Test
+    public void findUniqueAgeCategoryList_ReturnsListOfProductsCategory() {
+        var ageCategoryList = categoryRepository.findUniqueAgeCategoryList(productSpecification);
+
+        assertThat(ageCategoryList).isNotNull();
+        assertThat(ageCategoryList).isNotEmpty();
+        assertThat(ageCategoryList.size()).isEqualTo(2);
+        assertThat(ageCategoryList.get(0).getId()).isEqualTo(1001);
+        assertThat(ageCategoryList.get(1).getId()).isEqualTo(1002);
     }
 
     private void assertException(Class<? extends Exception> expectedExceptionType,

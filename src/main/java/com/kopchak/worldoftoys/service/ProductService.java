@@ -48,5 +48,6 @@ public interface ProductService {
     void updateCategory(String categoryType, Integer categoryId, CategoryNameDto categoryNameDto)
             throws CategoryNotFoundException, CategoryAlreadyExistsException, InvalidCategoryTypeException;
 
-    void createCategory(String categoryType, CategoryNameDto categoryNameDto) throws CategoryAlreadyExistsException, CategoryCreationException, InvalidCategoryTypeException;
+    void createCategory(String categoryType, CategoryNameDto categoryNameDto)
+            throws CategoryAlreadyExistsException, InvalidCategoryTypeException, CategoryCreationException;
 }

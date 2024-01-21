@@ -237,8 +237,7 @@ public class AdminPanelController {
                                                @Valid @RequestBody CategoryNameDto categoryNameDto) {
         try {
             productService.createCategory(categoryType, categoryNameDto);
-        } catch (CategoryCreationException | CategoryAlreadyExistsException |
-                 InvalidCategoryTypeException e) {
+        } catch (CategoryAlreadyExistsException | InvalidCategoryTypeException | CategoryCreationException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
         return new ResponseEntity<>(HttpStatus.CREATED);
