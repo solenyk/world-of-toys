@@ -35,7 +35,8 @@ INSERT INTO brand_category(id, name, slug)
 VALUES (1, 'CoComelon', 'сoсomelon'),
        (2, 'Сurlimals', 'сurlimals'),
        (3, 'Devilon', 'devilon'),
-       (4, 'Disney', 'disney');
+       (4, 'Disney', 'disney'),
+       (5, 'comelon', 'сomelon');
 
 INSERT INTO origin_category(id, name, slug)
 VALUES (1, 'Китай', 'china'),

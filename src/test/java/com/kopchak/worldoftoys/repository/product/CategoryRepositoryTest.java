@@ -1,24 +1,25 @@
 package com.kopchak.worldoftoys.repository.product;
 
-import com.kopchak.worldoftoys.dto.product.category.CategoryDto;
-import com.kopchak.worldoftoys.dto.product.category.FilteringCategoriesDto;
-import com.kopchak.worldoftoys.mapper.product.CategoryMapper;
+import com.kopchak.worldoftoys.domain.product.category.BrandCategory;
+import com.kopchak.worldoftoys.domain.product.category.OriginCategory;
+import com.kopchak.worldoftoys.exception.CategoryNotFoundException;
 import com.kopchak.worldoftoys.mapper.product.CategoryMapperImpl;
-import com.kopchak.worldoftoys.domain.product.Product;
 import com.kopchak.worldoftoys.repository.product.impl.CategoryRepositoryImpl;
 import com.kopchak.worldoftoys.repository.specifications.ProductSpecifications;
 import com.kopchak.worldoftoys.repository.specifications.impl.ProductSpecificationsImpl;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.math.BigDecimal;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @DataJpaTest
 @ActiveProfiles("integrationtest")
@@ -30,37 +31,51 @@ class CategoryRepositoryTest {
     @Autowired
     ProductSpecifications productSpecifications;
 
-    @Autowired
-    CategoryMapper categoryMapper;
+    @Test
+    public void findById_ReturnsProductCategory() throws CategoryNotFoundException {
+        Class<BrandCategory> productCategoryType = BrandCategory.class;
+
+        BrandCategory expectedBrandCategory = new BrandCategory();
+        expectedBrandCategory.setId(5);
+        expectedBrandCategory.setName("comelon");
+        expectedBrandCategory.setSlug("сomelon");
+        expectedBrandCategory.setProducts(new HashSet<>());
+
+        BrandCategory actualBrandCategory = categoryRepository.findById(5, productCategoryType);
+
+        assertThat(actualBrandCategory).isNotNull();
+        assertThat(actualBrandCategory).isInstanceOf(productCategoryType);
+        assertThat(actualBrandCategory).usingRecursiveComparison().isEqualTo(expectedBrandCategory);
+    }
 
     @Test
-    public void findUniqueFilteringProductCategories() {
-        String productName = "Лялька";
-        BigDecimal minPrice = BigDecimal.valueOf(600);
-        BigDecimal maxPrice = BigDecimal.valueOf(850);
-        List<String> originCategoriesSlugList = List.of("china");
-        List<String> brandCategoriesSlugList = List.of("сoсomelon", "сurlimals", "devilon");
-        List<String> ageCategoriesSlugList = List.of("do-1-roku", "vid-1-do-3-rokiv", "vid-6-do-9-rokiv");
+    public void findById_InvalidCategoryId_ThrowsCategoryNotFoundException() {
+        Class<OriginCategory> productCategoryType = OriginCategory.class;
+        Integer id = 5;
 
-        Specification<Product> productSpecification = productSpecifications.filterByProductNamePriceAndCategories(
-                productName, minPrice, maxPrice, originCategoriesSlugList, brandCategoriesSlugList, ageCategoriesSlugList);
+        String categoryNotFoundExceptionMsg = String.format("%s with id: %d does not exist",
+                productCategoryType.getSimpleName(), id);
 
-        FilteringCategoriesDto filteringCategoriesDto = categoryRepository
-                .findUniqueFilteringProductCategories(productSpecification);
+        assertException(CategoryNotFoundException.class, categoryNotFoundExceptionMsg,
+                () -> categoryRepository.findById(id, productCategoryType));
+    }
 
-        List<CategoryDto> expectedOriginCategories = List.of(new CategoryDto("Китай", "china"));
-        List<CategoryDto> expectedBrandCategories = List.of(
-                new CategoryDto("CoComelon", "сoсomelon"));
-        List<CategoryDto> expectedAgeCategories = List.of(
-                new CategoryDto("від 1 до 3 років", "vid-1-do-3-rokiv"),
-                new CategoryDto("від 6 до 9 років", "vid-6-do-9-rokiv"));
+    @Test
+    public void findAllCategories_ReturnsSetOfOriginCategories() {
+        Class<OriginCategory> productCategoryType = OriginCategory.class;
+        int expectedOriginCategoriesSetSize = 2;
 
-        List<CategoryDto> actualOriginCategories = filteringCategoriesDto.originCategories();
-        List<CategoryDto> actualBrandCategories = filteringCategoriesDto.brandCategories();
-        List<CategoryDto> actualAgeCategories = filteringCategoriesDto.ageCategories();
+        Set<OriginCategory> actualOriginCategories = categoryRepository.findAllCategories(productCategoryType);
 
-        assertThat(actualOriginCategories).isEqualTo(expectedOriginCategories);
-        assertThat(actualBrandCategories).isEqualTo(expectedBrandCategories);
-        assertThat(actualAgeCategories).isEqualTo(expectedAgeCategories);
+        assertThat(actualOriginCategories).isNotNull();
+        assertThat(actualOriginCategories).isNotEmpty();
+        assertThat(actualOriginCategories.size()).isEqualTo(expectedOriginCategoriesSetSize);
+    }
+
+    private void assertException(Class<? extends Exception> expectedExceptionType,
+                                 String expectedMessage, Executable executable) {
+        Exception exception = assertThrows(expectedExceptionType, executable);
+        String actualMessage = exception.getMessage();
+        assertEquals(expectedMessage, actualMessage);
     }
 }
