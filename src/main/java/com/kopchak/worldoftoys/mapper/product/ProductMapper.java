@@ -2,7 +2,7 @@ package com.kopchak.worldoftoys.mapper.product;
 
 import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminFilteredProductDto;
-import com.kopchak.worldoftoys.dto.admin.product.AdminFilteredProductsPageDto;
+import com.kopchak.worldoftoys.dto.admin.product.AdminProductsPageDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
@@ -37,8 +37,8 @@ public abstract class ProductMapper {
                 productPage.getTotalElements(), productPage.getTotalPages());
     }
 
-    public AdminFilteredProductsPageDto toAdminFilteredProductsPageDto(Page<Product> productPage) {
-        return new AdminFilteredProductsPageDto(toAdminFilteredProductDtoList(productPage.getContent()),
+    public AdminProductsPageDto toAdminFilteredProductsPageDto(Page<Product> productPage) {
+        return new AdminProductsPageDto(toAdminFilteredProductDtoList(productPage.getContent()),
                 productPage.getTotalElements(), productPage.getTotalPages());
     }
 

@@ -8,7 +8,7 @@ import com.kopchak.worldoftoys.domain.product.category.OriginCategory;
 import com.kopchak.worldoftoys.domain.product.category.ProductCategory;
 import com.kopchak.worldoftoys.domain.product.category.type.CategoryType;
 import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
-import com.kopchak.worldoftoys.dto.admin.product.AdminFilteredProductsPageDto;
+import com.kopchak.worldoftoys.dto.admin.product.AdminProductsPageDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.category.AdminCategoryDto;
 import com.kopchak.worldoftoys.dto.admin.product.category.CategoryIdDto;
@@ -99,12 +99,12 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public AdminFilteredProductsPageDto getAdminFilteredProducts(int page, int size, String productName,
-                                                                 BigDecimal minPrice, BigDecimal maxPrice,
-                                                                 List<String> originCategories,
-                                                                 List<String> brandCategories,
-                                                                 List<String> ageCategories, String priceSortOrder,
-                                                                 String availability) {
+    public AdminProductsPageDto getAdminFilteredProducts(int page, int size, String productName,
+                                                         BigDecimal minPrice, BigDecimal maxPrice,
+                                                         List<String> originCategories,
+                                                         List<String> brandCategories,
+                                                         List<String> ageCategories, String priceSortOrder,
+                                                         String availability) {
 
         Page<Product> productPage = getFilteredProductPage(page, size, productName, minPrice, maxPrice,
                 originCategories, brandCategories, ageCategories, priceSortOrder, availability);

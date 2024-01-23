@@ -170,11 +170,11 @@ class OrderServiceImplTest {
         int pageNumber = 0;
         int pageSize = 10;
         String dateSortOrder = "asc";
-        Specification<Order> mockSpecification = mock(Specification.class);
+        Specification<Order> orderSpec = Specification.where(null);
         var expectedFilteredOrdersPageDto = new FilteredOrdersPageDto(new HashSet<>(), 0L, 0L);
 
-        when(orderSpecifications.filterByStatusesAndDate(any(), any(), eq(dateSortOrder))).thenReturn(mockSpecification);
-        when(orderRepository.findAll(eq(mockSpecification), any(Pageable.class))).thenReturn(Page.empty());
+        when(orderSpecifications.filterByStatusesAndDate(any(), any(), eq(dateSortOrder))).thenReturn(orderSpec);
+        when(orderRepository.findAll(eq(orderSpec), any(Pageable.class))).thenReturn(Page.empty());
         when(orderMapper.toFilteredOrdersPageDto(any())).thenReturn(expectedFilteredOrdersPageDto);
 
         var actualFilteredOrdersPageDto = orderService.filterOrdersByStatusesAndDate(pageNumber, pageSize, null,

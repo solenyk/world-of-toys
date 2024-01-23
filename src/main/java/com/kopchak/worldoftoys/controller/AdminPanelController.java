@@ -3,7 +3,7 @@ package com.kopchak.worldoftoys.controller;
 import com.kopchak.worldoftoys.domain.order.OrderStatus;
 import com.kopchak.worldoftoys.domain.order.payment.PaymentStatus;
 import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
-import com.kopchak.worldoftoys.dto.admin.product.AdminFilteredProductsPageDto;
+import com.kopchak.worldoftoys.dto.admin.product.AdminProductsPageDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.category.AdminCategoryDto;
 import com.kopchak.worldoftoys.dto.admin.product.category.CategoryNameDto;
@@ -54,7 +54,7 @@ public class AdminPanelController {
             description = "Products were successfully fetched",
             content = @Content(schema = @Schema(implementation = FilteredProductsPageDto.class)))
     @GetMapping("/products")
-    public ResponseEntity<AdminFilteredProductsPageDto> getAdminFilteredProducts(
+    public ResponseEntity<AdminProductsPageDto> getAdminFilteredProducts(
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "10") int size,
             @RequestParam(name = "name", required = false) String productName,
