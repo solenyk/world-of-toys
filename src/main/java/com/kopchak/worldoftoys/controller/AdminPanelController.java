@@ -111,10 +111,11 @@ public class AdminPanelController {
                     content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class)))
     })
     @PutMapping("/products/{productId}")
-    public ResponseEntity<Void> updateProduct(@PathVariable(name = "productId") Integer productId,
-                                              @Valid @RequestPart("product") AddUpdateProductDto addUpdateProductDto,
-                                              @RequestPart("image") MultipartFile mainImageFile,
-                                              @RequestPart("images") List<MultipartFile> imageFilesList) {
+    public ResponseEntity<Void> updateProduct(
+            @PathVariable(name = "productId") Integer productId,
+            @Valid @RequestPart("product") AddUpdateProductDto addUpdateProductDto,
+            @RequestPart(value = "image", required = false) MultipartFile mainImageFile,
+            @RequestPart(value = "images", required = false) List<MultipartFile> imageFilesList) {
         try {
             productService.updateProduct(productId, addUpdateProductDto, mainImageFile, imageFilesList);
         } catch (ProductNotFoundException | CategoryNotFoundException | InvalidImageFileFormatException |
@@ -136,9 +137,10 @@ public class AdminPanelController {
                     content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class)))
     })
     @PostMapping("/products/add")
-    public ResponseEntity<Void> createProduct(@Valid @RequestPart("product") AddUpdateProductDto addUpdateProductDto,
-                                              @RequestPart("image") MultipartFile mainImageFile,
-                                              @RequestPart("images") List<MultipartFile> imageFilesList) {
+    public ResponseEntity<Void> createProduct(
+            @Valid @RequestPart("product") AddUpdateProductDto addUpdateProductDto,
+            @RequestPart(value = "image", required = false) MultipartFile mainImageFile,
+            @RequestPart(value = "images", required = false) List<MultipartFile> imageFilesList) {
         try {
             productService.createProduct(addUpdateProductDto, mainImageFile, imageFilesList);
         } catch (ProductNotFoundException | CategoryNotFoundException | InvalidImageFileFormatException |

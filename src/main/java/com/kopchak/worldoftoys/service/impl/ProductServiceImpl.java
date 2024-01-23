@@ -8,8 +8,8 @@ import com.kopchak.worldoftoys.domain.product.category.OriginCategory;
 import com.kopchak.worldoftoys.domain.product.category.ProductCategory;
 import com.kopchak.worldoftoys.domain.product.category.type.CategoryType;
 import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
-import com.kopchak.worldoftoys.dto.admin.product.AdminProductsPageDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
+import com.kopchak.worldoftoys.dto.admin.product.AdminProductsPageDto;
 import com.kopchak.worldoftoys.dto.admin.product.category.AdminCategoryDto;
 import com.kopchak.worldoftoys.dto.admin.product.category.CategoryIdDto;
 import com.kopchak.worldoftoys.dto.admin.product.category.CategoryNameDto;
@@ -122,7 +122,7 @@ public class ProductServiceImpl implements ProductService {
         }
         Product product = productOptional.get();
         Image mainImage = product.getMainImage();
-        ImageDto mainImageDto = imageService.generateDecompressedImageDto(mainImage);
+        ImageDto mainImageDto = mainImage == null ? null : imageService.generateDecompressedImageDto(mainImage);
         List<ImageDto> imageDtoList = getDecompressedProductImageDtoList(product.getImages(), mainImage);
         log.info("Fetched product by id: '{}'", productId);
         return productMapper.toAdminProductDto(product, mainImageDto, imageDtoList);
@@ -182,7 +182,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public void createCategory(String categoryType, CategoryNameDto categoryNameDto)
-            throws CategoryAlreadyExistsException, InvalidCategoryTypeException, CategoryCreationException{
+            throws CategoryAlreadyExistsException, InvalidCategoryTypeException, CategoryCreationException {
         Class<? extends ProductCategory> categoryClass = getCategoryByCategoryType(categoryType);
         categoryRepository.createCategory(categoryClass, categoryNameDto.name());
     }
@@ -232,10 +232,12 @@ public class ProductServiceImpl implements ProductService {
 
     private void setProductImages(Product product, MultipartFile mainImageFile, List<MultipartFile> imageFilesList)
             throws ImageCompressionException, ImageExceedsMaxSizeException, InvalidImageFileFormatException {
-        Image mainImage = imageService.convertMultipartFileToImage(mainImageFile, product);
+        Image mainImage = mainImageFile == null ? null : imageService.convertMultipartFileToImage(mainImageFile, product);
         Set<Image> imagesSet = new LinkedHashSet<>();
-        for (MultipartFile image : imageFilesList) {
-            imagesSet.add(imageService.convertMultipartFileToImage(image, product));
+        if (imageFilesList != null) {
+            for (MultipartFile image : imageFilesList) {
+                imagesSet.add(imageService.convertMultipartFileToImage(image, product));
+            }
         }
         product.setMainImage(mainImage);
         product.setImages(imagesSet);
