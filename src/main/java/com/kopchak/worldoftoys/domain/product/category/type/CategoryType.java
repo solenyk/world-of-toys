@@ -1,26 +1,20 @@
 package com.kopchak.worldoftoys.domain.product.category.type;
 
-import com.kopchak.worldoftoys.exception.exception.category.InvalidCategoryTypeException;
+import com.kopchak.worldoftoys.domain.product.category.AgeCategory;
+import com.kopchak.worldoftoys.domain.product.category.BrandCategory;
+import com.kopchak.worldoftoys.domain.product.category.OriginCategory;
+import com.kopchak.worldoftoys.domain.product.category.ProductCategory;
 import lombok.Getter;
 
 @Getter
 public enum CategoryType {
-    BRANDS("brands"),
-    ORIGINS("origins"),
-    AGES("ages");
+    BRANDS(BrandCategory.class),
+    ORIGINS(OriginCategory.class),
+    AGES(AgeCategory.class);
 
-    private final String value;
+    private final Class<? extends ProductCategory> category;
 
-    CategoryType(String value) {
-        this.value = value;
-    }
-
-    public static CategoryType findByValue(String value) throws InvalidCategoryTypeException {
-        for (CategoryType categoryType : CategoryType.values()) {
-            if (categoryType.value.equalsIgnoreCase(value)) {
-                return categoryType;
-            }
-        }
-        throw new InvalidCategoryTypeException(String.format("Category: %s does not exist", value));
+    CategoryType(Class<? extends ProductCategory> category) {
+        this.category = category;
     }
 }

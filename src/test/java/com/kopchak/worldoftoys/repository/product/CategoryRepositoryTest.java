@@ -3,7 +3,7 @@ package com.kopchak.worldoftoys.repository.product;
 import com.kopchak.worldoftoys.domain.product.Product;
 import com.kopchak.worldoftoys.domain.product.category.BrandCategory;
 import com.kopchak.worldoftoys.domain.product.category.OriginCategory;
-import com.kopchak.worldoftoys.exception.exception.category.CategoryAlreadyExistsException;
+import com.kopchak.worldoftoys.exception.exception.category.DublicateCategoryNameException;
 import com.kopchak.worldoftoys.exception.exception.category.CategoryContainsProductsException;
 import com.kopchak.worldoftoys.exception.exception.category.CategoryCreationException;
 import com.kopchak.worldoftoys.exception.exception.category.CategoryNotFoundException;
@@ -123,7 +123,7 @@ class CategoryRepositoryTest {
     }
 
     @Test
-    public void updateCategory_NonExistingCategoryName() throws CategoryAlreadyExistsException, CategoryNotFoundException {
+    public void updateCategory_NonExistingCategoryName() throws DublicateCategoryNameException, CategoryNotFoundException {
         Class<BrandCategory> productCategoryType = BrandCategory.class;
         Integer id = 1001;
         String newCategoryName = "new-name";
@@ -146,7 +146,7 @@ class CategoryRepositoryTest {
         String categoryAlreadyExistsExceptionMsg = String.format("Category with name: %s already exist",
                 existingCategoryName);
 
-        assertException(CategoryAlreadyExistsException.class, categoryAlreadyExistsExceptionMsg,
+        assertException(DublicateCategoryNameException.class, categoryAlreadyExistsExceptionMsg,
                 () -> categoryRepository.updateCategory(productCategoryType, id, existingCategoryName));
     }
 
@@ -163,7 +163,7 @@ class CategoryRepositoryTest {
     }
 
     @Test
-    public void createCategory_NonExistingCategoryName() throws CategoryAlreadyExistsException, CategoryNotFoundException, CategoryCreationException {
+    public void createCategory_NonExistingCategoryName() throws DublicateCategoryNameException, CategoryNotFoundException, CategoryCreationException {
         Class<BrandCategory> productCategoryType = BrandCategory.class;
         Integer id = 1;
         String newCategoryName = "new-name";
@@ -184,7 +184,7 @@ class CategoryRepositoryTest {
         String categoryAlreadyExistsExceptionMsg = String.format("Category with name: %s already exist",
                 existingCategoryName);
 
-        assertException(CategoryAlreadyExistsException.class, categoryAlreadyExistsExceptionMsg,
+        assertException(DublicateCategoryNameException.class, categoryAlreadyExistsExceptionMsg,
                 () -> categoryRepository.createCategory(productCategoryType, existingCategoryName));
     }
 

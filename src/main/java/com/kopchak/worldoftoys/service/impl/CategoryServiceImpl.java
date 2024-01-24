@@ -1,15 +1,14 @@
 package com.kopchak.worldoftoys.service.impl;
 
 import com.kopchak.worldoftoys.domain.product.Product;
-import com.kopchak.worldoftoys.domain.product.category.AgeCategory;
-import com.kopchak.worldoftoys.domain.product.category.BrandCategory;
-import com.kopchak.worldoftoys.domain.product.category.OriginCategory;
-import com.kopchak.worldoftoys.domain.product.category.ProductCategory;
 import com.kopchak.worldoftoys.domain.product.category.type.CategoryType;
 import com.kopchak.worldoftoys.dto.admin.category.AdminCategoryDto;
 import com.kopchak.worldoftoys.dto.admin.category.CategoryNameDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringCategoriesDto;
-import com.kopchak.worldoftoys.exception.exception.category.*;
+import com.kopchak.worldoftoys.exception.exception.category.DublicateCategoryNameException;
+import com.kopchak.worldoftoys.exception.exception.category.CategoryContainsProductsException;
+import com.kopchak.worldoftoys.exception.exception.category.CategoryCreationException;
+import com.kopchak.worldoftoys.exception.exception.category.CategoryNotFoundException;
 import com.kopchak.worldoftoys.mapper.product.CategoryMapper;
 import com.kopchak.worldoftoys.repository.product.CategoryRepository;
 import com.kopchak.worldoftoys.repository.specifications.impl.ProductSpecificationsImpl;
@@ -49,39 +48,25 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public Set<AdminCategoryDto> getAdminCategories(String categoryType) throws InvalidCategoryTypeException {
-        Class<? extends ProductCategory> categoryClass = getCategoryByCategoryType(categoryType);
-        var categories = categoryRepository.findAllCategories(categoryClass);
+    public Set<AdminCategoryDto> getAdminCategories(CategoryType categoryType) {
+        var categories = categoryRepository.findAllCategories(categoryType.getCategory());
         return categoryMapper.toAdminCategoryDtoSet(categories);
     }
 
     @Override
-    public void deleteCategory(String categoryType, Integer categoryId)
-            throws CategoryContainsProductsException, InvalidCategoryTypeException {
-        Class<? extends ProductCategory> categoryClass = getCategoryByCategoryType(categoryType);
-        categoryRepository.deleteCategory(categoryClass, categoryId);
+    public void deleteCategory(CategoryType categoryType, Integer categoryId) throws CategoryContainsProductsException {
+        categoryRepository.deleteCategory(categoryType.getCategory(), categoryId);
     }
 
     @Override
-    public void updateCategory(String categoryType, Integer categoryId, CategoryNameDto categoryNameDto)
-            throws CategoryNotFoundException, CategoryAlreadyExistsException, InvalidCategoryTypeException {
-        Class<? extends ProductCategory> categoryClass = getCategoryByCategoryType(categoryType);
-        categoryRepository.updateCategory(categoryClass, categoryId, categoryNameDto.name());
+    public void updateCategory(CategoryType categoryType, Integer categoryId, CategoryNameDto categoryNameDto)
+            throws CategoryNotFoundException, DublicateCategoryNameException {
+        categoryRepository.updateCategory(categoryType.getCategory(), categoryId, categoryNameDto.name());
     }
 
     @Override
-    public void createCategory(String categoryType, CategoryNameDto categoryNameDto)
-            throws CategoryAlreadyExistsException, InvalidCategoryTypeException, CategoryCreationException {
-        Class<? extends ProductCategory> categoryClass = getCategoryByCategoryType(categoryType);
-        categoryRepository.createCategory(categoryClass, categoryNameDto.name());
-    }
-
-    private Class<? extends ProductCategory> getCategoryByCategoryType(String categoryType)
-            throws InvalidCategoryTypeException {
-        return switch (CategoryType.findByValue(categoryType)) {
-            case BRANDS -> BrandCategory.class;
-            case ORIGINS -> OriginCategory.class;
-            case AGES -> AgeCategory.class;
-        };
+    public void createCategory(CategoryType categoryType, CategoryNameDto categoryNameDto)
+            throws DublicateCategoryNameException, CategoryCreationException {
+        categoryRepository.createCategory(categoryType.getCategory(), categoryNameDto.name());
     }
 }

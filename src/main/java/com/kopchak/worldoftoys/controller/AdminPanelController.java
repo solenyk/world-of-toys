@@ -2,6 +2,7 @@ package com.kopchak.worldoftoys.controller;
 
 import com.kopchak.worldoftoys.domain.order.OrderStatus;
 import com.kopchak.worldoftoys.domain.order.payment.PaymentStatus;
+import com.kopchak.worldoftoys.domain.product.category.type.CategoryType;
 import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductsPageDto;
@@ -169,37 +170,20 @@ public class AdminPanelController {
     }
 
     @Operation(summary = "Get all categories")
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Product categories were successfully fetched",
-                    content = {
-                            @Content(
-                                    mediaType = "application/json",
-                                    array = @ArraySchema(
-                                            schema = @Schema(implementation = AdminCategoryDto.class))
-                            )
-                    }),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "Category type is invalid",
-                    content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class))),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "Product category is not found",
-                    content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class)))
-    })
+    @ApiResponse(
+            responseCode = "200",
+            description = "Product categories were successfully fetched",
+            content = {
+                    @Content(
+                            mediaType = "application/json",
+                            array = @ArraySchema(
+                                    schema = @Schema(implementation = AdminCategoryDto.class))
+                    )
+            })
     @GetMapping("/categories/{categoryType}")
     public ResponseEntity<Set<AdminCategoryDto>> getProductCategories(
-            @PathVariable("categoryType") String categoryType) {
-        try {
-            Set<AdminCategoryDto> categoryDtoSet = categoryService.getAdminCategories(categoryType);
-            return new ResponseEntity<>(categoryDtoSet, HttpStatus.OK);
-        } catch (InvalidCategoryTypeException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
-        } catch (CategoryNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
-        }
+            @PathVariable("categoryType") CategoryType categoryType) {
+        return new ResponseEntity<>(categoryService.getAdminCategories(categoryType), HttpStatus.OK);
     }
 
     @Operation(summary = "Delete product category")
@@ -210,15 +194,15 @@ public class AdminPanelController {
                     content = @Content(schema = @Schema(hidden = true))),
             @ApiResponse(
                     responseCode = "400",
-                    description = "Product category is incorrect",
+                    description = "Product category contains products",
                     content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class)))
     })
     @DeleteMapping("/categories/{categoryType}/{categoryId}")
-    public ResponseEntity<Void> deleteCategory(@PathVariable("categoryType") String categoryType,
+    public ResponseEntity<Void> deleteCategory(@PathVariable("categoryType") CategoryType categoryType,
                                                @PathVariable(name = "categoryId") Integer categoryId) {
         try {
             categoryService.deleteCategory(categoryType, categoryId);
-        } catch (InvalidCategoryTypeException | CategoryContainsProductsException e) {
+        } catch (CategoryContainsProductsException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -232,16 +216,20 @@ public class AdminPanelController {
                     content = @Content(schema = @Schema(hidden = true))),
             @ApiResponse(
                     responseCode = "400",
-                    description = "Product category type is incorrect",
+                    description = "Product category name already exist",
+                    content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class))),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Product category is not found",
                     content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class)))
     })
     @PutMapping("/categories/{categoryType}/{categoryId}")
-    public ResponseEntity<Void> updateCategory(@PathVariable("categoryType") String categoryType,
+    public ResponseEntity<Void> updateCategory(@PathVariable("categoryType") CategoryType categoryType,
                                                @PathVariable(name = "categoryId") Integer categoryId,
                                                @Valid @RequestBody CategoryNameDto categoryNameDto) {
         try {
             categoryService.updateCategory(categoryType, categoryId, categoryNameDto);
-        } catch (CategoryAlreadyExistsException | InvalidCategoryTypeException e) {
+        } catch (DublicateCategoryNameException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         } catch (CategoryNotFoundException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
@@ -261,11 +249,11 @@ public class AdminPanelController {
                     content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class)))
     })
     @PostMapping("/categories/{categoryType}/add")
-    public ResponseEntity<Void> createCategory(@PathVariable("categoryType") String categoryType,
+    public ResponseEntity<Void> createCategory(@PathVariable("categoryType") CategoryType categoryType,
                                                @Valid @RequestBody CategoryNameDto categoryNameDto) {
         try {
             categoryService.createCategory(categoryType, categoryNameDto);
-        } catch (CategoryAlreadyExistsException | InvalidCategoryTypeException | CategoryCreationException e) {
+        } catch (DublicateCategoryNameException | CategoryCreationException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
         return new ResponseEntity<>(HttpStatus.CREATED);
