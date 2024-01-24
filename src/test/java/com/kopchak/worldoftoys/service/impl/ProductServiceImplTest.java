@@ -2,15 +2,20 @@ package com.kopchak.worldoftoys.service.impl;
 
 import com.kopchak.worldoftoys.domain.image.Image;
 import com.kopchak.worldoftoys.domain.product.Product;
+import com.kopchak.worldoftoys.domain.product.category.AgeCategory;
+import com.kopchak.worldoftoys.domain.product.category.BrandCategory;
+import com.kopchak.worldoftoys.domain.product.category.OriginCategory;
 import com.kopchak.worldoftoys.domain.product.category.ProductCategory;
+import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductsPageDto;
+import com.kopchak.worldoftoys.dto.admin.category.CategoryIdDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringCategoriesDto;
 import com.kopchak.worldoftoys.dto.product.image.ImageDto;
-import com.kopchak.worldoftoys.exception.ImageDecompressionException;
-import com.kopchak.worldoftoys.exception.ProductNotFoundException;
+import com.kopchak.worldoftoys.exception.exception.image.ext.ImageDecompressionException;
+import com.kopchak.worldoftoys.exception.exception.product.ProductNotFoundException;
 import com.kopchak.worldoftoys.mapper.product.CategoryMapper;
 import com.kopchak.worldoftoys.mapper.product.ProductMapper;
 import com.kopchak.worldoftoys.repository.product.CategoryRepository;
@@ -37,7 +42,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ProductServiceImplTest {
@@ -81,7 +86,7 @@ class ProductServiceImplTest {
         originCategories = List.of("china", "ukraine");
         brandCategories = List.of("сurlimals", "devilon");
         ageCategories = List.of("do-1-roku", "vid-1-do-3-rokiv");
-        product = Product.builder().mainImage(new Image()).images(Set.of(new Image())).build();
+        product = Product.builder().id(PRODUCT_ID).mainImage(new Image()).images(Set.of(new Image())).build();
         imageDto = ImageDto.builder().build();
         spec = Specification.where(null);
         pageable = PageRequest.of(PAGE, SIZE);
@@ -95,7 +100,7 @@ class ProductServiceImplTest {
         when(imageService.generateDecompressedImageDto(any())).thenReturn(imageDto);
         when(productMapper.toProductDto(eq(product), any(), any())).thenReturn(expectedProductDto);
 
-        ProductDto actualProductDto = productService.getProductDtoBySlug(PRODUCT_SLUG);
+        ProductDto actualProductDto = productService.getProductBySlug(PRODUCT_SLUG);
 
         assertThat(actualProductDto).isNotNull();
         assertThat(actualProductDto).isEqualTo(expectedProductDto);
@@ -108,7 +113,7 @@ class ProductServiceImplTest {
         when(productRepository.findBySlug(eq(PRODUCT_SLUG))).thenReturn(Optional.empty());
 
         assertException(ProductNotFoundException.class, productNotFoundExceptionMsg,
-                () -> productService.getProductDtoBySlug(PRODUCT_SLUG));
+                () -> productService.getProductBySlug(PRODUCT_SLUG));
     }
 
     @Test
@@ -121,32 +126,11 @@ class ProductServiceImplTest {
         when(productRepository.findAll(eq(spec), eq(pageable))).thenReturn(Page.empty());
         when(productMapper.toFilteredProductsPageDto(any())).thenReturn(expectedFilteredProductsPageDto);
 
-        var actualFilteredProductsPageDto = productService.getFilteredProducts(PAGE, SIZE, productName, minProductPrice,
+        var actualFilteredProductsPageDto = productService.getFilteredProductsPage(PAGE, SIZE, productName, minProductPrice,
                 maxProductPrice, originCategories, brandCategories, ageCategories, PRICE_SORT_ORDER);
 
         assertThat(actualFilteredProductsPageDto).isNotNull();
         assertThat(actualFilteredProductsPageDto).isEqualTo(expectedFilteredProductsPageDto);
-    }
-
-    @Test
-    public void getFilteringProductCategories_ReturnsFilteringProductCategoriesDto() {
-        var productCategories = new ArrayList<ProductCategory>();
-        var expectedFilteringProductCategoriesDto = FilteringCategoriesDto.builder().build();
-
-        when(productSpecifications.filterByProductNamePriceAndCategories(eq(productName), eq(minProductPrice),
-                eq(maxProductPrice), eq(originCategories), eq(brandCategories), eq(ageCategories), any()))
-                .thenReturn(spec);
-        when(categoryRepository.findUniqueBrandCategoryList(spec)).thenReturn(productCategories);
-        when(categoryRepository.findUniqueOriginCategoryList(spec)).thenReturn(productCategories);
-        when(categoryRepository.findUniqueAgeCategoryList(spec)).thenReturn(productCategories);
-        when(categoryMapper.toFilteringCategoriesDto(eq(productCategories), eq(productCategories),
-                eq(productCategories))).thenReturn(expectedFilteringProductCategoriesDto);
-
-        var actualFilteringProductCategoriesDto = productService.getFilteringCategories(productName,
-                minProductPrice, maxProductPrice, originCategories, brandCategories, ageCategories);
-
-        assertThat(actualFilteringProductCategoriesDto).isNotNull();
-        assertThat(actualFilteringProductCategoriesDto).isEqualTo(expectedFilteringProductCategoriesDto);
     }
 
     @Test
@@ -159,7 +143,7 @@ class ProductServiceImplTest {
         when(productRepository.findAll(eq(spec), eq(pageable))).thenReturn(Page.empty());
         when(productMapper.toAdminFilteredProductsPageDto(any())).thenReturn(expectedAdminProductsPageDto);
 
-        var actualAdminProductsPageDto = productService.getAdminFilteredProducts(PAGE, SIZE, productName,
+        var actualAdminProductsPageDto = productService.getAdminProductsPage(PAGE, SIZE, productName,
                 minProductPrice, maxProductPrice, originCategories, brandCategories, ageCategories,
                 PRICE_SORT_ORDER, null);
 
@@ -184,7 +168,7 @@ class ProductServiceImplTest {
         when(productMapper.toAdminProductDto(eq(product), eq(imageDto), eq(imageDtoList)))
                 .thenReturn(expectedAdminProductDto);
 
-        var actualAdminProductDto = productService.getAdminProductDtoById(PRODUCT_ID);
+        var actualAdminProductDto = productService.getProductById(PRODUCT_ID);
 
         assertThat(actualAdminProductDto).isNotNull();
         assertThat(actualAdminProductDto).isEqualTo(expectedAdminProductDto);
@@ -197,7 +181,42 @@ class ProductServiceImplTest {
         when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.empty());
 
         assertException(ProductNotFoundException.class, productNotFoundExceptionMsg,
-                () -> productService.getAdminProductDtoById(PRODUCT_ID));
+                () -> productService.getProductById(PRODUCT_ID));
+    }
+
+    @Test
+    public void updateProduct_() throws Exception {
+        CategoryIdDto categoryIdDto = new CategoryIdDto(1);
+        var addUpdateProductDto = AddUpdateProductDto
+                .builder()
+                .name(productName)
+                .brandCategory(categoryIdDto)
+                .originCategory(categoryIdDto)
+                .ageCategories(List.of(categoryIdDto))
+                .build();
+        BrandCategory expectedBrandCategory = new BrandCategory();
+        OriginCategory expectedOriginCategory = new OriginCategory();
+        AgeCategory expectedAgeCategory = new AgeCategory();
+
+        when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.of(product));
+        when(productRepository.findByName(productName)).thenReturn(Optional.empty());
+        when(productMapper.toProduct(addUpdateProductDto)).thenReturn(product);
+        when(categoryRepository.findById(eq(categoryIdDto.id()), eq(BrandCategory.class)))
+                .thenReturn(expectedBrandCategory);
+        when(categoryRepository.findById(eq(categoryIdDto.id()), eq(OriginCategory.class)))
+                .thenReturn(expectedOriginCategory);
+        when(categoryRepository.findById(eq(categoryIdDto.id()), eq(AgeCategory.class)))
+                .thenReturn(expectedAgeCategory);
+
+        productService.updateProduct(PRODUCT_ID, addUpdateProductDto, null, null);
+
+        verify(productRepository).save(product);
+
+        assertThat(product.getBrandCategory()).isEqualTo(expectedBrandCategory);
+        assertThat(product.getOriginCategory()).isEqualTo(expectedOriginCategory);
+        assertThat(product.getAgeCategories()).isNotNull();
+        assertThat(product.getAgeCategories().size()).isEqualTo(1);
+        assertThat(product.getAgeCategories().contains(expectedAgeCategory)).isTrue();
     }
 
     private void assertException(Class<? extends Exception> expectedExceptionType,

@@ -8,6 +8,7 @@ import com.kopchak.worldoftoys.dto.product.category.CategoryDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringCategoriesDto;
 import com.kopchak.worldoftoys.exception.exception.image.ext.ImageDecompressionException;
 import com.kopchak.worldoftoys.exception.exception.product.ProductNotFoundException;
+import com.kopchak.worldoftoys.service.CategoryService;
 import com.kopchak.worldoftoys.service.JwtTokenService;
 import com.kopchak.worldoftoys.service.ProductService;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,6 +48,9 @@ class ShopControllerTest {
 
     @MockBean
     private ProductService productService;
+
+    @MockBean
+    private CategoryService categoryService;
 
     @MockBean
     private JwtTokenService jwtTokenService;
@@ -114,7 +118,7 @@ class ShopControllerTest {
                 .ageCategories(List.of(new CategoryDto("від 1 до 3 років", "vid-1-do-3-rokiv")))
                 .build();
 
-        when(productService.getFilteringCategories(eq(PRODUCT_NAME), eq(minProductPrice), eq(maxProductPrice),
+        when(categoryService.getFilteringCategories(eq(PRODUCT_NAME), eq(minProductPrice), eq(maxProductPrice),
                 eq(originCategories), eq(brandCategories), eq(ageCategories)))
                 .thenReturn(expectedFilteringProductCategoriesDto);
 
