@@ -21,6 +21,7 @@ import com.kopchak.worldoftoys.exception.exception.order.InvalidOrderException;
 import com.kopchak.worldoftoys.exception.exception.order.InvalidOrderStatusException;
 import com.kopchak.worldoftoys.exception.exception.product.DuplicateProductNameException;
 import com.kopchak.worldoftoys.exception.exception.product.ProductNotFoundException;
+import com.kopchak.worldoftoys.service.CategoryService;
 import com.kopchak.worldoftoys.service.OrderService;
 import com.kopchak.worldoftoys.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -51,8 +52,8 @@ import java.util.Set;
         "to products and orders. It provides endpoints for filtering and managing products, categories, and orders.")
 @SecurityRequirement(name = "Bearer Authentication")
 public class AdminPanelController {
-
     private final ProductService productService;
+    private final CategoryService categoryService;
     private final OrderService orderService;
 
     @Operation(summary = "Fetch filtered products")
@@ -192,7 +193,7 @@ public class AdminPanelController {
     public ResponseEntity<Set<AdminCategoryDto>> getProductCategories(
             @PathVariable("categoryType") String categoryType) {
         try {
-            Set<AdminCategoryDto> categoryDtoSet = productService.getAdminCategories(categoryType);
+            Set<AdminCategoryDto> categoryDtoSet = categoryService.getAdminCategories(categoryType);
             return new ResponseEntity<>(categoryDtoSet, HttpStatus.OK);
         } catch (InvalidCategoryTypeException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
@@ -216,7 +217,7 @@ public class AdminPanelController {
     public ResponseEntity<Void> deleteCategory(@PathVariable("categoryType") String categoryType,
                                                @PathVariable(name = "categoryId") Integer categoryId) {
         try {
-            productService.deleteCategory(categoryType, categoryId);
+            categoryService.deleteCategory(categoryType, categoryId);
         } catch (InvalidCategoryTypeException | CategoryContainsProductsException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
@@ -239,7 +240,7 @@ public class AdminPanelController {
                                                @PathVariable(name = "categoryId") Integer categoryId,
                                                @Valid @RequestBody CategoryNameDto categoryNameDto) {
         try {
-            productService.updateCategory(categoryType, categoryId, categoryNameDto);
+            categoryService.updateCategory(categoryType, categoryId, categoryNameDto);
         } catch (CategoryAlreadyExistsException | InvalidCategoryTypeException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         } catch (CategoryNotFoundException e) {
@@ -263,7 +264,7 @@ public class AdminPanelController {
     public ResponseEntity<Void> createCategory(@PathVariable("categoryType") String categoryType,
                                                @Valid @RequestBody CategoryNameDto categoryNameDto) {
         try {
-            productService.createCategory(categoryType, categoryNameDto);
+            categoryService.createCategory(categoryType, categoryNameDto);
         } catch (CategoryAlreadyExistsException | InvalidCategoryTypeException | CategoryCreationException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }

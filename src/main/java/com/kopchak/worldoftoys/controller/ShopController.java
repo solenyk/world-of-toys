@@ -6,6 +6,7 @@ import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringCategoriesDto;
 import com.kopchak.worldoftoys.exception.exception.image.ext.ImageDecompressionException;
 import com.kopchak.worldoftoys.exception.exception.product.ProductNotFoundException;
+import com.kopchak.worldoftoys.service.CategoryService;
 import com.kopchak.worldoftoys.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -32,6 +33,7 @@ import java.util.List;
         "It provides endpoints for filtering products, fetching product categories and single products by slug")
 public class ShopController {
     private final ProductService productService;
+    private final CategoryService categoryService;
 
     @Operation(summary = "Fetch filtered products")
     @ApiResponse(
@@ -69,7 +71,7 @@ public class ShopController {
             @RequestParam(name = "brand", required = false) List<String> brandCategories,
             @RequestParam(name = "age", required = false) List<String> ageCategories
     ) {
-        FilteringCategoriesDto filteringCategoriesDto = productService.getFilteringCategories(
+        FilteringCategoriesDto filteringCategoriesDto = categoryService.getFilteringCategories(
                 productName, minPrice, maxPrice, originCategories, brandCategories, ageCategories);
         return new ResponseEntity<>(filteringCategoriesDto, HttpStatus.OK);
     }

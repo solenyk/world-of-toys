@@ -3,21 +3,17 @@ package com.kopchak.worldoftoys.service;
 import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductsPageDto;
-import com.kopchak.worldoftoys.dto.admin.category.AdminCategoryDto;
-import com.kopchak.worldoftoys.dto.admin.category.CategoryNameDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
-import com.kopchak.worldoftoys.dto.product.category.FilteringCategoriesDto;
-import com.kopchak.worldoftoys.exception.exception.category.*;
+import com.kopchak.worldoftoys.exception.exception.category.CategoryNotFoundException;
+import com.kopchak.worldoftoys.exception.exception.image.ImageException;
+import com.kopchak.worldoftoys.exception.exception.image.ext.ImageDecompressionException;
 import com.kopchak.worldoftoys.exception.exception.product.DuplicateProductNameException;
 import com.kopchak.worldoftoys.exception.exception.product.ProductNotFoundException;
-import com.kopchak.worldoftoys.exception.exception.image.ext.ImageDecompressionException;
-import com.kopchak.worldoftoys.exception.exception.image.ImageException;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Set;
 
 public interface ProductService {
     FilteredProductsPageDto getFilteredProductsPage(int page, int size, String productName, BigDecimal minPrice,
@@ -26,10 +22,6 @@ public interface ProductService {
                                                     String priceSortOrder);
 
     ProductDto getProductBySlug(String productSlug) throws ProductNotFoundException, ImageDecompressionException;
-
-    FilteringCategoriesDto getFilteringCategories(String productName, BigDecimal minPrice, BigDecimal maxPrice,
-                                                  List<String> originCategories, List<String> brandCategories,
-                                                  List<String> ageCategories);
 
     AdminProductsPageDto getAdminProductsPage(int page, int size, String productName, BigDecimal minPrice,
                                               BigDecimal maxPrice, List<String> originCategories,
@@ -45,16 +37,4 @@ public interface ProductService {
     void createProduct(AddUpdateProductDto addUpdateProductDto, MultipartFile mainImageFile,
                        List<MultipartFile> imageFileList)
             throws DuplicateProductNameException, CategoryNotFoundException, ImageException;
-
-    Set<AdminCategoryDto> getAdminCategories(String categoryType)
-            throws CategoryNotFoundException, InvalidCategoryTypeException;
-
-    void deleteCategory(String category, Integer categoryId)
-            throws CategoryContainsProductsException, InvalidCategoryTypeException;
-
-    void updateCategory(String categoryType, Integer categoryId, CategoryNameDto categoryNameDto)
-            throws CategoryNotFoundException, CategoryAlreadyExistsException, InvalidCategoryTypeException;
-
-    void createCategory(String categoryType, CategoryNameDto categoryNameDto)
-            throws CategoryAlreadyExistsException, InvalidCategoryTypeException, CategoryCreationException;
 }

@@ -5,24 +5,18 @@ import com.kopchak.worldoftoys.domain.product.Product;
 import com.kopchak.worldoftoys.domain.product.category.AgeCategory;
 import com.kopchak.worldoftoys.domain.product.category.BrandCategory;
 import com.kopchak.worldoftoys.domain.product.category.OriginCategory;
-import com.kopchak.worldoftoys.domain.product.category.ProductCategory;
-import com.kopchak.worldoftoys.domain.product.category.type.CategoryType;
+import com.kopchak.worldoftoys.dto.admin.category.CategoryIdDto;
 import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductsPageDto;
-import com.kopchak.worldoftoys.dto.admin.category.AdminCategoryDto;
-import com.kopchak.worldoftoys.dto.admin.category.CategoryIdDto;
-import com.kopchak.worldoftoys.dto.admin.category.CategoryNameDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
-import com.kopchak.worldoftoys.dto.product.category.FilteringCategoriesDto;
 import com.kopchak.worldoftoys.dto.product.image.ImageDto;
-import com.kopchak.worldoftoys.exception.exception.category.*;
+import com.kopchak.worldoftoys.exception.exception.category.CategoryNotFoundException;
 import com.kopchak.worldoftoys.exception.exception.image.ImageException;
 import com.kopchak.worldoftoys.exception.exception.image.ext.ImageDecompressionException;
 import com.kopchak.worldoftoys.exception.exception.product.DuplicateProductNameException;
 import com.kopchak.worldoftoys.exception.exception.product.ProductNotFoundException;
-import com.kopchak.worldoftoys.mapper.product.CategoryMapper;
 import com.kopchak.worldoftoys.mapper.product.ProductMapper;
 import com.kopchak.worldoftoys.repository.product.CategoryRepository;
 import com.kopchak.worldoftoys.repository.product.ProductRepository;
@@ -49,7 +43,6 @@ public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final ProductSpecificationsImpl productSpecifications;
-    private final CategoryMapper categoryMapper;
     private final ProductMapper productMapper;
     private final ImageService imageService;
 
@@ -79,23 +72,6 @@ public class ProductServiceImpl implements ProductService {
                 getDecompressedProductImageDtoList(product.getImages(), mainImage);
         log.info("Fetched product by slug: '{}'", productSlug);
         return productMapper.toProductDto(product, mainImageDto, imageDtoList);
-    }
-
-    @Override
-    public FilteringCategoriesDto getFilteringCategories(String productName, BigDecimal minPrice, BigDecimal maxPrice,
-                                                         List<String> originCategories, List<String> brandCategories,
-                                                         List<String> ageCategories) {
-        Specification<Product> spec = productSpecifications.filterByProductNamePriceAndCategories(productName, minPrice,
-                maxPrice, originCategories, brandCategories, ageCategories, null);
-        var filteringProductCategoriesDto = categoryMapper.toFilteringCategoriesDto(
-                categoryRepository.findUniqueBrandCategoryList(spec),
-                categoryRepository.findUniqueOriginCategoryList(spec),
-                categoryRepository.findUniqueAgeCategoryList(spec)
-        );
-        log.info("Fetched filtering product categories - Product Name: '{}', Min Price: {}, Max Price: {}, " +
-                        "Origin Categories: {}, Brand Categories: {}, Age Categories: {}",
-                productName, minPrice, maxPrice, originCategories, brandCategories, ageCategories);
-        return filteringProductCategoriesDto;
     }
 
     @Override
@@ -152,34 +128,6 @@ public class ProductServiceImpl implements ProductService {
         log.info("The product with name: {} was successfully saved", product.getName());
     }
 
-    @Override
-    public Set<AdminCategoryDto> getAdminCategories(String categoryType) throws InvalidCategoryTypeException {
-        Class<? extends ProductCategory> categoryClass = getCategoryByCategoryType(categoryType);
-        var categories = categoryRepository.findAllCategories(categoryClass);
-        return categoryMapper.toAdminCategoryDtoSet(categories);
-    }
-
-    @Override
-    public void deleteCategory(String categoryType, Integer categoryId)
-            throws CategoryContainsProductsException, InvalidCategoryTypeException {
-        Class<? extends ProductCategory> categoryClass = getCategoryByCategoryType(categoryType);
-        categoryRepository.deleteCategory(categoryClass, categoryId);
-    }
-
-    @Override
-    public void updateCategory(String categoryType, Integer categoryId, CategoryNameDto categoryNameDto)
-            throws CategoryNotFoundException, CategoryAlreadyExistsException, InvalidCategoryTypeException {
-        Class<? extends ProductCategory> categoryClass = getCategoryByCategoryType(categoryType);
-        categoryRepository.updateCategory(categoryClass, categoryId, categoryNameDto.name());
-    }
-
-    @Override
-    public void createCategory(String categoryType, CategoryNameDto categoryNameDto)
-            throws CategoryAlreadyExistsException, InvalidCategoryTypeException, CategoryCreationException {
-        Class<? extends ProductCategory> categoryClass = getCategoryByCategoryType(categoryType);
-        categoryRepository.createCategory(categoryClass, categoryNameDto.name());
-    }
-
     private Page<Product> getFilteredProductPage(int page, int size, String productName, BigDecimal minPrice,
                                                  BigDecimal maxPrice, List<String> originCategories,
                                                  List<String> brandCategories, List<String> ageCategories,
@@ -193,15 +141,6 @@ public class ProductServiceImpl implements ProductService {
                         "Price Sort Order: '{}'", page, size, productName, minPrice, maxPrice, originCategories,
                 brandCategories, ageCategories, availability, priceSortOrder);
         return productPage;
-    }
-
-    private Class<? extends ProductCategory> getCategoryByCategoryType(String categoryType)
-            throws InvalidCategoryTypeException {
-        return switch (CategoryType.findByValue(categoryType)) {
-            case BRANDS -> BrandCategory.class;
-            case ORIGINS -> OriginCategory.class;
-            case AGES -> AgeCategory.class;
-        };
     }
 
     private Product buildProductFromDtoAndImages(AddUpdateProductDto addUpdateProductDto, MultipartFile mainImageFile,
