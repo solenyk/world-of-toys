@@ -22,10 +22,10 @@ import com.kopchak.worldoftoys.mapper.product.CategoryMapper;
 import com.kopchak.worldoftoys.mapper.product.ProductMapper;
 import com.kopchak.worldoftoys.repository.product.CategoryRepository;
 import com.kopchak.worldoftoys.repository.product.ProductRepository;
-import com.kopchak.worldoftoys.repository.product.image.ImageRepository;
 import com.kopchak.worldoftoys.repository.specifications.impl.ProductSpecificationsImpl;
 import com.kopchak.worldoftoys.service.ImageService;
 import com.kopchak.worldoftoys.service.ProductService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -37,7 +37,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -48,7 +47,6 @@ public class ProductServiceImpl implements ProductService {
     private final ProductSpecificationsImpl productSpecifications;
     private final CategoryMapper categoryMapper;
     private final ProductMapper productMapper;
-    private final ImageRepository imageRepository;
     private final ImageService imageService;
 
     @Override
@@ -112,15 +110,9 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public AdminProductDto getAdminProductDtoById(Integer productId)
-            throws ProductNotFoundException, ImageDecompressionException {
-        Optional<Product> productOptional = productRepository.findById(productId);
-        if (productOptional.isEmpty()) {
-            String errMsg = String.format("The product with id: %d is not found.", productId);
-            log.error(errMsg);
-            throw new ProductNotFoundException(errMsg);
-        }
-        Product product = productOptional.get();
+    public AdminProductDto getAdminProductDtoById(Integer productId) throws ProductNotFoundException, ImageDecompressionException {
+        Product product = productRepository.findById(productId).orElseThrow(
+                () -> new ProductNotFoundException(String.format("The product with id: %d is not found.", productId)));
         Image mainImage = product.getMainImage();
         ImageDto mainImageDto = mainImage == null ? null : imageService.generateDecompressedImageDto(mainImage);
         List<ImageDto> imageDtoList = getDecompressedProductImageDtoList(product.getImages(), mainImage);
@@ -129,10 +121,13 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional
     public void updateProduct(Integer productId, AddUpdateProductDto addUpdateProductDto, MultipartFile mainImageFile,
-                              List<MultipartFile> imageFilesList)
-            throws CategoryNotFoundException, ProductNotFoundException, ImageCompressionException,
-            ImageExceedsMaxSizeException, InvalidImageFileFormatException {
+                              List<MultipartFile> imageFilesList) throws CategoryNotFoundException, ProductNotFoundException,
+            ImageCompressionException, ImageExceedsMaxSizeException, InvalidImageFileFormatException {
+        if (productRepository.findById(productId).isEmpty()) {
+            throw new ProductNotFoundException(String.format("The product with id: %d is not found.", productId));
+        }
         String productName = addUpdateProductDto.name();
         Optional<Product> productOptional = productRepository.findByName(productName);
         if (productOptional.isPresent() && !productOptional.get().getId().equals(productId)) {
@@ -141,7 +136,6 @@ public class ProductServiceImpl implements ProductService {
         Product product = buildProductFromDtoAndImages(addUpdateProductDto, mainImageFile, imageFilesList);
         product.setId(productId);
         productRepository.save(product);
-        updateProductImages(product);
         log.info("The product with id: {} was successfully updated", productId);
     }
 
@@ -252,14 +246,5 @@ public class ProductServiceImpl implements ProductService {
             }
         }
         return imageDtoList;
-    }
-
-    private void updateProductImages(Product product) {
-        Set<Image> productImagesSet = product.getImages();
-        productImagesSet.add(product.getMainImage());
-        Set<String> imageNames = productImagesSet.stream().map(Image::getName).collect(Collectors.toSet());
-        imageRepository.deleteImagesByProductIdNotInNames(product.getId(), imageNames);
-        log.info("Product photos that were missing during the update have been removed in " +
-                "the updated version of the product");
     }
 }

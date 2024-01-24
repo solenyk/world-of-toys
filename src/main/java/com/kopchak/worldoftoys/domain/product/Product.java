@@ -58,13 +58,11 @@ public class Product {
     @Min(value = 0, message = "Invalid quantity: product quantity '${validatedValue}' must not be less than {status}")
     private BigInteger availableQuantity;
 
-    @OneToOne(fetch = FetchType.LAZY,
-            cascade = {CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.MERGE, CascadeType.REMOVE})
+    @OneToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
     @JoinColumn(name = "image_id", referencedColumnName = "id")
     private Image mainImage;
 
-    @OneToMany(mappedBy = "product",
-            cascade = {CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.MERGE, CascadeType.REMOVE})
+    @OneToMany(mappedBy = "product", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
     private Set<Image> images;
 
     @ManyToOne(fetch = FetchType.LAZY)
