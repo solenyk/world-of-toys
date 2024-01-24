@@ -1,7 +1,7 @@
 package com.kopchak.worldoftoys.domain.user;
 
-import com.kopchak.worldoftoys.domain.token.AuthenticationToken;
-import com.kopchak.worldoftoys.domain.token.ConfirmationToken;
+import com.kopchak.worldoftoys.domain.token.auth.AuthenticationToken;
+import com.kopchak.worldoftoys.domain.token.confirm.ConfirmationToken;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

@@ -1,7 +1,7 @@
 package com.kopchak.worldoftoys.repository.token;
 
-import com.kopchak.worldoftoys.domain.token.AuthTokenType;
-import com.kopchak.worldoftoys.domain.token.AuthenticationToken;
+import com.kopchak.worldoftoys.domain.token.auth.AuthTokenType;
+import com.kopchak.worldoftoys.domain.token.auth.AuthenticationToken;
 import com.kopchak.worldoftoys.domain.user.AppUser;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;

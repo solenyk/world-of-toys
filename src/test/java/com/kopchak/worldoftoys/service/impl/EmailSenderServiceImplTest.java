@@ -2,7 +2,7 @@ package com.kopchak.worldoftoys.service.impl;
 
 import com.kopchak.worldoftoys.domain.order.OrderStatus;
 import com.kopchak.worldoftoys.domain.order.payment.PaymentStatus;
-import com.kopchak.worldoftoys.domain.token.ConfirmationTokenType;
+import com.kopchak.worldoftoys.domain.token.confirm.ConfirmationTokenType;
 import com.kopchak.worldoftoys.domain.user.AppUser;
 import com.kopchak.worldoftoys.exception.exception.email.MessageSendingException;
 import com.kopchak.worldoftoys.exception.exception.user.UserNotFoundException;

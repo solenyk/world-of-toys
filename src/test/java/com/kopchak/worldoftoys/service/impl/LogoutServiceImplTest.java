@@ -1,6 +1,6 @@
 package com.kopchak.worldoftoys.service.impl;
 
-import com.kopchak.worldoftoys.domain.token.AuthenticationToken;
+import com.kopchak.worldoftoys.domain.token.auth.AuthenticationToken;
 import com.kopchak.worldoftoys.domain.user.AppUser;
 import com.kopchak.worldoftoys.repository.token.AuthTokenRepository;
 import jakarta.servlet.http.HttpServletRequest;

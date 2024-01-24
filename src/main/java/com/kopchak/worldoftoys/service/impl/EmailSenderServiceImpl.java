@@ -6,7 +6,7 @@ import com.kopchak.worldoftoys.domain.email.confirm.factory.ConfirmEmailFactory;
 import com.kopchak.worldoftoys.domain.email.status.StatusEmail;
 import com.kopchak.worldoftoys.domain.email.status.factory.StatusEmailFactory;
 import com.kopchak.worldoftoys.domain.order.StatusProvider;
-import com.kopchak.worldoftoys.domain.token.ConfirmationTokenType;
+import com.kopchak.worldoftoys.domain.token.confirm.ConfirmationTokenType;
 import com.kopchak.worldoftoys.domain.user.AppUser;
 import com.kopchak.worldoftoys.exception.exception.email.MessageSendingException;
 import com.kopchak.worldoftoys.exception.exception.user.UserNotFoundException;

@@ -1,6 +1,6 @@
 package com.kopchak.worldoftoys.dto.admin.product;
 
-import com.kopchak.worldoftoys.dto.admin.product.category.CategoryIdDto;
+import com.kopchak.worldoftoys.dto.admin.category.CategoryIdDto;
 import com.kopchak.worldoftoys.exception.validation.ValidationStepTwo;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.GroupSequence;

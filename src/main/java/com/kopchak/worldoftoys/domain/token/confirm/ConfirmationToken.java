@@ -1,4 +1,4 @@
-package com.kopchak.worldoftoys.domain.token;
+package com.kopchak.worldoftoys.domain.token.confirm;
 
 import com.kopchak.worldoftoys.domain.user.AppUser;
 import jakarta.persistence.*;
@@ -6,13 +6,15 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Getter
 @Setter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-public class AuthenticationToken {
+public class ConfirmationToken {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
@@ -21,16 +23,19 @@ public class AuthenticationToken {
     @NotBlank(message = "Invalid token: token is blank")
     private String token;
 
-    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     @NotNull(message = "Invalid token type: token type is NULL")
-    private AuthTokenType tokenType;
+    private ConfirmationTokenType tokenType;
 
     @Column(nullable = false)
-    private boolean revoked;
+    @NotNull(message = "Invalid creation date: creation date is NULL")
+    private LocalDateTime createdAt;
 
     @Column(nullable = false)
-    private boolean expired;
+    @NotNull(message = "Invalid expiration date: expiration date is NULL")
+    private LocalDateTime expiresAt;
+
+    private LocalDateTime confirmedAt;
 
     @ManyToOne
     @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)

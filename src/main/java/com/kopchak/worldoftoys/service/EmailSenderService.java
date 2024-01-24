@@ -3,7 +3,7 @@ package com.kopchak.worldoftoys.service;
 import com.kopchak.worldoftoys.exception.exception.email.MessageSendingException;
 import com.kopchak.worldoftoys.exception.exception.user.UserNotFoundException;
 import com.kopchak.worldoftoys.domain.order.StatusProvider;
-import com.kopchak.worldoftoys.domain.token.ConfirmationTokenType;
+import com.kopchak.worldoftoys.domain.token.confirm.ConfirmationTokenType;
 
 public interface EmailSenderService {
     void send(String recipientEmail, String senderEmail, String msgSubject) throws MessageSendingException;

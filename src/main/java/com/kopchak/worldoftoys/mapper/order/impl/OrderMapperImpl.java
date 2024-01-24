@@ -8,7 +8,7 @@ import com.kopchak.worldoftoys.domain.order.details.OrderDetails;
 import com.kopchak.worldoftoys.domain.order.payment.Payment;
 import com.kopchak.worldoftoys.domain.order.payment.PaymentStatus;
 import com.kopchak.worldoftoys.domain.product.Product;
-import com.kopchak.worldoftoys.dto.admin.product.order.*;
+import com.kopchak.worldoftoys.dto.admin.order.*;
 import com.kopchak.worldoftoys.dto.order.OrderDto;
 import com.kopchak.worldoftoys.dto.order.OrderProductDto;
 import com.kopchak.worldoftoys.exception.exception.order.InvalidOrderStatusException;

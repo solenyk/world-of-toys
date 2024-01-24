@@ -1,7 +1,7 @@
 package com.kopchak.worldoftoys.service.impl;
 
-import com.kopchak.worldoftoys.domain.token.AuthTokenType;
-import com.kopchak.worldoftoys.domain.token.AuthenticationToken;
+import com.kopchak.worldoftoys.domain.token.auth.AuthTokenType;
+import com.kopchak.worldoftoys.domain.token.auth.AuthenticationToken;
 import com.kopchak.worldoftoys.domain.user.AppUser;
 import com.kopchak.worldoftoys.dto.token.AccessAndRefreshTokensDto;
 import com.kopchak.worldoftoys.dto.token.AuthTokenDto;

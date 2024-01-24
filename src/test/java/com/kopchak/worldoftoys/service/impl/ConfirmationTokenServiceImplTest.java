@@ -1,7 +1,7 @@
 package com.kopchak.worldoftoys.service.impl;
 
-import com.kopchak.worldoftoys.domain.token.ConfirmationToken;
-import com.kopchak.worldoftoys.domain.token.ConfirmationTokenType;
+import com.kopchak.worldoftoys.domain.token.confirm.ConfirmationToken;
+import com.kopchak.worldoftoys.domain.token.confirm.ConfirmationTokenType;
 import com.kopchak.worldoftoys.domain.user.AppUser;
 import com.kopchak.worldoftoys.dto.user.ResetPasswordDto;
 import com.kopchak.worldoftoys.exception.exception.token.InvalidConfirmationTokenException;

@@ -1,7 +1,7 @@
 package com.kopchak.worldoftoys.mapper.product;
 
 import com.kopchak.worldoftoys.domain.product.category.ProductCategory;
-import com.kopchak.worldoftoys.dto.admin.product.category.AdminCategoryDto;
+import com.kopchak.worldoftoys.dto.admin.category.AdminCategoryDto;
 import com.kopchak.worldoftoys.dto.product.category.CategoryDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringCategoriesDto;
 import org.mapstruct.Mapper;

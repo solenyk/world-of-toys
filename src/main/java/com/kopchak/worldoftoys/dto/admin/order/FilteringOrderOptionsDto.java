@@ -1,4 +1,4 @@
-package com.kopchak.worldoftoys.dto.admin.product.order;
+package com.kopchak.worldoftoys.dto.admin.order;
 
 import java.util.Set;
 

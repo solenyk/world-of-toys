@@ -1,8 +1,8 @@
 package com.kopchak.worldoftoys.service;
 
-import com.kopchak.worldoftoys.dto.admin.product.order.FilteredOrdersPageDto;
-import com.kopchak.worldoftoys.dto.admin.product.order.FilteringOrderOptionsDto;
-import com.kopchak.worldoftoys.dto.admin.product.order.StatusDto;
+import com.kopchak.worldoftoys.dto.admin.order.FilteredOrdersPageDto;
+import com.kopchak.worldoftoys.dto.admin.order.FilteringOrderOptionsDto;
+import com.kopchak.worldoftoys.dto.admin.order.StatusDto;
 import com.kopchak.worldoftoys.dto.order.OrderDto;
 import com.kopchak.worldoftoys.dto.order.OrderRecipientDto;
 import com.kopchak.worldoftoys.exception.exception.order.InvalidOrderException;

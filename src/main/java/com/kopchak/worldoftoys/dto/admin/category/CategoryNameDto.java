@@ -1,4 +1,4 @@
-package com.kopchak.worldoftoys.dto.admin.product.category;
+package com.kopchak.worldoftoys.dto.admin.category;
 
 import com.kopchak.worldoftoys.exception.validation.ValidationStepTwo;
 import io.swagger.v3.oas.annotations.media.Schema;
