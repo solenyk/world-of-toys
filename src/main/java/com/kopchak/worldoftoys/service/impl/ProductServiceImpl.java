@@ -17,7 +17,11 @@ import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringCategoriesDto;
 import com.kopchak.worldoftoys.dto.product.image.ImageDto;
-import com.kopchak.worldoftoys.exception.*;
+import com.kopchak.worldoftoys.exception.exception.category.*;
+import com.kopchak.worldoftoys.exception.exception.image.ImageException;
+import com.kopchak.worldoftoys.exception.exception.image.ext.ImageDecompressionException;
+import com.kopchak.worldoftoys.exception.exception.product.DuplicateProductNameException;
+import com.kopchak.worldoftoys.exception.exception.product.ProductNotFoundException;
 import com.kopchak.worldoftoys.mapper.product.CategoryMapper;
 import com.kopchak.worldoftoys.mapper.product.ProductMapper;
 import com.kopchak.worldoftoys.repository.product.CategoryRepository;
@@ -50,17 +54,17 @@ public class ProductServiceImpl implements ProductService {
     private final ImageService imageService;
 
     @Override
-    public FilteredProductsPageDto getFilteredProducts(int page, int size, String productName, BigDecimal minPrice,
-                                                       BigDecimal maxPrice, List<String> originCategories,
-                                                       List<String> brandCategories, List<String> ageCategories,
-                                                       String priceSortOrder) {
+    public FilteredProductsPageDto getFilteredProductsPage(int page, int size, String productName, BigDecimal minPrice,
+                                                           BigDecimal maxPrice, List<String> originCategories,
+                                                           List<String> brandCategories, List<String> ageCategories,
+                                                           String priceSortOrder) {
         Page<Product> productPage = getFilteredProductPage(page, size, productName, minPrice, maxPrice,
                 originCategories, brandCategories, ageCategories, priceSortOrder, null);
         return productMapper.toFilteredProductsPageDto(productPage);
     }
 
     @Override
-    public ProductDto getProductDtoBySlug(String productSlug) throws ProductNotFoundException, ImageDecompressionException {
+    public ProductDto getProductBySlug(String productSlug) throws ProductNotFoundException, ImageDecompressionException {
         Optional<Product> productOptional = productRepository.findBySlug(productSlug);
         if (productOptional.isEmpty()) {
             String errMsg = String.format("The product with slug: %s is not found.", productSlug);
@@ -78,10 +82,8 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public FilteringCategoriesDto getFilteringCategories(String productName, BigDecimal minPrice,
-                                                         BigDecimal maxPrice,
-                                                         List<String> originCategories,
-                                                         List<String> brandCategories,
+    public FilteringCategoriesDto getFilteringCategories(String productName, BigDecimal minPrice, BigDecimal maxPrice,
+                                                         List<String> originCategories, List<String> brandCategories,
                                                          List<String> ageCategories) {
         Specification<Product> spec = productSpecifications.filterByProductNamePriceAndCategories(productName, minPrice,
                 maxPrice, originCategories, brandCategories, ageCategories, null);
@@ -97,20 +99,17 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public AdminProductsPageDto getAdminFilteredProducts(int page, int size, String productName,
-                                                         BigDecimal minPrice, BigDecimal maxPrice,
-                                                         List<String> originCategories,
-                                                         List<String> brandCategories,
-                                                         List<String> ageCategories, String priceSortOrder,
-                                                         String availability) {
-
+    public AdminProductsPageDto getAdminProductsPage(int page, int size, String productName, BigDecimal minPrice,
+                                                     BigDecimal maxPrice, List<String> originCategories,
+                                                     List<String> brandCategories, List<String> ageCategories,
+                                                     String priceSortOrder, String availability) {
         Page<Product> productPage = getFilteredProductPage(page, size, productName, minPrice, maxPrice,
                 originCategories, brandCategories, ageCategories, priceSortOrder, availability);
         return productMapper.toAdminFilteredProductsPageDto(productPage);
     }
 
     @Override
-    public AdminProductDto getAdminProductDtoById(Integer productId) throws ProductNotFoundException, ImageDecompressionException {
+    public AdminProductDto getProductById(Integer productId) throws ProductNotFoundException, ImageDecompressionException {
         Product product = productRepository.findById(productId).orElseThrow(
                 () -> new ProductNotFoundException(String.format("The product with id: %d is not found.", productId)));
         Image mainImage = product.getMainImage();
@@ -123,15 +122,16 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public void updateProduct(Integer productId, AddUpdateProductDto addUpdateProductDto, MultipartFile mainImageFile,
-                              List<MultipartFile> imageFilesList) throws CategoryNotFoundException, ProductNotFoundException,
-            ImageCompressionException, ImageExceedsMaxSizeException, InvalidImageFileFormatException {
+                              List<MultipartFile> imageFilesList) throws ProductNotFoundException, ImageException,
+            DuplicateProductNameException, CategoryNotFoundException {
         if (productRepository.findById(productId).isEmpty()) {
             throw new ProductNotFoundException(String.format("The product with id: %d is not found.", productId));
         }
         String productName = addUpdateProductDto.name();
         Optional<Product> productOptional = productRepository.findByName(productName);
         if (productOptional.isPresent() && !productOptional.get().getId().equals(productId)) {
-            throw new ProductNotFoundException(String.format("The product with name: %s is already exist", productName));
+            throw new DuplicateProductNameException(
+                    String.format("The product with name: %s is already exist", productName));
         }
         Product product = buildProductFromDtoAndImages(addUpdateProductDto, mainImageFile, imageFilesList);
         product.setId(productId);
@@ -142,11 +142,10 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public void createProduct(AddUpdateProductDto addUpdateProductDto, MultipartFile mainImageFile,
                               List<MultipartFile> imageFileList)
-            throws CategoryNotFoundException, ProductNotFoundException, ImageCompressionException,
-            ImageExceedsMaxSizeException, InvalidImageFileFormatException {
+            throws DuplicateProductNameException, CategoryNotFoundException, ImageException {
         String productName = addUpdateProductDto.name();
         if (productRepository.findByName(productName).isPresent()) {
-            throw new ProductNotFoundException(String.format("The product with name: %s is already exist", productName));
+            throw new DuplicateProductNameException(String.format("The product with name: %s is already exist", productName));
         }
         Product product = buildProductFromDtoAndImages(addUpdateProductDto, mainImageFile, imageFileList);
         productRepository.save(product);
@@ -196,7 +195,8 @@ public class ProductServiceImpl implements ProductService {
         return productPage;
     }
 
-    private Class<? extends ProductCategory> getCategoryByCategoryType(String categoryType) throws InvalidCategoryTypeException {
+    private Class<? extends ProductCategory> getCategoryByCategoryType(String categoryType)
+            throws InvalidCategoryTypeException {
         return switch (CategoryType.findByValue(categoryType)) {
             case BRANDS -> BrandCategory.class;
             case ORIGINS -> OriginCategory.class;
@@ -205,16 +205,15 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private Product buildProductFromDtoAndImages(AddUpdateProductDto addUpdateProductDto, MultipartFile mainImageFile,
-                                                 List<MultipartFile> imageFilesList) throws CategoryNotFoundException,
-            ImageCompressionException, ImageExceedsMaxSizeException, InvalidImageFileFormatException {
+                                                 List<MultipartFile> imageFilesList)
+            throws CategoryNotFoundException, ImageException {
         Product product = productMapper.toProduct(addUpdateProductDto);
         setProductCategories(product, addUpdateProductDto);
         setProductImages(product, mainImageFile, imageFilesList);
         return product;
     }
 
-    private void setProductCategories(Product product, AddUpdateProductDto productDto)
-            throws CategoryNotFoundException {
+    private void setProductCategories(Product product, AddUpdateProductDto productDto) throws CategoryNotFoundException {
         product.setBrandCategory(categoryRepository.findById(productDto.brandCategory().id(), BrandCategory.class));
         product.setOriginCategory(categoryRepository.findById(productDto.originCategory().id(), OriginCategory.class));
         Set<AgeCategory> ageCategories = new LinkedHashSet<>();
@@ -225,7 +224,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private void setProductImages(Product product, MultipartFile mainImageFile, List<MultipartFile> imageFilesList)
-            throws ImageCompressionException, ImageExceedsMaxSizeException, InvalidImageFileFormatException {
+            throws ImageException {
         Image mainImage = mainImageFile == null ? null : imageService.convertMultipartFileToImage(mainImageFile, product);
         Set<Image> imagesSet = new LinkedHashSet<>();
         if (imageFilesList != null) {

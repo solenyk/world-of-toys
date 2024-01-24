@@ -1,4 +1,4 @@
-package com.kopchak.worldoftoys.exception;
+package com.kopchak.worldoftoys.exception.exception.product;
 
 public class ProductNotFoundException extends Exception {
     public ProductNotFoundException(String reason) {

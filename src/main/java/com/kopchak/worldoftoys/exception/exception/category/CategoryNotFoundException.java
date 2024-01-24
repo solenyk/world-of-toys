@@ -1,4 +1,4 @@
-package com.kopchak.worldoftoys.exception;
+package com.kopchak.worldoftoys.exception.exception.category;
 
 public class CategoryNotFoundException extends Exception {
     public CategoryNotFoundException(String reason) {

@@ -6,8 +6,8 @@ import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.dto.product.category.CategoryDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringCategoriesDto;
-import com.kopchak.worldoftoys.exception.ImageDecompressionException;
-import com.kopchak.worldoftoys.exception.ProductNotFoundException;
+import com.kopchak.worldoftoys.exception.exception.image.ext.ImageDecompressionException;
+import com.kopchak.worldoftoys.exception.exception.product.ProductNotFoundException;
 import com.kopchak.worldoftoys.service.JwtTokenService;
 import com.kopchak.worldoftoys.service.ProductService;
 import org.junit.jupiter.api.BeforeEach;
@@ -91,7 +91,7 @@ class ShopControllerTest {
         FilteredProductsPageDto expectedFilteredProductsPageDto = new FilteredProductsPageDto(new ArrayList<>(),
                 20, 15);
 
-        when(productService.getFilteredProducts(eq(page), eq(size), eq(PRODUCT_NAME), eq(minProductPrice),
+        when(productService.getFilteredProductsPage(eq(page), eq(size), eq(PRODUCT_NAME), eq(minProductPrice),
                 eq(maxProductPrice), eq(originCategories), eq(brandCategories), eq(ageCategories),
                 eq(priceAscSortOrder))).thenReturn(expectedFilteredProductsPageDto);
 
@@ -137,7 +137,7 @@ class ShopControllerTest {
                 .availableQuantity(BigInteger.valueOf(200))
                 .build();
 
-        when(productService.getProductDtoBySlug(eq(PRODUCT_SLUG))).thenReturn(expectedProductDto);
+        when(productService.getProductBySlug(eq(PRODUCT_SLUG))).thenReturn(expectedProductDto);
 
         ResultActions response = mockMvc.perform(get("/api/v1/products/{productSlug}", PRODUCT_SLUG)
                 .contentType(MediaType.APPLICATION_JSON));
@@ -150,7 +150,7 @@ class ShopControllerTest {
     @Test
     public void getProductBySlug_ThrowImageDecompressionException_ReturnsBadRequestStatusAndResponseStatusExceptionDto() throws Exception {
         String imageDecompressionExceptionMsg = "The image with name: %s cannot be decompressed";
-        when(productService.getProductDtoBySlug(eq(PRODUCT_SLUG)))
+        when(productService.getProductBySlug(eq(PRODUCT_SLUG)))
                 .thenThrow(new ImageDecompressionException(imageDecompressionExceptionMsg));
 
         ResultActions response = mockMvc.perform(get("/api/v1/products/{productSlug}", PRODUCT_SLUG)
@@ -167,7 +167,7 @@ class ShopControllerTest {
     @Test
     public void getProductBySlug_ThrowProductNotFoundException_ReturnsNotFoundStatusAndResponseStatusExceptionDto() throws Exception {
         String productNotFoundExceptionMsg = String.format("The product with slug: %s is not found.", PRODUCT_SLUG);
-        when(productService.getProductDtoBySlug(eq(PRODUCT_SLUG)))
+        when(productService.getProductBySlug(eq(PRODUCT_SLUG)))
                 .thenThrow(new ProductNotFoundException(productNotFoundExceptionMsg));
 
         ResultActions response = mockMvc.perform(get("/api/v1/products/{productSlug}", PRODUCT_SLUG)

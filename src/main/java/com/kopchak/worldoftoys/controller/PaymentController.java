@@ -2,8 +2,8 @@ package com.kopchak.worldoftoys.controller;
 
 import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
 import com.kopchak.worldoftoys.dto.payment.StripeCredentialsDto;
-import com.kopchak.worldoftoys.exception.InvalidOrderException;
-import com.kopchak.worldoftoys.exception.MessageSendingException;
+import com.kopchak.worldoftoys.exception.exception.order.InvalidOrderException;
+import com.kopchak.worldoftoys.exception.exception.email.MessageSendingException;
 import com.kopchak.worldoftoys.service.PaymentService;
 import com.stripe.exception.StripeException;
 import io.swagger.v3.oas.annotations.Operation;

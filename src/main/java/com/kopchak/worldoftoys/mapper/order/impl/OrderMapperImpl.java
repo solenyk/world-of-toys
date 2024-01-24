@@ -11,7 +11,7 @@ import com.kopchak.worldoftoys.domain.product.Product;
 import com.kopchak.worldoftoys.dto.admin.product.order.*;
 import com.kopchak.worldoftoys.dto.order.OrderDto;
 import com.kopchak.worldoftoys.dto.order.OrderProductDto;
-import com.kopchak.worldoftoys.exception.InvalidOrderStatusException;
+import com.kopchak.worldoftoys.exception.exception.order.InvalidOrderStatusException;
 import com.kopchak.worldoftoys.mapper.order.OrderMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;

@@ -1,10 +1,10 @@
 package com.kopchak.worldoftoys.service.impl;
 
 import com.kopchak.worldoftoys.dto.product.image.ImageDto;
-import com.kopchak.worldoftoys.exception.ImageCompressionException;
-import com.kopchak.worldoftoys.exception.ImageDecompressionException;
-import com.kopchak.worldoftoys.exception.ImageExceedsMaxSizeException;
-import com.kopchak.worldoftoys.exception.InvalidImageFileFormatException;
+import com.kopchak.worldoftoys.exception.exception.image.ext.ImageCompressionException;
+import com.kopchak.worldoftoys.exception.exception.image.ext.ImageDecompressionException;
+import com.kopchak.worldoftoys.exception.exception.image.ext.ImageExceedsMaxSizeException;
+import com.kopchak.worldoftoys.exception.exception.image.ext.InvalidImageFileFormatException;
 import com.kopchak.worldoftoys.domain.image.Image;
 import com.kopchak.worldoftoys.domain.product.Product;
 import com.kopchak.worldoftoys.repository.product.image.ImageRepository;

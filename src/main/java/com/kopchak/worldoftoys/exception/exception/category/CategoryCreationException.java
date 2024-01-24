@@ -1,4 +1,4 @@
-package com.kopchak.worldoftoys.exception;
+package com.kopchak.worldoftoys.exception.exception.category;
 
 public class CategoryCreationException extends Exception {
     public CategoryCreationException(String message) {

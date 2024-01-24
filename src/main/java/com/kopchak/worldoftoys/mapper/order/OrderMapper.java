@@ -9,7 +9,7 @@ import com.kopchak.worldoftoys.dto.admin.product.order.FilteredOrdersPageDto;
 import com.kopchak.worldoftoys.dto.admin.product.order.FilteringOrderOptionsDto;
 import com.kopchak.worldoftoys.dto.admin.product.order.StatusDto;
 import com.kopchak.worldoftoys.dto.order.OrderDto;
-import com.kopchak.worldoftoys.exception.InvalidOrderStatusException;
+import com.kopchak.worldoftoys.exception.exception.order.InvalidOrderStatusException;
 import org.springframework.data.domain.Page;
 
 import java.util.List;

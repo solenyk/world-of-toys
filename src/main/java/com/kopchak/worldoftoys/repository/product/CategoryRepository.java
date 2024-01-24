@@ -2,10 +2,10 @@ package com.kopchak.worldoftoys.repository.product;
 
 import com.kopchak.worldoftoys.domain.product.Product;
 import com.kopchak.worldoftoys.domain.product.category.ProductCategory;
-import com.kopchak.worldoftoys.exception.CategoryAlreadyExistsException;
-import com.kopchak.worldoftoys.exception.CategoryContainsProductsException;
-import com.kopchak.worldoftoys.exception.CategoryCreationException;
-import com.kopchak.worldoftoys.exception.CategoryNotFoundException;
+import com.kopchak.worldoftoys.exception.exception.category.CategoryAlreadyExistsException;
+import com.kopchak.worldoftoys.exception.exception.category.CategoryContainsProductsException;
+import com.kopchak.worldoftoys.exception.exception.category.CategoryCreationException;
+import com.kopchak.worldoftoys.exception.exception.category.CategoryNotFoundException;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;

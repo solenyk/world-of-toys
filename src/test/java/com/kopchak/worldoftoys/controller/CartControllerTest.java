@@ -6,7 +6,7 @@ import com.kopchak.worldoftoys.domain.user.AppUser;
 import com.kopchak.worldoftoys.dto.cart.RequestCartItemDto;
 import com.kopchak.worldoftoys.dto.cart.UserCartDetailsDto;
 import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
-import com.kopchak.worldoftoys.exception.ProductNotFoundException;
+import com.kopchak.worldoftoys.exception.exception.product.ProductNotFoundException;
 import com.kopchak.worldoftoys.service.CartService;
 import com.kopchak.worldoftoys.service.JwtTokenService;
 import org.junit.jupiter.api.BeforeEach;

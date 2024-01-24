@@ -2,8 +2,8 @@ package com.kopchak.worldoftoys.controller;
 
 import com.kopchak.worldoftoys.dto.order.OrderDto;
 import com.kopchak.worldoftoys.dto.order.OrderRecipientDto;
-import com.kopchak.worldoftoys.exception.CartValidationException;
-import com.kopchak.worldoftoys.exception.OrderCreationException;
+import com.kopchak.worldoftoys.exception.exception.cart.CartValidationException;
+import com.kopchak.worldoftoys.exception.exception.order.OrderCreationException;
 import com.kopchak.worldoftoys.domain.user.AppUser;
 import com.kopchak.worldoftoys.service.CartService;
 import com.kopchak.worldoftoys.service.OrderService;

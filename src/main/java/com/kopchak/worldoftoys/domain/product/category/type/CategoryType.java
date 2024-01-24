@@ -1,6 +1,6 @@
 package com.kopchak.worldoftoys.domain.product.category.type;
 
-import com.kopchak.worldoftoys.exception.InvalidCategoryTypeException;
+import com.kopchak.worldoftoys.exception.exception.category.InvalidCategoryTypeException;
 import lombok.Getter;
 
 @Getter

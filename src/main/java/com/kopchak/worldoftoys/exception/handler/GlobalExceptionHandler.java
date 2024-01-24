@@ -2,7 +2,7 @@ package com.kopchak.worldoftoys.exception.handler;
 
 import com.kopchak.worldoftoys.dto.error.MethodArgumentNotValidExceptionDto;
 import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
-import com.kopchak.worldoftoys.exception.JwtTokenException;
+import com.kopchak.worldoftoys.exception.exception.token.JwtTokenException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
