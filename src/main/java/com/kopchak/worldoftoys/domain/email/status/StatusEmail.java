@@ -5,10 +5,10 @@ import com.kopchak.worldoftoys.domain.order.StatusProvider;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.web.util.UriComponentsBuilder;
 
-public abstract class StatusEmailType extends EmailType {
+public abstract class StatusEmail extends EmailType {
     private final static String LOGIN_LINK = "/api/v1/auth/login";
 
-    public StatusEmailType(String title, String subject, String link, String linkName, String msg) {
+    public StatusEmail(String title, String subject, String link, String linkName, String msg) {
         super(title, subject, link, linkName, msg);
     }
 

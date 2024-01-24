@@ -1,14 +1,11 @@
 package com.kopchak.worldoftoys.service.impl;
 
 import com.kopchak.worldoftoys.domain.email.EmailType;
-import com.kopchak.worldoftoys.domain.email.confirm.ConfirmEmailType;
-import com.kopchak.worldoftoys.domain.email.confirm.impl.AccountActivationEmail;
-import com.kopchak.worldoftoys.domain.email.confirm.impl.ResetPasswordEmail;
-import com.kopchak.worldoftoys.domain.email.status.StatusEmailType;
-import com.kopchak.worldoftoys.domain.email.status.impl.OrderStatusEmail;
-import com.kopchak.worldoftoys.domain.email.status.impl.PaymentStatusEmail;
+import com.kopchak.worldoftoys.domain.email.confirm.ConfirmEmail;
+import com.kopchak.worldoftoys.domain.email.confirm.factory.ConfirmEmailFactory;
+import com.kopchak.worldoftoys.domain.email.status.StatusEmail;
+import com.kopchak.worldoftoys.domain.email.status.factory.StatusEmailFactory;
 import com.kopchak.worldoftoys.domain.order.StatusProvider;
-import com.kopchak.worldoftoys.domain.order.payment.PaymentStatus;
 import com.kopchak.worldoftoys.domain.token.ConfirmationTokenType;
 import com.kopchak.worldoftoys.domain.user.AppUser;
 import com.kopchak.worldoftoys.exception.exception.email.MessageSendingException;
@@ -63,27 +60,19 @@ public class EmailSenderServiceImpl implements EmailSenderService {
             return new UserNotFoundException(errMsg);
         });
         String userFirstname = user.getFirstname();
-        ConfirmEmailType confirmEmailType;
-        if (tokenType == ConfirmationTokenType.ACTIVATION) {
-            confirmEmailType = new AccountActivationEmail(confirmToken);
-        } else {
-            confirmEmailType = new ResetPasswordEmail(confirmToken);
-        }
-        String emailContent = buildEmail(userFirstname, confirmEmailType);
-        send(userEmail, emailContent, confirmEmailType.getSubject());
+        ConfirmEmailFactory confirmEmailFactory = new ConfirmEmailFactory();
+        ConfirmEmail confirmEmail = confirmEmailFactory.createConfirmEmail(tokenType, confirmToken);
+        String emailContent = buildEmail(userFirstname, confirmEmail);
+        send(userEmail, emailContent, confirmEmail.getSubject());
     }
 
     @Override
     public <T extends Enum<T> & StatusProvider> void sendEmail(String userEmail, String userFirstname, String orderId,
                                                                T status) throws MessageSendingException {
-        StatusEmailType statusEmailType;
-        if (status instanceof PaymentStatus) {
-            statusEmailType = new PaymentStatusEmail(orderId, status);
-        } else {
-            statusEmailType = new OrderStatusEmail(orderId, status);
-        }
-        String emailContent = buildEmail(userFirstname, statusEmailType);
-        send(userEmail, emailContent, statusEmailType.getSubject());
+        StatusEmailFactory statusEmailFactory = new StatusEmailFactory();
+        StatusEmail statusEmail = statusEmailFactory.createStatusEmail(status, orderId);
+        String emailContent = buildEmail(userFirstname, statusEmail);
+        send(userEmail, emailContent, statusEmail.getSubject());
     }
 
     private String buildEmail(String name, EmailType emailType) {

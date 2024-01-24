@@ -1,8 +1,8 @@
-package com.kopchak.worldoftoys.domain.email.confirm.impl;
+package com.kopchak.worldoftoys.domain.email.confirm.ext;
 
-import com.kopchak.worldoftoys.domain.email.confirm.ConfirmEmailType;
+import com.kopchak.worldoftoys.domain.email.confirm.ConfirmEmail;
 
-public class AccountActivationEmail extends ConfirmEmailType {
+public class AccountActivationEmail extends ConfirmEmail {
     private static final String TITLE = "Account activation";
     private static final String SUBJECT = "Confirm your email";
     private static final String LINK = "/api/v1/auth/confirm";

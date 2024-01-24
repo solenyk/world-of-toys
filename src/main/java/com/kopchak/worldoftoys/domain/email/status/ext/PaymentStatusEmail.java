@@ -1,9 +1,9 @@
-package com.kopchak.worldoftoys.domain.email.status.impl;
+package com.kopchak.worldoftoys.domain.email.status.ext;
 
-import com.kopchak.worldoftoys.domain.email.status.StatusEmailType;
+import com.kopchak.worldoftoys.domain.email.status.StatusEmail;
 import com.kopchak.worldoftoys.domain.order.StatusProvider;
 
-public class PaymentStatusEmail extends StatusEmailType {
+public class PaymentStatusEmail extends StatusEmail {
     private static final String TITLE = "Order payment";
     private static final String SUBJECT = "Order payment status";
     private static final String LINK_NAME = "Check order payment status";

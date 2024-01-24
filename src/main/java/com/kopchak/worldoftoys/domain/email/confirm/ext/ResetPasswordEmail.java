@@ -1,8 +1,8 @@
-package com.kopchak.worldoftoys.domain.email.confirm.impl;
+package com.kopchak.worldoftoys.domain.email.confirm.ext;
 
-import com.kopchak.worldoftoys.domain.email.confirm.ConfirmEmailType;
+import com.kopchak.worldoftoys.domain.email.confirm.ConfirmEmail;
 
-public class ResetPasswordEmail extends ConfirmEmailType {
+public class ResetPasswordEmail extends ConfirmEmail {
     private static final String TITLE = "Password reset";
     private static final String SUBJECT = "Reset your password";
     private static final String LINK = "/api/v1/auth/reset-password";

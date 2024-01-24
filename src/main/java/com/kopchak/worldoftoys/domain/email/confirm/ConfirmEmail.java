@@ -4,10 +4,10 @@ import com.kopchak.worldoftoys.domain.email.EmailType;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.web.util.UriComponentsBuilder;
 
-public abstract class ConfirmEmailType extends EmailType {
+public abstract class ConfirmEmail extends EmailType {
     private final static String TOKEN_PARAM_NAME = "token";
 
-    public ConfirmEmailType(String title, String subject, String link, String linkName, String msg) {
+    public ConfirmEmail(String title, String subject, String link, String linkName, String msg) {
         super(title, subject, link, linkName, msg);
     }
 
