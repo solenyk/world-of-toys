@@ -2,7 +2,14 @@ package com.kopchak.worldoftoys.service.impl;
 
 import com.kopchak.worldoftoys.domain.product.Product;
 import com.kopchak.worldoftoys.domain.product.category.ProductCategory;
+import com.kopchak.worldoftoys.domain.product.category.type.CategoryType;
+import com.kopchak.worldoftoys.dto.admin.category.AdminCategoryDto;
+import com.kopchak.worldoftoys.dto.admin.category.CategoryNameDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringCategoriesDto;
+import com.kopchak.worldoftoys.exception.exception.category.CategoryContainsProductsException;
+import com.kopchak.worldoftoys.exception.exception.category.CategoryCreationException;
+import com.kopchak.worldoftoys.exception.exception.category.CategoryNotFoundException;
+import com.kopchak.worldoftoys.exception.exception.category.DuplicateCategoryNameException;
 import com.kopchak.worldoftoys.mapper.product.CategoryMapper;
 import com.kopchak.worldoftoys.repository.product.CategoryRepository;
 import com.kopchak.worldoftoys.repository.specifications.impl.ProductSpecificationsImpl;
@@ -16,12 +23,13 @@ import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class CategoryServiceImplTest {
@@ -34,6 +42,8 @@ class CategoryServiceImplTest {
 
     @InjectMocks
     private CategoryServiceImpl categoryService;
+    private final static CategoryType categoryType = CategoryType.ORIGINS;
+    private final static Integer categoryId = 1;
     private String productName;
     private BigDecimal minProductPrice;
     private BigDecimal maxProductPrice;
@@ -41,6 +51,7 @@ class CategoryServiceImplTest {
     private List<String> brandCategories;
     private List<String> ageCategories;
     private Specification<Product> spec;
+    private CategoryNameDto categoryNameDto;
 
     @BeforeEach
     void setUp() {
@@ -51,6 +62,7 @@ class CategoryServiceImplTest {
         brandCategories = List.of("сurlimals", "devilon");
         ageCategories = List.of("do-1-roku", "vid-1-do-3-rokiv");
         spec = Specification.where(null);
+        categoryNameDto = new CategoryNameDto("category-name");
     }
 
     @Test
@@ -72,5 +84,49 @@ class CategoryServiceImplTest {
 
         assertThat(actualFilteringProductCategoriesDto).isNotNull();
         assertThat(actualFilteringProductCategoriesDto).isEqualTo(expectedFilteringProductCategoriesDto);
+    }
+
+    @Test
+    public void getAdminCategories_ReturnsAdminCategoryDtoSet() {
+        CategoryType categoryType = CategoryType.ORIGINS;
+        AdminCategoryDto adminCategoryDto = new AdminCategoryDto(1, "name");
+        Set<AdminCategoryDto> expectedAdminCategoryDtoSet = Set.of(adminCategoryDto);
+
+        when(categoryRepository.findAllCategories(eq(categoryType.getCategory()))).thenReturn(new HashSet<>());
+        when(categoryMapper.toAdminCategoryDtoSet(anySet())).thenReturn(expectedAdminCategoryDtoSet);
+
+        Set<AdminCategoryDto> actualAdminCategoryDtoSet = categoryService.getAdminCategories(categoryType);
+
+        assertThat(actualAdminCategoryDtoSet).isNotNull();
+        assertThat(actualAdminCategoryDtoSet.size()).isEqualTo(1);
+        assertThat(actualAdminCategoryDtoSet.contains(adminCategoryDto)).isTrue();
+    }
+
+    @Test
+    public void deleteCategory() throws CategoryContainsProductsException {
+        doNothing().when(categoryRepository).deleteCategory(eq(categoryType.getCategory()), eq(categoryId));
+
+        categoryService.deleteCategory(categoryType, categoryId);
+
+        verify(categoryRepository).deleteCategory(eq(categoryType.getCategory()), eq(categoryId));
+    }
+
+    @Test
+    public void updateCategory() throws CategoryNotFoundException, DuplicateCategoryNameException {
+        doNothing().when(categoryRepository)
+                .updateCategory(categoryType.getCategory(), categoryId, categoryNameDto.name());
+
+        categoryService.updateCategory(categoryType, categoryId, categoryNameDto);
+
+        verify(categoryRepository).updateCategory(categoryType.getCategory(), categoryId, categoryNameDto.name());
+    }
+
+    @Test
+    public void createCategory() throws DuplicateCategoryNameException, CategoryCreationException {
+        doNothing().when(categoryRepository).createCategory(categoryType.getCategory(), categoryNameDto.name());
+
+        categoryService.createCategory(categoryType, categoryNameDto);
+
+        verify(categoryRepository).createCategory(categoryType.getCategory(), categoryNameDto.name());
     }
 }
