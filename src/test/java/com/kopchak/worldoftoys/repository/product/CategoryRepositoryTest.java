@@ -3,6 +3,7 @@ package com.kopchak.worldoftoys.repository.product;
 import com.kopchak.worldoftoys.domain.product.Product;
 import com.kopchak.worldoftoys.domain.product.category.BrandCategory;
 import com.kopchak.worldoftoys.domain.product.category.OriginCategory;
+import com.kopchak.worldoftoys.domain.product.category.ProductCategory;
 import com.kopchak.worldoftoys.mapper.product.CategoryMapperImpl;
 import com.kopchak.worldoftoys.repository.product.impl.CategoryRepositoryImpl;
 import com.kopchak.worldoftoys.repository.specifications.ProductSpecifications;
@@ -33,6 +34,8 @@ class CategoryRepositoryTest {
     @Autowired
     ProductSpecifications productSpecifications;
 
+    private final static Class<BrandCategory> BRAND_CATEGORY_CLASS = BrandCategory.class;
+
     private Specification<Product> productSpecification;
 
     @BeforeEach
@@ -50,7 +53,6 @@ class CategoryRepositoryTest {
 
     @Test
     public void findByIdAndType_BrandCategoryType_ReturnsOptionalOfBrandCategory() {
-        Class<BrandCategory> categoryClass = BrandCategory.class;
         Integer id = 1004;
 
         BrandCategory expectedBrandCategory = new BrandCategory();
@@ -59,11 +61,11 @@ class CategoryRepositoryTest {
         expectedBrandCategory.setSlug("сomelon");
         expectedBrandCategory.setProducts(new HashSet<>());
 
-        Optional<BrandCategory> actualBrandCategory = categoryRepository.findByIdAndType(id, categoryClass);
+        Optional<BrandCategory> actualBrandCategory = categoryRepository.findByIdAndType(id, BRAND_CATEGORY_CLASS);
 
         assertThat(actualBrandCategory).isNotNull();
         assertThat(actualBrandCategory).isNotEmpty();
-        assertThat(actualBrandCategory.get()).isInstanceOf(categoryClass);
+        assertThat(actualBrandCategory.get()).isInstanceOf(BRAND_CATEGORY_CLASS);
         assertThat(actualBrandCategory.get()).usingRecursiveComparison().isEqualTo(expectedBrandCategory);
     }
 
@@ -80,33 +82,43 @@ class CategoryRepositoryTest {
     }
 
     @Test
+    public void deleteByIdAndType() {
+        Integer id = 1004;
+
+        categoryRepository.deleteByIdAndType(id, BRAND_CATEGORY_CLASS);
+
+        Optional<BrandCategory> brandCategory = categoryRepository.findByIdAndType(id, BRAND_CATEGORY_CLASS);
+
+        assertThat(brandCategory).isNotNull();
+        assertThat(brandCategory).isEmpty();
+    }
+
+    @Test
     public void updateNameByIdAndType() {
-        Class<BrandCategory> productCategoryType = BrandCategory.class;
         Integer id = 1001;
         String newCategoryName = "new-name";
 
-        categoryRepository.updateNameByIdAndType(id, newCategoryName, productCategoryType);
+        categoryRepository.updateNameByIdAndType(id, newCategoryName, BRAND_CATEGORY_CLASS);
 
-        Optional<BrandCategory> updatedBrandCategory = categoryRepository.findByIdAndType(id, productCategoryType);
+        Optional<BrandCategory> updatedBrandCategory = categoryRepository.findByIdAndType(id, BRAND_CATEGORY_CLASS);
 
         assertThat(updatedBrandCategory).isNotNull();
         assertThat(updatedBrandCategory).isNotEmpty();
-        assertThat(updatedBrandCategory.get()).isInstanceOf(productCategoryType);
+        assertThat(updatedBrandCategory.get()).isInstanceOf(BRAND_CATEGORY_CLASS);
         assertThat(updatedBrandCategory.get().getName()).isEqualTo(newCategoryName);
     }
 
     @Test
     public void create() throws ReflectiveOperationException {
-        Class<BrandCategory> productCategoryType = BrandCategory.class;
         Integer id = 1;
         String newCategoryName = "new-name";
 
-        categoryRepository.create(newCategoryName, productCategoryType);
-        Optional<BrandCategory> createdBrandCategory = categoryRepository.findByIdAndType(id, productCategoryType);
+        categoryRepository.create(newCategoryName, BRAND_CATEGORY_CLASS);
+        Optional<BrandCategory> createdBrandCategory = categoryRepository.findByIdAndType(id, BRAND_CATEGORY_CLASS);
 
         assertThat(createdBrandCategory).isNotNull();
         assertThat(createdBrandCategory).isNotEmpty();
-        assertThat(createdBrandCategory.get()).isInstanceOf(productCategoryType);
+        assertThat(createdBrandCategory.get()).isInstanceOf(BRAND_CATEGORY_CLASS);
         assertThat(createdBrandCategory.get().getName()).isEqualTo(newCategoryName);
     }
 
@@ -139,5 +151,45 @@ class CategoryRepositoryTest {
         assertThat(ageCategoryList.size()).isEqualTo(2);
         assertThat(ageCategoryList.get(0).getId()).isEqualTo(1001);
         assertThat(ageCategoryList.get(1).getId()).isEqualTo(1002);
+    }
+
+    @Test
+    public void containsProductsInCategory_CategoryWithProducts_ReturnsTrue() {
+        Integer id = 1000;
+
+        boolean containsProductsInCategory = categoryRepository.containsProductsInCategory(id, BRAND_CATEGORY_CLASS);
+
+        assertThat(containsProductsInCategory).isTrue();
+    }
+
+    @Test
+    public void containsProductsInCategory_CategoryWithoutProducts_ReturnsFalse() {
+        Class<TestProductCategory> categoryClass = TestProductCategory.class;
+        Integer id = 1000;
+
+        boolean containsProductsInCategory = categoryRepository.containsProductsInCategory(id, categoryClass);
+
+        assertThat(containsProductsInCategory).isFalse();
+    }
+
+    @Test
+    public void isCategoryWithNameExists_ExistentCategoryName_ReturnsTrue() {
+        String name = "Disney";
+
+        boolean isCategoryWithNameExists = categoryRepository.isCategoryWithNameExists(name, BRAND_CATEGORY_CLASS);
+
+        assertThat(isCategoryWithNameExists).isTrue();
+    }
+
+    @Test
+    public void isCategoryWithNameExists_NonExistentCategoryName_ReturnsFalse() {
+        String name = "non-existent-brand-name";
+
+        boolean isCategoryWithNameExists = categoryRepository.isCategoryWithNameExists(name, BRAND_CATEGORY_CLASS);
+
+        assertThat(isCategoryWithNameExists).isFalse();
+    }
+
+    private static class TestProductCategory extends ProductCategory {
     }
 }
