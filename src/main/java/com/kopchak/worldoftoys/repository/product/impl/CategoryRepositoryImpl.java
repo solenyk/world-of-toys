@@ -4,7 +4,7 @@ import com.kopchak.worldoftoys.domain.product.Product;
 import com.kopchak.worldoftoys.domain.product.Product_;
 import com.kopchak.worldoftoys.domain.product.category.ProductCategory;
 import com.kopchak.worldoftoys.domain.product.category.ProductCategory_;
-import com.kopchak.worldoftoys.exception.exception.category.DublicateCategoryNameException;
+import com.kopchak.worldoftoys.exception.exception.category.DuplicateCategoryNameException;
 import com.kopchak.worldoftoys.exception.exception.category.CategoryContainsProductsException;
 import com.kopchak.worldoftoys.exception.exception.category.CategoryCreationException;
 import com.kopchak.worldoftoys.exception.exception.category.CategoryNotFoundException;
@@ -67,9 +67,9 @@ public class CategoryRepositoryImpl implements CategoryRepository {
     @Override
     @Transactional
     public <T extends ProductCategory> void updateCategory(Class<T> categoryType, Integer id, String name)
-            throws CategoryNotFoundException, DublicateCategoryNameException {
+            throws CategoryNotFoundException, DuplicateCategoryNameException {
         if (isCategoryWithNameExists(categoryType, name)) {
-            throw new DublicateCategoryNameException(String.format("Category with name: %s already exist", name));
+            throw new DuplicateCategoryNameException(String.format("Category with name: %s already exist", name));
         }
         T entityToUpdate = entityManager.find(categoryType, id);
         if (entityToUpdate == null) {
@@ -82,9 +82,9 @@ public class CategoryRepositoryImpl implements CategoryRepository {
     @Override
     @Transactional
     public <T extends ProductCategory> void createCategory(Class<T> categoryType, String name)
-            throws DublicateCategoryNameException, CategoryCreationException {
+            throws DuplicateCategoryNameException, CategoryCreationException {
         if (isCategoryWithNameExists(categoryType, name)) {
-            throw new DublicateCategoryNameException(String.format("Category with name: %s already exist", name));
+            throw new DuplicateCategoryNameException(String.format("Category with name: %s already exist", name));
         }
         try {
             T newCategory = categoryType.getDeclaredConstructor().newInstance();

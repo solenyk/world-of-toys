@@ -20,8 +20,8 @@ public interface CategoryService {
     void deleteCategory(CategoryType categoryType, Integer categoryId) throws CategoryContainsProductsException;
 
     void updateCategory(CategoryType categoryType, Integer categoryId, CategoryNameDto categoryNameDto)
-            throws CategoryNotFoundException, DublicateCategoryNameException;
+            throws CategoryNotFoundException, DuplicateCategoryNameException;
 
     void createCategory(CategoryType categoryType, CategoryNameDto categoryNameDto)
-            throws DublicateCategoryNameException, CategoryCreationException;
+            throws DuplicateCategoryNameException, CategoryCreationException;
 }

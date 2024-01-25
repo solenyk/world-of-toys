@@ -2,7 +2,7 @@ package com.kopchak.worldoftoys.repository.product;
 
 import com.kopchak.worldoftoys.domain.product.Product;
 import com.kopchak.worldoftoys.domain.product.category.ProductCategory;
-import com.kopchak.worldoftoys.exception.exception.category.DublicateCategoryNameException;
+import com.kopchak.worldoftoys.exception.exception.category.DuplicateCategoryNameException;
 import com.kopchak.worldoftoys.exception.exception.category.CategoryContainsProductsException;
 import com.kopchak.worldoftoys.exception.exception.category.CategoryCreationException;
 import com.kopchak.worldoftoys.exception.exception.category.CategoryNotFoundException;
@@ -20,10 +20,10 @@ public interface CategoryRepository {
             throws CategoryContainsProductsException;
 
     <T extends ProductCategory> void updateCategory(Class<T> categoryType, Integer id, String name)
-            throws CategoryNotFoundException, DublicateCategoryNameException;
+            throws CategoryNotFoundException, DuplicateCategoryNameException;
 
     <T extends ProductCategory> void createCategory(Class<T> categoryType, String name)
-            throws DublicateCategoryNameException, CategoryCreationException;
+            throws DuplicateCategoryNameException, CategoryCreationException;
 
     List<ProductCategory> findUniqueBrandCategoryList(Specification<Product> spec);
 

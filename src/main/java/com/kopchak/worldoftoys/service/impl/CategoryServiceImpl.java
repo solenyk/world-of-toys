@@ -5,7 +5,7 @@ import com.kopchak.worldoftoys.domain.product.category.type.CategoryType;
 import com.kopchak.worldoftoys.dto.admin.category.AdminCategoryDto;
 import com.kopchak.worldoftoys.dto.admin.category.CategoryNameDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringCategoriesDto;
-import com.kopchak.worldoftoys.exception.exception.category.DublicateCategoryNameException;
+import com.kopchak.worldoftoys.exception.exception.category.DuplicateCategoryNameException;
 import com.kopchak.worldoftoys.exception.exception.category.CategoryContainsProductsException;
 import com.kopchak.worldoftoys.exception.exception.category.CategoryCreationException;
 import com.kopchak.worldoftoys.exception.exception.category.CategoryNotFoundException;
@@ -60,13 +60,13 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public void updateCategory(CategoryType categoryType, Integer categoryId, CategoryNameDto categoryNameDto)
-            throws CategoryNotFoundException, DublicateCategoryNameException {
+            throws CategoryNotFoundException, DuplicateCategoryNameException {
         categoryRepository.updateCategory(categoryType.getCategory(), categoryId, categoryNameDto.name());
     }
 
     @Override
     public void createCategory(CategoryType categoryType, CategoryNameDto categoryNameDto)
-            throws DublicateCategoryNameException, CategoryCreationException {
+            throws DuplicateCategoryNameException, CategoryCreationException {
         categoryRepository.createCategory(categoryType.getCategory(), categoryNameDto.name());
     }
 }

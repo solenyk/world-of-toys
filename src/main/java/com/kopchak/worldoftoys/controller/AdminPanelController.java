@@ -3,21 +3,24 @@ package com.kopchak.worldoftoys.controller;
 import com.kopchak.worldoftoys.domain.order.OrderStatus;
 import com.kopchak.worldoftoys.domain.order.payment.PaymentStatus;
 import com.kopchak.worldoftoys.domain.product.category.type.CategoryType;
-import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
-import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
-import com.kopchak.worldoftoys.dto.admin.product.AdminProductsPageDto;
 import com.kopchak.worldoftoys.dto.admin.category.AdminCategoryDto;
 import com.kopchak.worldoftoys.dto.admin.category.CategoryNameDto;
 import com.kopchak.worldoftoys.dto.admin.order.FilteredOrdersPageDto;
 import com.kopchak.worldoftoys.dto.admin.order.FilteringOrderOptionsDto;
 import com.kopchak.worldoftoys.dto.admin.order.StatusDto;
+import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
+import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
+import com.kopchak.worldoftoys.dto.admin.product.AdminProductsPageDto;
 import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
-import com.kopchak.worldoftoys.exception.exception.category.*;
+import com.kopchak.worldoftoys.exception.exception.category.CategoryContainsProductsException;
+import com.kopchak.worldoftoys.exception.exception.category.CategoryCreationException;
+import com.kopchak.worldoftoys.exception.exception.category.CategoryNotFoundException;
+import com.kopchak.worldoftoys.exception.exception.category.DuplicateCategoryNameException;
 import com.kopchak.worldoftoys.exception.exception.email.MessageSendingException;
-import com.kopchak.worldoftoys.exception.exception.image.ext.ImageDecompressionException;
 import com.kopchak.worldoftoys.exception.exception.image.ImageException;
+import com.kopchak.worldoftoys.exception.exception.image.ext.ImageDecompressionException;
 import com.kopchak.worldoftoys.exception.exception.order.InvalidOrderException;
 import com.kopchak.worldoftoys.exception.exception.order.InvalidOrderStatusException;
 import com.kopchak.worldoftoys.exception.exception.product.DuplicateProductNameException;
@@ -229,7 +232,7 @@ public class AdminPanelController {
                                                @Valid @RequestBody CategoryNameDto categoryNameDto) {
         try {
             categoryService.updateCategory(categoryType, categoryId, categoryNameDto);
-        } catch (DublicateCategoryNameException e) {
+        } catch (DuplicateCategoryNameException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         } catch (CategoryNotFoundException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
@@ -253,7 +256,7 @@ public class AdminPanelController {
                                                @Valid @RequestBody CategoryNameDto categoryNameDto) {
         try {
             categoryService.createCategory(categoryType, categoryNameDto);
-        } catch (DublicateCategoryNameException | CategoryCreationException e) {
+        } catch (DuplicateCategoryNameException | CategoryCreationException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
         return new ResponseEntity<>(HttpStatus.CREATED);
@@ -320,7 +323,7 @@ public class AdminPanelController {
     })
     @PatchMapping("/orders/{orderId}")
     public ResponseEntity<Void> updateOrderStatus(@PathVariable(name = "orderId") String orderId,
-                                                  @RequestBody StatusDto statusDto) {
+                                                  @Valid @RequestBody StatusDto statusDto) {
         try {
             orderService.updateOrderStatus(orderId, statusDto);
         } catch (InvalidOrderStatusException | InvalidOrderException e) {

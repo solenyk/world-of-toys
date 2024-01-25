@@ -1,7 +1,7 @@
 package com.kopchak.worldoftoys.config;
 
-import com.kopchak.worldoftoys.filter.JwtAuthenticationFilter;
 import com.kopchak.worldoftoys.domain.user.Role;
+import com.kopchak.worldoftoys.filter.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

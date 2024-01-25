@@ -5,18 +5,18 @@ import com.kopchak.worldoftoys.domain.product.Product;
 import com.kopchak.worldoftoys.domain.product.category.AgeCategory;
 import com.kopchak.worldoftoys.domain.product.category.BrandCategory;
 import com.kopchak.worldoftoys.domain.product.category.OriginCategory;
-import com.kopchak.worldoftoys.domain.product.category.ProductCategory;
+import com.kopchak.worldoftoys.dto.admin.category.CategoryIdDto;
 import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductsPageDto;
-import com.kopchak.worldoftoys.dto.admin.category.CategoryIdDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
-import com.kopchak.worldoftoys.dto.product.category.FilteringCategoriesDto;
 import com.kopchak.worldoftoys.dto.product.image.ImageDto;
+import com.kopchak.worldoftoys.exception.exception.category.CategoryNotFoundException;
+import com.kopchak.worldoftoys.exception.exception.image.ImageException;
 import com.kopchak.worldoftoys.exception.exception.image.ext.ImageDecompressionException;
+import com.kopchak.worldoftoys.exception.exception.product.DuplicateProductNameException;
 import com.kopchak.worldoftoys.exception.exception.product.ProductNotFoundException;
-import com.kopchak.worldoftoys.mapper.product.CategoryMapper;
 import com.kopchak.worldoftoys.mapper.product.ProductMapper;
 import com.kopchak.worldoftoys.repository.product.CategoryRepository;
 import com.kopchak.worldoftoys.repository.product.ProductRepository;
@@ -33,6 +33,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -56,18 +57,20 @@ class ProductServiceImplTest {
     private ProductSpecificationsImpl productSpecifications;
     @Mock
     private ProductMapper productMapper;
-    @Mock
-    private CategoryMapper categoryMapper;
-
     @InjectMocks
     private ProductServiceImpl productService;
 
     private final static String PRODUCT_SLUG = "lyalka-klaymber";
     private final static String PRICE_SORT_ORDER = "asc";
     private final static Integer PRODUCT_ID = 1;
+    private final static String PRODUCT_NAME = "лялька";
+    private final static String PRODUCT_ID_NOT_FOUND_EXCEPTION_MSG =
+            String.format("The product with id: %d is not found.", PRODUCT_ID);
+    private final static String DUPLICATE_PRODUCT_NAME_EXCEPTION_MSG =
+            String.format("The product with name: %s is already exist", PRODUCT_NAME);
+
     private final static int PAGE = 0;
     private final static int SIZE = 3;
-    private String productName;
     private BigDecimal minProductPrice;
     private BigDecimal maxProductPrice;
     private List<String> originCategories;
@@ -77,10 +80,14 @@ class ProductServiceImplTest {
     private ImageDto imageDto;
     private Specification<Product> spec;
     private Pageable pageable;
+    private CategoryIdDto categoryIdDto;
+    private AddUpdateProductDto addUpdateProductDto;
+    private BrandCategory brandCategory;
+    private OriginCategory originCategory;
+    private AgeCategory ageCategory;
 
     @BeforeEach
     void setUp() {
-        productName = "лялька";
         minProductPrice = BigDecimal.valueOf(350);
         maxProductPrice = BigDecimal.valueOf(1000);
         originCategories = List.of("china", "ukraine");
@@ -90,6 +97,17 @@ class ProductServiceImplTest {
         imageDto = ImageDto.builder().build();
         spec = Specification.where(null);
         pageable = PageRequest.of(PAGE, SIZE);
+        categoryIdDto = new CategoryIdDto(1);
+        addUpdateProductDto = AddUpdateProductDto
+                .builder()
+                .name(PRODUCT_NAME)
+                .brandCategory(categoryIdDto)
+                .originCategory(categoryIdDto)
+                .ageCategories(List.of(categoryIdDto))
+                .build();
+        brandCategory = new BrandCategory();
+        originCategory = new OriginCategory();
+        ageCategory = new AgeCategory();
     }
 
     @Test
@@ -120,13 +138,13 @@ class ProductServiceImplTest {
     public void getFilteredProducts_ReturnsFilteredProductsPageDto() {
         var expectedFilteredProductsPageDto = new FilteredProductsPageDto(new ArrayList<>(), 3L, 2L);
 
-        when(productSpecifications.filterByAllCriteria(eq(productName), eq(minProductPrice), eq(maxProductPrice),
+        when(productSpecifications.filterByAllCriteria(eq(PRODUCT_NAME), eq(minProductPrice), eq(maxProductPrice),
                 eq(originCategories), eq(brandCategories), eq(ageCategories), eq(PRICE_SORT_ORDER), any()))
                 .thenReturn(spec);
         when(productRepository.findAll(eq(spec), eq(pageable))).thenReturn(Page.empty());
         when(productMapper.toFilteredProductsPageDto(any())).thenReturn(expectedFilteredProductsPageDto);
 
-        var actualFilteredProductsPageDto = productService.getFilteredProductsPage(PAGE, SIZE, productName, minProductPrice,
+        var actualFilteredProductsPageDto = productService.getFilteredProductsPage(PAGE, SIZE, PRODUCT_NAME, minProductPrice,
                 maxProductPrice, originCategories, brandCategories, ageCategories, PRICE_SORT_ORDER);
 
         assertThat(actualFilteredProductsPageDto).isNotNull();
@@ -137,13 +155,13 @@ class ProductServiceImplTest {
     public void getAdminFilteredProducts_ReturnsAdminProductsPageDto() {
         var expectedAdminProductsPageDto = AdminProductsPageDto.builder().build();
 
-        when(productSpecifications.filterByAllCriteria(eq(productName), eq(minProductPrice), eq(maxProductPrice),
+        when(productSpecifications.filterByAllCriteria(eq(PRODUCT_NAME), eq(minProductPrice), eq(maxProductPrice),
                 eq(originCategories), eq(brandCategories), eq(ageCategories), eq(PRICE_SORT_ORDER), any()))
                 .thenReturn(spec);
         when(productRepository.findAll(eq(spec), eq(pageable))).thenReturn(Page.empty());
         when(productMapper.toAdminFilteredProductsPageDto(any())).thenReturn(expectedAdminProductsPageDto);
 
-        var actualAdminProductsPageDto = productService.getAdminProductsPage(PAGE, SIZE, productName,
+        var actualAdminProductsPageDto = productService.getAdminProductsPage(PAGE, SIZE, PRODUCT_NAME,
                 minProductPrice, maxProductPrice, originCategories, brandCategories, ageCategories,
                 PRICE_SORT_ORDER, null);
 
@@ -157,7 +175,7 @@ class ProductServiceImplTest {
         var expectedAdminProductDto = AdminProductDto
                 .builder()
                 .id(PRODUCT_ID)
-                .name(productName)
+                .name(PRODUCT_NAME)
                 .slug(PRODUCT_SLUG)
                 .price(minProductPrice)
                 .mainImage(imageDto)
@@ -176,47 +194,90 @@ class ProductServiceImplTest {
 
     @Test
     public void getAdminProductDtoById_NonExistentProduct_ThrowProductNotFoundException() {
-        String productNotFoundExceptionMsg = String.format("The product with id: %d is not found.", PRODUCT_ID);
-
         when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.empty());
 
-        assertException(ProductNotFoundException.class, productNotFoundExceptionMsg,
+        assertException(ProductNotFoundException.class, PRODUCT_ID_NOT_FOUND_EXCEPTION_MSG,
                 () -> productService.getProductById(PRODUCT_ID));
     }
 
     @Test
-    public void updateProduct_() throws Exception {
-        CategoryIdDto categoryIdDto = new CategoryIdDto(1);
-        var addUpdateProductDto = AddUpdateProductDto
-                .builder()
-                .name(productName)
-                .brandCategory(categoryIdDto)
-                .originCategory(categoryIdDto)
-                .ageCategories(List.of(categoryIdDto))
-                .build();
-        BrandCategory expectedBrandCategory = new BrandCategory();
-        OriginCategory expectedOriginCategory = new OriginCategory();
-        AgeCategory expectedAgeCategory = new AgeCategory();
-
+    public void updateProduct_ExistentProductIdAndNonExistentProductName() throws Exception {
         when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.of(product));
-        when(productRepository.findByName(productName)).thenReturn(Optional.empty());
+        when(productRepository.findByName(PRODUCT_NAME)).thenReturn(Optional.empty());
         when(productMapper.toProduct(addUpdateProductDto)).thenReturn(product);
         when(categoryRepository.findById(eq(categoryIdDto.id()), eq(BrandCategory.class)))
-                .thenReturn(expectedBrandCategory);
+                .thenReturn(brandCategory);
         when(categoryRepository.findById(eq(categoryIdDto.id()), eq(OriginCategory.class)))
-                .thenReturn(expectedOriginCategory);
+                .thenReturn(originCategory);
         when(categoryRepository.findById(eq(categoryIdDto.id()), eq(AgeCategory.class)))
-                .thenReturn(expectedAgeCategory);
+                .thenReturn(ageCategory);
 
         productService.updateProduct(PRODUCT_ID, addUpdateProductDto, null, null);
 
         verify(productRepository).save(product);
 
-        assertThat(product.getBrandCategory()).isEqualTo(expectedBrandCategory);
-        assertThat(product.getOriginCategory()).isEqualTo(expectedOriginCategory);
+        assertThat(product.getBrandCategory()).isEqualTo(brandCategory);
+        assertThat(product.getOriginCategory()).isEqualTo(originCategory);
         assertThat(product.getAgeCategories()).isNotNull();
         assertThat(product.getAgeCategories().size()).isEqualTo(1);
-        assertThat(product.getAgeCategories().contains(expectedAgeCategory)).isTrue();
+        assertThat(product.getAgeCategories().contains(ageCategory)).isTrue();
+    }
+
+    @Test
+    public void updateProduct_NonExistentProductId_ThrowProductNotFoundException() {
+        when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.empty());
+
+        assertException(ProductNotFoundException.class, PRODUCT_ID_NOT_FOUND_EXCEPTION_MSG,
+                () -> productService.updateProduct(PRODUCT_ID, addUpdateProductDto, null, null));
+
+        verify(productRepository, never()).save(product);
+    }
+
+    @Test
+    public void updateProduct_DuplicateProductName_ThrowDuplicateProductNameException() {
+        product.setId(2);
+
+        when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.of(product));
+        when(productRepository.findByName(PRODUCT_NAME)).thenReturn(Optional.of(product));
+
+        assertException(DuplicateProductNameException.class, DUPLICATE_PRODUCT_NAME_EXCEPTION_MSG,
+                () -> productService.updateProduct(PRODUCT_ID, addUpdateProductDto, null, null));
+
+        verify(productRepository, never()).save(product);
+    }
+
+    @Test
+    public void createProduct_NonExistentProductName() throws ImageException, DuplicateProductNameException, CategoryNotFoundException {
+        MultipartFile image = mock(MultipartFile.class);
+        List<MultipartFile> images = List.of(image);
+
+        when(productRepository.findByName(PRODUCT_NAME)).thenReturn(Optional.empty());
+        when(productMapper.toProduct(addUpdateProductDto)).thenReturn(product);
+        when(categoryRepository.findById(eq(categoryIdDto.id()), eq(BrandCategory.class)))
+                .thenReturn(brandCategory);
+        when(categoryRepository.findById(eq(categoryIdDto.id()), eq(OriginCategory.class)))
+                .thenReturn(originCategory);
+        when(categoryRepository.findById(eq(categoryIdDto.id()), eq(AgeCategory.class)))
+                .thenReturn(ageCategory);
+
+        productService.createProduct(addUpdateProductDto, image, images);
+
+        verify(productRepository).save(product);
+
+        assertThat(product.getBrandCategory()).isEqualTo(brandCategory);
+        assertThat(product.getOriginCategory()).isEqualTo(originCategory);
+        assertThat(product.getAgeCategories()).isNotNull();
+        assertThat(product.getAgeCategories().contains(ageCategory)).isTrue();
+    }
+
+    @Test
+    public void createProduct_DuplicateProductName_ThrowDuplicateProductNameException() {
+        when(productRepository.findByName(PRODUCT_NAME)).thenReturn(Optional.of(product));
+
+        assertException(DuplicateProductNameException.class, DUPLICATE_PRODUCT_NAME_EXCEPTION_MSG,
+                () -> productService.createProduct(addUpdateProductDto, null, null));
+
+        verify(productRepository, never()).save(product);
     }
 
     private void assertException(Class<? extends Exception> expectedExceptionType,
