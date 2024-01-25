@@ -57,32 +57,32 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public void deleteCategory(CategoryType categoryType, Integer categoryId) throws CategoryContainsProductsException {
-        if (categoryRepository.containsProductsInCategory(categoryType.getCategory(), categoryId)) {
+        if (categoryRepository.containsProductsInCategory(categoryId, categoryType.getCategory())) {
             throw new CategoryContainsProductsException(String.format("It is not possible to delete a category " +
                     "with id: %d because there are products in this category.", categoryId));
         }
-        categoryRepository.deleteByIdAndType(categoryType.getCategory(), categoryId);
+        categoryRepository.deleteByIdAndType(categoryId, categoryType.getCategory());
     }
 
     @Override
     public void updateCategory(CategoryType categoryType, Integer categoryId, CategoryNameDto categoryNameDto)
             throws DuplicateCategoryNameException {
         String categoryName = categoryNameDto.name();
-        if (categoryRepository.isCategoryWithNameExists(categoryType.getCategory(), categoryName)) {
+        if (categoryRepository.isCategoryWithNameExists(categoryName, categoryType.getCategory())) {
             throw new DuplicateCategoryNameException(String.format("Category with name: %s already exist", categoryName));
         }
-        categoryRepository.updateNameByIdAndType(categoryType.getCategory(), categoryId, categoryName);
+        categoryRepository.updateNameByIdAndType(categoryId, categoryName, categoryType.getCategory());
     }
 
     @Override
     public void createCategory(CategoryType categoryType, CategoryNameDto categoryNameDto)
             throws DuplicateCategoryNameException, CategoryCreationException {
         String categoryName = categoryNameDto.name();
-        if (categoryRepository.isCategoryWithNameExists(categoryType.getCategory(), categoryName)) {
+        if (categoryRepository.isCategoryWithNameExists(categoryName, categoryType.getCategory())) {
             throw new DuplicateCategoryNameException(String.format("Category with name: %s already exist", categoryName));
         }
         try {
-            categoryRepository.create(categoryType.getCategory(), categoryName);
+            categoryRepository.create(categoryName, categoryType.getCategory());
         } catch (ReflectiveOperationException e) {
             throw new CategoryCreationException(e.getMessage());
         }
@@ -90,7 +90,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public <T extends ProductCategory> T findCategoryById(Integer id, Class<T> categoryType) throws CategoryNotFoundException {
-        Optional<T> optionalCategory = categoryRepository.findById(id, categoryType);
+        Optional<T> optionalCategory = categoryRepository.findByIdAndType(id, categoryType);
         if (optionalCategory.isPresent()) {
             return optionalCategory.get();
         }

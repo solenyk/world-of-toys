@@ -31,7 +31,7 @@ import java.util.function.Function;
 public class CategoryRepositoryImpl implements CategoryRepository {
     private final EntityManager entityManager;
 
-    public <T extends ProductCategory> Optional<T> findById(Integer id, Class<T> categoryType) {
+    public <T extends ProductCategory> Optional<T> findByIdAndType(Integer id, Class<T> categoryType) {
         T category = entityManager.find(categoryType, id);
         return Optional.ofNullable(category);
     }
@@ -48,7 +48,7 @@ public class CategoryRepositoryImpl implements CategoryRepository {
 
     @Override
     @Transactional
-    public <T extends ProductCategory> void deleteByIdAndType(Class<T> categoryType, Integer id) {
+    public <T extends ProductCategory> void deleteByIdAndType(Integer id, Class<T> categoryType) {
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
         CriteriaDelete<T> criteriaQuery = criteriaBuilder.createCriteriaDelete(categoryType);
         Root<T> root = criteriaQuery.from(categoryType);
@@ -58,8 +58,8 @@ public class CategoryRepositoryImpl implements CategoryRepository {
 
     @Override
     @Transactional
-    public <T extends ProductCategory> void updateNameByIdAndType(Class<T> categoryType, Integer id, String name) {
-        Optional<T> entityToUpdateOptional = findById(id, categoryType);
+    public <T extends ProductCategory> void updateNameByIdAndType(Integer id, String name, Class<T> categoryType) {
+        Optional<T> entityToUpdateOptional = findByIdAndType(id, categoryType);
         if (entityToUpdateOptional.isPresent()) {
             T entityToUpdate = entityToUpdateOptional.get();
             entityToUpdate.setName(name);
@@ -69,7 +69,7 @@ public class CategoryRepositoryImpl implements CategoryRepository {
 
     @Override
     @Transactional
-    public <T extends ProductCategory> void create(Class<T> categoryType, String name) throws ReflectiveOperationException {
+    public <T extends ProductCategory> void create(String name, Class<T> categoryType) throws ReflectiveOperationException {
         T newCategory = categoryType.getDeclaredConstructor().newInstance();
         newCategory.setName(name);
         entityManager.persist(newCategory);
@@ -100,7 +100,7 @@ public class CategoryRepositoryImpl implements CategoryRepository {
     }
 
     @Override
-    public <T extends ProductCategory> boolean containsProductsInCategory(Class<T> categoryType, Integer id) {
+    public <T extends ProductCategory> boolean containsProductsInCategory(Integer id, Class<T> categoryType) {
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
         CriteriaQuery<Product> criteriaQuery = criteriaBuilder.createQuery(Product.class);
         Root<Product> root = criteriaQuery.from(Product.class);
@@ -115,10 +115,10 @@ public class CategoryRepositoryImpl implements CategoryRepository {
     }
 
     @Override
-    public <T extends ProductCategory> boolean isCategoryWithNameExists(Class<T> productCategoryType, String name) {
+    public <T extends ProductCategory> boolean isCategoryWithNameExists(String name, Class<T> categoryType) {
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
-        CriteriaQuery<T> criteriaQuery = criteriaBuilder.createQuery(productCategoryType);
-        Root<T> root = criteriaQuery.from(productCategoryType);
+        CriteriaQuery<T> criteriaQuery = criteriaBuilder.createQuery(categoryType);
+        Root<T> root = criteriaQuery.from(categoryType);
         criteriaQuery.where(criteriaBuilder.equal(root.get(ProductCategory_.NAME), name));
         try {
             entityManager.createQuery(criteriaQuery).getSingleResult();

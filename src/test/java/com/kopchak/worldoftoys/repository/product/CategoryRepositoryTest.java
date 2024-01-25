@@ -49,8 +49,8 @@ class CategoryRepositoryTest {
     }
 
     @Test
-    public void findById_BrandCategoryType_ReturnsOptionalOfBrandCategory() {
-        Class<BrandCategory> productCategoryType = BrandCategory.class;
+    public void findByIdAndType_BrandCategoryType_ReturnsOptionalOfBrandCategory() {
+        Class<BrandCategory> categoryClass = BrandCategory.class;
         Integer id = 1004;
 
         BrandCategory expectedBrandCategory = new BrandCategory();
@@ -59,20 +59,20 @@ class CategoryRepositoryTest {
         expectedBrandCategory.setSlug("сomelon");
         expectedBrandCategory.setProducts(new HashSet<>());
 
-        Optional<BrandCategory> actualBrandCategory = categoryRepository.findById(id, productCategoryType);
+        Optional<BrandCategory> actualBrandCategory = categoryRepository.findByIdAndType(id, categoryClass);
 
         assertThat(actualBrandCategory).isNotNull();
         assertThat(actualBrandCategory).isNotEmpty();
-        assertThat(actualBrandCategory.get()).isInstanceOf(productCategoryType);
+        assertThat(actualBrandCategory.get()).isInstanceOf(categoryClass);
         assertThat(actualBrandCategory.get()).usingRecursiveComparison().isEqualTo(expectedBrandCategory);
     }
 
     @Test
-    public void findAllCategories_ReturnsSetOfOriginCategories() {
-        Class<OriginCategory> productCategoryType = OriginCategory.class;
+    public void findAll_ReturnsSetOfOriginCategories() {
+        Class<OriginCategory> categoryClass = OriginCategory.class;
         int expectedOriginCategoriesSetSize = 2;
 
-        Set<OriginCategory> actualOriginCategories = categoryRepository.findAll(productCategoryType);
+        Set<OriginCategory> actualOriginCategories = categoryRepository.findAll(categoryClass);
 
         assertThat(actualOriginCategories).isNotNull();
         assertThat(actualOriginCategories).isNotEmpty();
@@ -80,14 +80,14 @@ class CategoryRepositoryTest {
     }
 
     @Test
-    public void updateCategory() {
+    public void updateNameByIdAndType() {
         Class<BrandCategory> productCategoryType = BrandCategory.class;
         Integer id = 1001;
         String newCategoryName = "new-name";
 
-        categoryRepository.updateNameByIdAndType(productCategoryType, id, newCategoryName);
+        categoryRepository.updateNameByIdAndType(id, newCategoryName, productCategoryType);
 
-        Optional<BrandCategory> updatedBrandCategory = categoryRepository.findById(id, productCategoryType);
+        Optional<BrandCategory> updatedBrandCategory = categoryRepository.findByIdAndType(id, productCategoryType);
 
         assertThat(updatedBrandCategory).isNotNull();
         assertThat(updatedBrandCategory).isNotEmpty();
@@ -96,13 +96,13 @@ class CategoryRepositoryTest {
     }
 
     @Test
-    public void createCategory() throws ReflectiveOperationException {
+    public void create() throws ReflectiveOperationException {
         Class<BrandCategory> productCategoryType = BrandCategory.class;
         Integer id = 1;
         String newCategoryName = "new-name";
 
-        categoryRepository.create(productCategoryType, newCategoryName);
-        Optional<BrandCategory> createdBrandCategory = categoryRepository.findById(id, productCategoryType);
+        categoryRepository.create(newCategoryName, productCategoryType);
+        Optional<BrandCategory> createdBrandCategory = categoryRepository.findByIdAndType(id, productCategoryType);
 
         assertThat(createdBrandCategory).isNotNull();
         assertThat(createdBrandCategory).isNotEmpty();
