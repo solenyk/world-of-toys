@@ -89,7 +89,7 @@ class CategoryRepositoryTest {
         Class<OriginCategory> productCategoryType = OriginCategory.class;
         int expectedOriginCategoriesSetSize = 2;
 
-        Set<OriginCategory> actualOriginCategories = categoryRepository.findAllCategories(productCategoryType);
+        Set<OriginCategory> actualOriginCategories = categoryRepository.findAll(productCategoryType);
 
         assertThat(actualOriginCategories).isNotNull();
         assertThat(actualOriginCategories).isNotEmpty();
@@ -101,7 +101,7 @@ class CategoryRepositoryTest {
         Class<BrandCategory> productCategoryType = BrandCategory.class;
         Integer id = 5;
 
-        categoryRepository.deleteCategory(productCategoryType, id);
+        categoryRepository.deleteByIdAndType(productCategoryType, id);
 
         String categoryNotFoundExceptionMsg = String.format("%s with id: %d does not exist",
                 productCategoryType.getSimpleName(), id);
@@ -119,7 +119,7 @@ class CategoryRepositoryTest {
                 "with id: %d because there are products in this category.", id);
 
         assertException(CategoryContainsProductsException.class, categoryContainsProductsExceptionMsg,
-                () -> categoryRepository.deleteCategory(productCategoryType, id));
+                () -> categoryRepository.deleteByIdAndType(productCategoryType, id));
     }
 
     @Test
@@ -128,7 +128,7 @@ class CategoryRepositoryTest {
         Integer id = 1001;
         String newCategoryName = "new-name";
 
-        categoryRepository.updateCategory(productCategoryType, id, newCategoryName);
+        categoryRepository.updateNameByIdAndType(productCategoryType, id, newCategoryName);
 
         var updatedBrandCategory = categoryRepository.findById(id, productCategoryType);
 
@@ -147,7 +147,7 @@ class CategoryRepositoryTest {
                 existingCategoryName);
 
         assertException(DuplicateCategoryNameException.class, categoryAlreadyExistsExceptionMsg,
-                () -> categoryRepository.updateCategory(productCategoryType, id, existingCategoryName));
+                () -> categoryRepository.updateNameByIdAndType(productCategoryType, id, existingCategoryName));
     }
 
     @Test
@@ -159,7 +159,7 @@ class CategoryRepositoryTest {
         String categoryNotFoundExceptionMsg = String.format("Category with id: %d doesn't exist", id);
 
         assertException(CategoryNotFoundException.class, categoryNotFoundExceptionMsg,
-                () -> categoryRepository.updateCategory(productCategoryType, id, newCategoryName));
+                () -> categoryRepository.updateNameByIdAndType(productCategoryType, id, newCategoryName));
     }
 
     @Test
@@ -168,7 +168,7 @@ class CategoryRepositoryTest {
         Integer id = 1;
         String newCategoryName = "new-name";
 
-        categoryRepository.createCategory(productCategoryType, newCategoryName);
+        categoryRepository.create(productCategoryType, newCategoryName);
         var createdBrandCategory = categoryRepository.findById(id, productCategoryType);
 
         assertThat(createdBrandCategory).isNotNull();
@@ -185,7 +185,7 @@ class CategoryRepositoryTest {
                 existingCategoryName);
 
         assertException(DuplicateCategoryNameException.class, categoryAlreadyExistsExceptionMsg,
-                () -> categoryRepository.createCategory(productCategoryType, existingCategoryName));
+                () -> categoryRepository.create(productCategoryType, existingCategoryName));
     }
 
     @Test

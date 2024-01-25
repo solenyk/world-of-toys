@@ -1,5 +1,6 @@
 package com.kopchak.worldoftoys.service;
 
+import com.kopchak.worldoftoys.domain.product.category.ProductCategory;
 import com.kopchak.worldoftoys.domain.product.category.type.CategoryType;
 import com.kopchak.worldoftoys.dto.admin.category.AdminCategoryDto;
 import com.kopchak.worldoftoys.dto.admin.category.CategoryNameDto;
@@ -20,8 +21,10 @@ public interface CategoryService {
     void deleteCategory(CategoryType categoryType, Integer categoryId) throws CategoryContainsProductsException;
 
     void updateCategory(CategoryType categoryType, Integer categoryId, CategoryNameDto categoryNameDto)
-            throws CategoryNotFoundException, DuplicateCategoryNameException;
+            throws DuplicateCategoryNameException;
 
     void createCategory(CategoryType categoryType, CategoryNameDto categoryNameDto)
             throws DuplicateCategoryNameException, CategoryCreationException;
+
+    <T extends ProductCategory> T findCategoryById(Integer id, Class<T> categoryType) throws CategoryNotFoundException;
 }

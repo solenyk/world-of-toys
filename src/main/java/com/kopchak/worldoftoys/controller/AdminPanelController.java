@@ -220,10 +220,6 @@ public class AdminPanelController {
             @ApiResponse(
                     responseCode = "400",
                     description = "Product category name already exist",
-                    content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class))),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "Product category is not found",
                     content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class)))
     })
     @PutMapping("/categories/{categoryType}/{categoryId}")
@@ -234,8 +230,6 @@ public class AdminPanelController {
             categoryService.updateCategory(categoryType, categoryId, categoryNameDto);
         } catch (DuplicateCategoryNameException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
-        } catch (CategoryNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }

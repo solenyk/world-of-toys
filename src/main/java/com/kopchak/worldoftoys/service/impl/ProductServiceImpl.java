@@ -18,9 +18,9 @@ import com.kopchak.worldoftoys.exception.exception.image.ext.ImageDecompressionE
 import com.kopchak.worldoftoys.exception.exception.product.DuplicateProductNameException;
 import com.kopchak.worldoftoys.exception.exception.product.ProductNotFoundException;
 import com.kopchak.worldoftoys.mapper.product.ProductMapper;
-import com.kopchak.worldoftoys.repository.product.CategoryRepository;
 import com.kopchak.worldoftoys.repository.product.ProductRepository;
 import com.kopchak.worldoftoys.repository.specifications.impl.ProductSpecificationsImpl;
+import com.kopchak.worldoftoys.service.CategoryService;
 import com.kopchak.worldoftoys.service.ImageService;
 import com.kopchak.worldoftoys.service.ProductService;
 import jakarta.transaction.Transactional;
@@ -41,7 +41,8 @@ import java.util.*;
 @Slf4j
 public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
-    private final CategoryRepository categoryRepository;
+    private final CategoryService categoryService;
+    //    private final CategoryRepository categoryRepository;
     private final ProductSpecificationsImpl productSpecifications;
     private final ProductMapper productMapper;
     private final ImageService imageService;
@@ -153,11 +154,11 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private void setProductCategories(Product product, AddUpdateProductDto productDto) throws CategoryNotFoundException {
-        product.setBrandCategory(categoryRepository.findById(productDto.brandCategory().id(), BrandCategory.class));
-        product.setOriginCategory(categoryRepository.findById(productDto.originCategory().id(), OriginCategory.class));
+        product.setBrandCategory(categoryService.findCategoryById(productDto.brandCategory().id(), BrandCategory.class));
+        product.setOriginCategory(categoryService.findCategoryById(productDto.originCategory().id(), OriginCategory.class));
         Set<AgeCategory> ageCategories = new LinkedHashSet<>();
         for (CategoryIdDto ageCategory : productDto.ageCategories()) {
-            ageCategories.add(categoryRepository.findById(ageCategory.id(), AgeCategory.class));
+            ageCategories.add(categoryService.findCategoryById(ageCategory.id(), AgeCategory.class));
         }
         product.setAgeCategories(ageCategories);
     }

@@ -92,7 +92,7 @@ class CategoryServiceImplTest {
         AdminCategoryDto adminCategoryDto = new AdminCategoryDto(1, "name");
         Set<AdminCategoryDto> expectedAdminCategoryDtoSet = Set.of(adminCategoryDto);
 
-        when(categoryRepository.findAllCategories(eq(categoryType.getCategory()))).thenReturn(new HashSet<>());
+        when(categoryRepository.findAll(eq(categoryType.getCategory()))).thenReturn(new HashSet<>());
         when(categoryMapper.toAdminCategoryDtoSet(anySet())).thenReturn(expectedAdminCategoryDtoSet);
 
         Set<AdminCategoryDto> actualAdminCategoryDtoSet = categoryService.getAdminCategories(categoryType);
@@ -104,29 +104,29 @@ class CategoryServiceImplTest {
 
     @Test
     public void deleteCategory() throws CategoryContainsProductsException {
-        doNothing().when(categoryRepository).deleteCategory(eq(categoryType.getCategory()), eq(categoryId));
+        doNothing().when(categoryRepository).deleteByIdAndType(eq(categoryType.getCategory()), eq(categoryId));
 
         categoryService.deleteCategory(categoryType, categoryId);
 
-        verify(categoryRepository).deleteCategory(eq(categoryType.getCategory()), eq(categoryId));
+        verify(categoryRepository).deleteByIdAndType(eq(categoryType.getCategory()), eq(categoryId));
     }
 
     @Test
     public void updateCategory() throws CategoryNotFoundException, DuplicateCategoryNameException {
         doNothing().when(categoryRepository)
-                .updateCategory(categoryType.getCategory(), categoryId, categoryNameDto.name());
+                .updateNameByIdAndType(categoryType.getCategory(), categoryId, categoryNameDto.name());
 
         categoryService.updateCategory(categoryType, categoryId, categoryNameDto);
 
-        verify(categoryRepository).updateCategory(categoryType.getCategory(), categoryId, categoryNameDto.name());
+        verify(categoryRepository).updateNameByIdAndType(categoryType.getCategory(), categoryId, categoryNameDto.name());
     }
 
     @Test
     public void createCategory() throws DuplicateCategoryNameException, CategoryCreationException {
-        doNothing().when(categoryRepository).createCategory(categoryType.getCategory(), categoryNameDto.name());
+        doNothing().when(categoryRepository).create(categoryType.getCategory(), categoryNameDto.name());
 
         categoryService.createCategory(categoryType, categoryNameDto);
 
-        verify(categoryRepository).createCategory(categoryType.getCategory(), categoryNameDto.name());
+        verify(categoryRepository).create(categoryType.getCategory(), categoryNameDto.name());
     }
 }

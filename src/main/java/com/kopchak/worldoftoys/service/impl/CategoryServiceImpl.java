@@ -1,14 +1,15 @@
 package com.kopchak.worldoftoys.service.impl;
 
 import com.kopchak.worldoftoys.domain.product.Product;
+import com.kopchak.worldoftoys.domain.product.category.ProductCategory;
 import com.kopchak.worldoftoys.domain.product.category.type.CategoryType;
 import com.kopchak.worldoftoys.dto.admin.category.AdminCategoryDto;
 import com.kopchak.worldoftoys.dto.admin.category.CategoryNameDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringCategoriesDto;
-import com.kopchak.worldoftoys.exception.exception.category.DuplicateCategoryNameException;
 import com.kopchak.worldoftoys.exception.exception.category.CategoryContainsProductsException;
 import com.kopchak.worldoftoys.exception.exception.category.CategoryCreationException;
 import com.kopchak.worldoftoys.exception.exception.category.CategoryNotFoundException;
+import com.kopchak.worldoftoys.exception.exception.category.DuplicateCategoryNameException;
 import com.kopchak.worldoftoys.mapper.product.CategoryMapper;
 import com.kopchak.worldoftoys.repository.product.CategoryRepository;
 import com.kopchak.worldoftoys.repository.specifications.impl.ProductSpecificationsImpl;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -49,24 +51,49 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public Set<AdminCategoryDto> getAdminCategories(CategoryType categoryType) {
-        var categories = categoryRepository.findAllCategories(categoryType.getCategory());
+        var categories = categoryRepository.findAll(categoryType.getCategory());
         return categoryMapper.toAdminCategoryDtoSet(categories);
     }
 
     @Override
     public void deleteCategory(CategoryType categoryType, Integer categoryId) throws CategoryContainsProductsException {
-        categoryRepository.deleteCategory(categoryType.getCategory(), categoryId);
+        if (categoryRepository.containsProductsInCategory(categoryType.getCategory(), categoryId)) {
+            throw new CategoryContainsProductsException(String.format("It is not possible to delete a category " +
+                    "with id: %d because there are products in this category.", categoryId));
+        }
+        categoryRepository.deleteByIdAndType(categoryType.getCategory(), categoryId);
     }
 
     @Override
     public void updateCategory(CategoryType categoryType, Integer categoryId, CategoryNameDto categoryNameDto)
-            throws CategoryNotFoundException, DuplicateCategoryNameException {
-        categoryRepository.updateCategory(categoryType.getCategory(), categoryId, categoryNameDto.name());
+            throws DuplicateCategoryNameException {
+        String categoryName = categoryNameDto.name();
+        if (categoryRepository.isCategoryWithNameExists(categoryType.getCategory(), categoryName)) {
+            throw new DuplicateCategoryNameException(String.format("Category with name: %s already exist", categoryName));
+        }
+        categoryRepository.updateNameByIdAndType(categoryType.getCategory(), categoryId, categoryName);
     }
 
     @Override
     public void createCategory(CategoryType categoryType, CategoryNameDto categoryNameDto)
             throws DuplicateCategoryNameException, CategoryCreationException {
-        categoryRepository.createCategory(categoryType.getCategory(), categoryNameDto.name());
+        String categoryName = categoryNameDto.name();
+        if (categoryRepository.isCategoryWithNameExists(categoryType.getCategory(), categoryName)) {
+            throw new DuplicateCategoryNameException(String.format("Category with name: %s already exist", categoryName));
+        }
+        try {
+            categoryRepository.create(categoryType.getCategory(), categoryName);
+        } catch (ReflectiveOperationException e) {
+            throw new CategoryCreationException(e.getMessage());
+        }
+    }
+
+    @Override
+    public <T extends ProductCategory> T findCategoryById(Integer id, Class<T> categoryType) throws CategoryNotFoundException {
+        Optional<T> optionalCategory = categoryRepository.findById(id, categoryType);
+        if (optionalCategory.isPresent()) {
+            return optionalCategory.get();
+        }
+        throw new CategoryNotFoundException(String.format("The category with id: %d is not found", id));
     }
 }
