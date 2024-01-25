@@ -1,13 +1,14 @@
 package com.kopchak.worldoftoys.service.impl;
 
 import com.kopchak.worldoftoys.domain.product.Product;
+import com.kopchak.worldoftoys.domain.product.category.OriginCategory;
 import com.kopchak.worldoftoys.domain.product.category.ProductCategory;
 import com.kopchak.worldoftoys.domain.product.category.type.CategoryType;
 import com.kopchak.worldoftoys.dto.admin.category.AdminCategoryDto;
 import com.kopchak.worldoftoys.dto.admin.category.CategoryNameDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringCategoriesDto;
 import com.kopchak.worldoftoys.exception.exception.category.CategoryContainsProductsException;
-import com.kopchak.worldoftoys.exception.exception.category.CategoryCreationException;
+import com.kopchak.worldoftoys.exception.exception.category.CategoryNotFoundException;
 import com.kopchak.worldoftoys.exception.exception.category.DuplicateCategoryNameException;
 import com.kopchak.worldoftoys.mapper.product.CategoryMapper;
 import com.kopchak.worldoftoys.repository.product.CategoryRepository;
@@ -15,18 +16,18 @@ import com.kopchak.worldoftoys.repository.specifications.impl.ProductSpecificati
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.function.Executable;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -41,8 +42,11 @@ class CategoryServiceImplTest {
 
     @InjectMocks
     private CategoryServiceImpl categoryService;
-    private final static CategoryType categoryType = CategoryType.ORIGINS;
-    private final static Integer categoryId = 1;
+    private final static CategoryType CATEGORY_TYPE = CategoryType.ORIGINS;
+    private final static Integer CATEGORY_ID = 1;
+    private final static String CATEGORY_NAME = "category-name";
+    private final static String DUPLICATE_CATEGORY_NAME_EXCEPTION_MSG =
+            String.format("Category with name: %s already exist", CATEGORY_NAME);
     private String productName;
     private BigDecimal minProductPrice;
     private BigDecimal maxProductPrice;
@@ -61,7 +65,7 @@ class CategoryServiceImplTest {
         brandCategories = List.of("сurlimals", "devilon");
         ageCategories = List.of("do-1-roku", "vid-1-do-3-rokiv");
         spec = Specification.where(null);
-        categoryNameDto = new CategoryNameDto("category-name");
+        categoryNameDto = new CategoryNameDto(CATEGORY_NAME);
     }
 
     @Test
@@ -87,14 +91,13 @@ class CategoryServiceImplTest {
 
     @Test
     public void getAdminCategories_ReturnsAdminCategoryDtoSet() {
-        CategoryType categoryType = CategoryType.ORIGINS;
         AdminCategoryDto adminCategoryDto = new AdminCategoryDto(1, "name");
         Set<AdminCategoryDto> expectedAdminCategoryDtoSet = Set.of(adminCategoryDto);
 
-        when(categoryRepository.findAll(eq(categoryType.getCategory()))).thenReturn(new HashSet<>());
+        when(categoryRepository.findAll(eq(CATEGORY_TYPE.getCategory()))).thenReturn(new HashSet<>());
         when(categoryMapper.toAdminCategoryDtoSet(anySet())).thenReturn(expectedAdminCategoryDtoSet);
 
-        Set<AdminCategoryDto> actualAdminCategoryDtoSet = categoryService.getAdminCategories(categoryType);
+        Set<AdminCategoryDto> actualAdminCategoryDtoSet = categoryService.getAdminCategories(CATEGORY_TYPE);
 
         assertThat(actualAdminCategoryDtoSet).isNotNull();
         assertThat(actualAdminCategoryDtoSet.size()).isEqualTo(1);
@@ -102,30 +105,102 @@ class CategoryServiceImplTest {
     }
 
     @Test
-    public void deleteCategory() throws CategoryContainsProductsException {
-        doNothing().when(categoryRepository).deleteByIdAndType(eq(categoryId), eq(categoryType.getCategory()));
+    public void deleteCategory_CategoryWithoutProducts() throws CategoryContainsProductsException {
+        when(categoryRepository.containsProductsInCategory(CATEGORY_ID, CATEGORY_TYPE.getCategory())).thenReturn(false);
+        doNothing().when(categoryRepository).deleteByIdAndType(eq(CATEGORY_ID), eq(CATEGORY_TYPE.getCategory()));
 
-        categoryService.deleteCategory(categoryType, categoryId);
+        categoryService.deleteCategory(CATEGORY_TYPE, CATEGORY_ID);
 
-        verify(categoryRepository).deleteByIdAndType(eq(categoryId), eq(categoryType.getCategory()));
+        verify(categoryRepository).deleteByIdAndType(eq(CATEGORY_ID), eq(CATEGORY_TYPE.getCategory()));
     }
 
     @Test
-    public void updateCategory() throws DuplicateCategoryNameException {
+    public void deleteCategory_CategoryWithProducts_ThrowsCategoryContainsProductsException() {
+        String categoryContainsProductsExceptionMsg = String.format("It is not possible to delete a category " +
+                "with id: %d because there are products in this category.", CATEGORY_ID);
+
+        when(categoryRepository.containsProductsInCategory(eq(CATEGORY_ID), eq(CATEGORY_TYPE.getCategory())))
+                .thenReturn(true);
+
+        assertException(CategoryContainsProductsException.class, categoryContainsProductsExceptionMsg,
+                () -> categoryService.deleteCategory(CATEGORY_TYPE, CATEGORY_ID));
+
+        verify(categoryRepository, never()).deleteByIdAndType(any(), any());
+    }
+
+    @Test
+    public void updateCategory_NonExistentCategoryName() throws DuplicateCategoryNameException {
+        when(categoryRepository.isCategoryWithNameExists(eq(CATEGORY_NAME), eq(CATEGORY_TYPE.getCategory())))
+                .thenReturn(false);
         doNothing().when(categoryRepository)
-                .updateNameByIdAndType(categoryId, categoryNameDto.name(), categoryType.getCategory());
+                .updateNameByIdAndType(CATEGORY_ID, categoryNameDto.name(), CATEGORY_TYPE.getCategory());
 
-        categoryService.updateCategory(categoryType, categoryId, categoryNameDto);
+        categoryService.updateCategory(CATEGORY_TYPE, CATEGORY_ID, categoryNameDto);
 
-        verify(categoryRepository).updateNameByIdAndType(categoryId, categoryNameDto.name(), categoryType.getCategory());
+        verify(categoryRepository).updateNameByIdAndType(eq(CATEGORY_ID), eq(CATEGORY_NAME),
+                eq(CATEGORY_TYPE.getCategory()));
     }
 
     @Test
-    public void createCategory() throws DuplicateCategoryNameException, CategoryCreationException, ReflectiveOperationException {
-        doNothing().when(categoryRepository).create(categoryNameDto.name(), categoryType.getCategory());
+    public void updateCategory_ExistentCategoryName_ThrowsDuplicateCategoryNameException() {
+        when(categoryRepository.isCategoryWithNameExists(eq(CATEGORY_NAME), eq(CATEGORY_TYPE.getCategory())))
+                .thenReturn(true);
 
-        categoryService.createCategory(categoryType, categoryNameDto);
+        assertException(DuplicateCategoryNameException.class, DUPLICATE_CATEGORY_NAME_EXCEPTION_MSG,
+                () -> categoryService.updateCategory(CATEGORY_TYPE, CATEGORY_ID, categoryNameDto));
 
-        verify(categoryRepository).create(categoryNameDto.name(), categoryType.getCategory());
+        verify(categoryRepository, never()).updateNameByIdAndType(any(), any(), any());
+    }
+
+    @Test
+    public void createCategory_NonExistentCategoryName() throws Exception {
+        when(categoryRepository.isCategoryWithNameExists(eq(CATEGORY_NAME), eq(CATEGORY_TYPE.getCategory())))
+                .thenReturn(false);
+        doNothing().when(categoryRepository).create(eq(CATEGORY_NAME), eq(CATEGORY_TYPE.getCategory()));
+
+        categoryService.createCategory(CATEGORY_TYPE, categoryNameDto);
+
+        verify(categoryRepository).create(eq(CATEGORY_NAME), eq(CATEGORY_TYPE.getCategory()));
+    }
+
+    @Test
+    public void createCategory_ExistentCategoryName_ThrowsDuplicateCategoryNameException() throws ReflectiveOperationException {
+        when(categoryRepository.isCategoryWithNameExists(eq(CATEGORY_NAME), eq(CATEGORY_TYPE.getCategory())))
+                .thenReturn(true);
+
+        assertException(DuplicateCategoryNameException.class, DUPLICATE_CATEGORY_NAME_EXCEPTION_MSG,
+                () -> categoryService.createCategory(CATEGORY_TYPE, categoryNameDto));
+
+        verify(categoryRepository, never()).create(any(), any());
+    }
+
+    @Test
+    public void findCategoryByIdAndType_ExistentOriginCategory_ReturnsOriginCategory() throws CategoryNotFoundException {
+        OriginCategory expectedOriginCategory = new OriginCategory();
+
+        when(categoryRepository.findByIdAndType(eq(CATEGORY_ID), eq(OriginCategory.class)))
+                .thenReturn(Optional.of(expectedOriginCategory));
+
+        var actualOriginCategory = categoryService.findCategoryByIdAndType(CATEGORY_ID, CATEGORY_TYPE.getCategory());
+
+        assertThat(actualOriginCategory).isNotNull();
+        assertThat(actualOriginCategory).isEqualTo(expectedOriginCategory);
+    }
+
+    @Test
+    public void findCategoryByIdAndType_NonExistentOriginCategory_ThrowsCategoryNotFoundException() {
+        String categoryNotFoundExceptionMsg = String.format("The category with id: %d is not found", CATEGORY_ID);
+        when(categoryRepository.findByIdAndType(eq(CATEGORY_ID), eq(OriginCategory.class)))
+                .thenReturn(Optional.empty());
+
+        assertException(CategoryNotFoundException.class, categoryNotFoundExceptionMsg,
+                () -> categoryService.findCategoryByIdAndType(CATEGORY_ID, CATEGORY_TYPE.getCategory()));
+    }
+
+    private void assertException(Class<? extends Exception> expectedExceptionType, String expectedMessage,
+                                 Executable executable) {
+        Exception exception = assertThrows(expectedExceptionType, executable);
+        String actualMessage = exception.getMessage();
+        assertEquals(expectedMessage, actualMessage);
     }
 }
