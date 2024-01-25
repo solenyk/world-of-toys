@@ -42,7 +42,6 @@ import java.util.*;
 public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
     private final CategoryService categoryService;
-    //    private final CategoryRepository categoryRepository;
     private final ProductSpecificationsImpl productSpecifications;
     private final ProductMapper productMapper;
     private final ImageService imageService;
@@ -154,11 +153,11 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private void setProductCategories(Product product, AddUpdateProductDto productDto) throws CategoryNotFoundException {
-        product.setBrandCategory(categoryService.findCategoryById(productDto.brandCategory().id(), BrandCategory.class));
-        product.setOriginCategory(categoryService.findCategoryById(productDto.originCategory().id(), OriginCategory.class));
+        product.setBrandCategory(categoryService.findCategoryByIdAndType(productDto.brandCategory().id(), BrandCategory.class));
+        product.setOriginCategory(categoryService.findCategoryByIdAndType(productDto.originCategory().id(), OriginCategory.class));
         Set<AgeCategory> ageCategories = new LinkedHashSet<>();
         for (CategoryIdDto ageCategory : productDto.ageCategories()) {
-            ageCategories.add(categoryService.findCategoryById(ageCategory.id(), AgeCategory.class));
+            ageCategories.add(categoryService.findCategoryByIdAndType(ageCategory.id(), AgeCategory.class));
         }
         product.setAgeCategories(ageCategories);
     }

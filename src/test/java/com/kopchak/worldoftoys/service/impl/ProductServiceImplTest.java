@@ -12,15 +12,12 @@ import com.kopchak.worldoftoys.dto.admin.product.AdminProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.dto.product.image.ImageDto;
-import com.kopchak.worldoftoys.exception.exception.category.CategoryNotFoundException;
-import com.kopchak.worldoftoys.exception.exception.image.ImageException;
-import com.kopchak.worldoftoys.exception.exception.image.ext.ImageDecompressionException;
 import com.kopchak.worldoftoys.exception.exception.product.DuplicateProductNameException;
 import com.kopchak.worldoftoys.exception.exception.product.ProductNotFoundException;
 import com.kopchak.worldoftoys.mapper.product.ProductMapper;
-import com.kopchak.worldoftoys.repository.product.CategoryRepository;
 import com.kopchak.worldoftoys.repository.product.ProductRepository;
 import com.kopchak.worldoftoys.repository.specifications.impl.ProductSpecificationsImpl;
+import com.kopchak.worldoftoys.service.CategoryService;
 import com.kopchak.worldoftoys.service.ImageService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -52,7 +49,7 @@ class ProductServiceImplTest {
     @Mock
     private ImageService imageService;
     @Mock
-    private CategoryRepository categoryRepository;
+    private CategoryService categoryService;
     @Mock
     private ProductSpecificationsImpl productSpecifications;
     @Mock
@@ -111,7 +108,7 @@ class ProductServiceImplTest {
     }
 
     @Test
-    public void getProductDtoBySlug_ExistentProduct_ReturnsProductDto() throws ImageDecompressionException, ProductNotFoundException {
+    public void getProductDtoBySlug_ExistentProduct_ReturnsProductDto() throws Exception {
         ProductDto expectedProductDto = ProductDto.builder().build();
 
         when(productRepository.findBySlug(eq(PRODUCT_SLUG))).thenReturn(Optional.of(product));
@@ -170,7 +167,7 @@ class ProductServiceImplTest {
     }
 
     @Test
-    public void getAdminProductDtoById_ExistentProduct_ReturnsAdminProductDto() throws ImageDecompressionException, ProductNotFoundException {
+    public void getAdminProductDtoById_ExistentProduct_ReturnsAdminProductDto() throws Exception {
         var imageDtoList = Collections.singletonList(imageDto);
         var expectedAdminProductDto = AdminProductDto
                 .builder()
@@ -205,11 +202,11 @@ class ProductServiceImplTest {
         when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.of(product));
         when(productRepository.findByName(PRODUCT_NAME)).thenReturn(Optional.empty());
         when(productMapper.toProduct(addUpdateProductDto)).thenReturn(product);
-        when(categoryRepository.findById(eq(categoryIdDto.id()), eq(BrandCategory.class)))
+        when(categoryService.findCategoryByIdAndType(eq(categoryIdDto.id()), eq(BrandCategory.class)))
                 .thenReturn(brandCategory);
-        when(categoryRepository.findById(eq(categoryIdDto.id()), eq(OriginCategory.class)))
+        when(categoryService.findCategoryByIdAndType(eq(categoryIdDto.id()), eq(OriginCategory.class)))
                 .thenReturn(originCategory);
-        when(categoryRepository.findById(eq(categoryIdDto.id()), eq(AgeCategory.class)))
+        when(categoryService.findCategoryByIdAndType(eq(categoryIdDto.id()), eq(AgeCategory.class)))
                 .thenReturn(ageCategory);
 
         productService.updateProduct(PRODUCT_ID, addUpdateProductDto, null, null);
@@ -247,17 +244,17 @@ class ProductServiceImplTest {
     }
 
     @Test
-    public void createProduct_NonExistentProductName() throws ImageException, DuplicateProductNameException, CategoryNotFoundException {
+    public void createProduct_NonExistentProductName() throws Exception {
         MultipartFile image = mock(MultipartFile.class);
         List<MultipartFile> images = List.of(image);
 
         when(productRepository.findByName(PRODUCT_NAME)).thenReturn(Optional.empty());
         when(productMapper.toProduct(addUpdateProductDto)).thenReturn(product);
-        when(categoryRepository.findById(eq(categoryIdDto.id()), eq(BrandCategory.class)))
+        when(categoryService.findCategoryByIdAndType(eq(categoryIdDto.id()), eq(BrandCategory.class)))
                 .thenReturn(brandCategory);
-        when(categoryRepository.findById(eq(categoryIdDto.id()), eq(OriginCategory.class)))
+        when(categoryService.findCategoryByIdAndType(eq(categoryIdDto.id()), eq(OriginCategory.class)))
                 .thenReturn(originCategory);
-        when(categoryRepository.findById(eq(categoryIdDto.id()), eq(AgeCategory.class)))
+        when(categoryService.findCategoryByIdAndType(eq(categoryIdDto.id()), eq(AgeCategory.class)))
                 .thenReturn(ageCategory);
 
         productService.createProduct(addUpdateProductDto, image, images);

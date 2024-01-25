@@ -89,7 +89,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public <T extends ProductCategory> T findCategoryById(Integer id, Class<T> categoryType) throws CategoryNotFoundException {
+    public <T extends ProductCategory> T findCategoryByIdAndType(Integer id, Class<T> categoryType) throws CategoryNotFoundException {
         Optional<T> optionalCategory = categoryRepository.findByIdAndType(id, categoryType);
         if (optionalCategory.isPresent()) {
             return optionalCategory.get();

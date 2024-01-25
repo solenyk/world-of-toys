@@ -8,7 +8,6 @@ import com.kopchak.worldoftoys.dto.admin.category.CategoryNameDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringCategoriesDto;
 import com.kopchak.worldoftoys.exception.exception.category.CategoryContainsProductsException;
 import com.kopchak.worldoftoys.exception.exception.category.CategoryCreationException;
-import com.kopchak.worldoftoys.exception.exception.category.CategoryNotFoundException;
 import com.kopchak.worldoftoys.exception.exception.category.DuplicateCategoryNameException;
 import com.kopchak.worldoftoys.mapper.product.CategoryMapper;
 import com.kopchak.worldoftoys.repository.product.CategoryRepository;
@@ -104,29 +103,29 @@ class CategoryServiceImplTest {
 
     @Test
     public void deleteCategory() throws CategoryContainsProductsException {
-        doNothing().when(categoryRepository).deleteByIdAndType(eq(categoryType.getCategory()), eq(categoryId));
+        doNothing().when(categoryRepository).deleteByIdAndType(eq(categoryId), eq(categoryType.getCategory()));
 
         categoryService.deleteCategory(categoryType, categoryId);
 
-        verify(categoryRepository).deleteByIdAndType(eq(categoryType.getCategory()), eq(categoryId));
+        verify(categoryRepository).deleteByIdAndType(eq(categoryId), eq(categoryType.getCategory()));
     }
 
     @Test
-    public void updateCategory() throws CategoryNotFoundException, DuplicateCategoryNameException {
+    public void updateCategory() throws DuplicateCategoryNameException {
         doNothing().when(categoryRepository)
-                .updateNameByIdAndType(categoryType.getCategory(), categoryId, categoryNameDto.name());
+                .updateNameByIdAndType(categoryId, categoryNameDto.name(), categoryType.getCategory());
 
         categoryService.updateCategory(categoryType, categoryId, categoryNameDto);
 
-        verify(categoryRepository).updateNameByIdAndType(categoryType.getCategory(), categoryId, categoryNameDto.name());
+        verify(categoryRepository).updateNameByIdAndType(categoryId, categoryNameDto.name(), categoryType.getCategory());
     }
 
     @Test
-    public void createCategory() throws DuplicateCategoryNameException, CategoryCreationException {
-        doNothing().when(categoryRepository).create(categoryType.getCategory(), categoryNameDto.name());
+    public void createCategory() throws DuplicateCategoryNameException, CategoryCreationException, ReflectiveOperationException {
+        doNothing().when(categoryRepository).create(categoryNameDto.name(), categoryType.getCategory());
 
         categoryService.createCategory(categoryType, categoryNameDto);
 
-        verify(categoryRepository).create(categoryType.getCategory(), categoryNameDto.name());
+        verify(categoryRepository).create(categoryNameDto.name(), categoryType.getCategory());
     }
 }

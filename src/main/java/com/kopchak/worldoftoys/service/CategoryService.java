@@ -26,5 +26,5 @@ public interface CategoryService {
     void createCategory(CategoryType categoryType, CategoryNameDto categoryNameDto)
             throws DuplicateCategoryNameException, CategoryCreationException;
 
-    <T extends ProductCategory> T findCategoryById(Integer id, Class<T> categoryType) throws CategoryNotFoundException;
+    <T extends ProductCategory> T findCategoryByIdAndType(Integer id, Class<T> categoryType) throws CategoryNotFoundException;
 }
