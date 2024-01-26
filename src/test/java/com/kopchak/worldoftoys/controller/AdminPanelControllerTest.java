@@ -1,10 +1,14 @@
 package com.kopchak.worldoftoys.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kopchak.worldoftoys.dto.admin.category.CategoryIdDto;
+import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductsPageDto;
 import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
 import com.kopchak.worldoftoys.exception.exception.image.ext.ImageDecompressionException;
+import com.kopchak.worldoftoys.exception.exception.product.DuplicateProductNameException;
 import com.kopchak.worldoftoys.exception.exception.product.ProductNotFoundException;
 import com.kopchak.worldoftoys.service.CategoryService;
 import com.kopchak.worldoftoys.service.JwtTokenService;
@@ -18,21 +22,25 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 
 @WebMvcTest(controllers = AdminPanelController.class)
@@ -59,14 +67,36 @@ class AdminPanelControllerTest {
     private final static Integer PRODUCT_ID = 1;
     private final static String PRODUCT_NAME = "лялька";
     private AdminProductDto adminProductDto;
+    private CategoryIdDto categoryIdDto;
+    private AddUpdateProductDto addUpdateProductDto;
+    private String addUpdateProductDtoJson;
+    private MockMultipartFile addUpdateProductDtoJsonFile;
+    private MockMultipartFile mainImage;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws JsonProcessingException {
         adminProductDto = AdminProductDto
                 .builder()
                 .id(PRODUCT_ID)
                 .name(PRODUCT_NAME)
                 .build();
+        categoryIdDto = new CategoryIdDto(1);
+        addUpdateProductDto = AddUpdateProductDto
+                .builder()
+                .name(PRODUCT_NAME)
+                .description("description")
+                .price(BigDecimal.TEN)
+                .availableQuantity(BigInteger.ONE)
+                .isAvailable(true)
+                .brandCategory(categoryIdDto)
+                .originCategory(categoryIdDto)
+                .ageCategories(List.of(categoryIdDto))
+                .build();
+        addUpdateProductDtoJson = objectMapper.writeValueAsString(addUpdateProductDto);
+        addUpdateProductDtoJsonFile = new MockMultipartFile("product", null,
+                "application/json", addUpdateProductDtoJson.getBytes());
+        mainImage = new MockMultipartFile("image", "filename",
+                "image/jpg", "image".getBytes());
     }
 
     @Test
@@ -117,7 +147,6 @@ class AdminPanelControllerTest {
 
     @Test
     public void getFilteredProductsPage_ReturnsOkStatus() throws Exception {
-        String PRODUCT_NAME = "лялька";
         List<String> originCategories = List.of("china", "ukraine");
         List<String> brandCategories = List.of("сurlimals", "devilon");
         List<String> ageCategories = List.of("do-1-roku", "vid-1-do-3-rokiv");
@@ -142,6 +171,61 @@ class AdminPanelControllerTest {
 
         response.andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(content().json(objectMapper.writeValueAsString(adminProductsPageDto)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    public void updateProduct_ReturnsNoContentStatus() throws Exception {
+        doNothing().when(productService).updateProduct(eq(PRODUCT_ID), eq(addUpdateProductDto), eq(mainImage), any());
+
+        ResultActions response = mockMvc
+                .perform(multipart(HttpMethod.PUT, "/api/v1/admin/products/{productId}", PRODUCT_ID)
+                        .file(addUpdateProductDtoJsonFile)
+                        .file(mainImage));
+
+        response.andExpect(MockMvcResultMatchers.status().isNoContent())
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    public void updateProduct_ThrowDuplicateProductNameException_ReturnsBadRequestStatusAndResponseStatusExceptionDto() throws Exception {
+        String duplicateProductNameExceptionMsg =
+                String.format("The product with name: %s is already exist", PRODUCT_NAME);
+        var responseStatusExceptionDto = getResponseStatusExceptionDto(HttpStatus.BAD_REQUEST,
+                duplicateProductNameExceptionMsg);
+
+
+        doThrow(new DuplicateProductNameException(duplicateProductNameExceptionMsg))
+                .when(productService).updateProduct(eq(PRODUCT_ID), eq(addUpdateProductDto), eq(mainImage), any());
+
+        ResultActions response = mockMvc
+                .perform(multipart(HttpMethod.PUT, "/api/v1/admin/products/{productId}", PRODUCT_ID)
+                        .file(addUpdateProductDtoJsonFile)
+                        .file(mainImage));
+
+        response.andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    public void updateProduct_ThrowProductNotFoundException_ReturnsNotFoundStatusAndResponseStatusExceptionDto() throws Exception {
+        String productNotFoundExceptionMsg =
+                String.format("The product with name: %s is already exist", PRODUCT_NAME);
+        var responseStatusExceptionDto = getResponseStatusExceptionDto(HttpStatus.NOT_FOUND,
+                productNotFoundExceptionMsg);
+
+
+        doThrow(new ProductNotFoundException(productNotFoundExceptionMsg))
+                .when(productService).updateProduct(eq(PRODUCT_ID), eq(addUpdateProductDto), eq(mainImage), any());
+
+        ResultActions response = mockMvc
+                .perform(multipart(HttpMethod.PUT, "/api/v1/admin/products/{productId}", PRODUCT_ID)
+                        .file(addUpdateProductDtoJsonFile)
+                        .file(mainImage));
+
+        response.andExpect(MockMvcResultMatchers.status().isNotFound())
+                .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)))
                 .andDo(MockMvcResultHandlers.print());
     }
 

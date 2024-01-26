@@ -143,7 +143,6 @@ public class ProductServiceImpl implements ProductService {
         return productPage;
     }
 
-    //TODO: видадяє нові фото так само як і старі
     private Product buildProductFromDtoAndImages(AddUpdateProductDto addUpdateProductDto, MultipartFile mainImageFile,
                                                  List<MultipartFile> imageFilesList)
             throws CategoryNotFoundException, ImageException {
