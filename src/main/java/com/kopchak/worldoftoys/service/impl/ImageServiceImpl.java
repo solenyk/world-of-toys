@@ -53,14 +53,28 @@ public class ImageServiceImpl implements ImageService {
     }
 
     @Override
-    public ImageDto generateDecompressedImageDto(Image image) throws ImageDecompressionException {
+    public ImageDto decompressImage(Image image) throws ImageDecompressionException {
         String imageName = image.getName();
-        byte[] decompressedImg = decompressImage(image.getImage(), imageName);
-        return ImageDto.builder()
-                .name(imageName)
-                .type(image.getType())
-                .image(decompressedImg)
-                .build();
+        byte[] imageData = image.getImage();
+        Inflater inflater = new Inflater();
+        inflater.setInput(imageData);
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream(imageName.length());
+        byte[] tmp = new byte[4 * 1024];
+        try {
+            while (!inflater.finished()) {
+                int count = inflater.inflate(tmp);
+                outputStream.write(tmp, 0, count);
+            }
+            outputStream.close();
+        } catch (DataFormatException | IOException e) {
+            System.out.println("error: " + e.getMessage());
+            String errorMsg = String.format("The image with name: %s cannot be decompressed", imageName);
+            log.error(errorMsg);
+            throw new ImageDecompressionException(errorMsg);
+        }
+        log.info("The image with name: {} was successfully decompressed", imageName);
+        byte[] decompressedImg = outputStream.toByteArray();
+        return new ImageDto(imageName, image.getType(), decompressedImg);
     }
 
     private boolean isNonImageFile(MultipartFile file) {
@@ -97,26 +111,6 @@ public class ImageServiceImpl implements ImageService {
             int size = deflater.deflate(tmp);
             outputStream.write(tmp, 0, size);
         }
-        return outputStream.toByteArray();
-    }
-
-    private byte[] decompressImage(byte[] data, String fileName) throws ImageDecompressionException {
-        Inflater inflater = new Inflater();
-        inflater.setInput(data);
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream(data.length);
-        byte[] tmp = new byte[4 * 1024];
-        try {
-            while (!inflater.finished()) {
-                int count = inflater.inflate(tmp);
-                outputStream.write(tmp, 0, count);
-            }
-            outputStream.close();
-        } catch (DataFormatException | IOException e) {
-            String errorMsg = String.format("The image with name: %s cannot be decompressed", fileName);
-            log.error(errorMsg);
-            throw new ImageDecompressionException(errorMsg);
-        }
-        log.info("The image with name: {} was successfully decompressed", fileName);
         return outputStream.toByteArray();
     }
 

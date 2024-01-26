@@ -67,7 +67,7 @@ public class ProductServiceImpl implements ProductService {
         Product product = productOptional.get();
         Image mainImage = product.getMainImage();
         Set<Image> images = product.getImages();
-        ImageDto mainImageDto = mainImage == null ? null : imageService.generateDecompressedImageDto(mainImage);
+        ImageDto mainImageDto = mainImage == null ? null : imageService.decompressImage(mainImage);
         List<ImageDto> imageDtoList = (images == null || images.isEmpty()) ? new ArrayList<>() :
                 getDecompressedProductImageDtoList(product.getImages(), mainImage);
         log.info("Fetched product by slug: '{}'", productSlug);
@@ -89,7 +89,7 @@ public class ProductServiceImpl implements ProductService {
         Product product = productRepository.findById(productId).orElseThrow(
                 () -> new ProductNotFoundException(String.format("The product with id: %d is not found.", productId)));
         Image mainImage = product.getMainImage();
-        ImageDto mainImageDto = mainImage == null ? null : imageService.generateDecompressedImageDto(mainImage);
+        ImageDto mainImageDto = mainImage == null ? null : imageService.decompressImage(mainImage);
         List<ImageDto> imageDtoList = getDecompressedProductImageDtoList(product.getImages(), mainImage);
         log.info("Fetched product by id: '{}'", productId);
         return productMapper.toAdminProductDto(product, mainImageDto, imageDtoList);
@@ -181,7 +181,7 @@ public class ProductServiceImpl implements ProductService {
         List<ImageDto> imageDtoList = new ArrayList<>();
         for (Image image : images) {
             if (!image.equals(mainImage)) {
-                imageDtoList.add(imageService.generateDecompressedImageDto(image));
+                imageDtoList.add(imageService.decompressImage(image));
             }
         }
         return imageDtoList;
