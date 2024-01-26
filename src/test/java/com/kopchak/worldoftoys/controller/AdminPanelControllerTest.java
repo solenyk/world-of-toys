@@ -2,11 +2,14 @@ package com.kopchak.worldoftoys.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kopchak.worldoftoys.domain.product.category.type.CategoryType;
+import com.kopchak.worldoftoys.dto.admin.category.AdminCategoryDto;
 import com.kopchak.worldoftoys.dto.admin.category.CategoryIdDto;
 import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductsPageDto;
 import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
+import com.kopchak.worldoftoys.exception.exception.category.CategoryNotFoundException;
 import com.kopchak.worldoftoys.exception.exception.image.ext.ImageDecompressionException;
 import com.kopchak.worldoftoys.exception.exception.product.DuplicateProductNameException;
 import com.kopchak.worldoftoys.exception.exception.product.ProductNotFoundException;
@@ -35,6 +38,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -66,6 +70,8 @@ class AdminPanelControllerTest {
     private ObjectMapper objectMapper;
     private final static Integer PRODUCT_ID = 1;
     private final static String PRODUCT_NAME = "лялька";
+    private final static String DUPLICATE_PRODUCT_NAME_EXCEPTION_MSG =
+            String.format("The product with name: %s is already exist", PRODUCT_NAME);
     private AdminProductDto adminProductDto;
     private CategoryIdDto categoryIdDto;
     private AddUpdateProductDto addUpdateProductDto;
@@ -189,13 +195,11 @@ class AdminPanelControllerTest {
 
     @Test
     public void updateProduct_ThrowDuplicateProductNameException_ReturnsBadRequestStatusAndResponseStatusExceptionDto() throws Exception {
-        String duplicateProductNameExceptionMsg =
-                String.format("The product with name: %s is already exist", PRODUCT_NAME);
         var responseStatusExceptionDto = getResponseStatusExceptionDto(HttpStatus.BAD_REQUEST,
-                duplicateProductNameExceptionMsg);
+                DUPLICATE_PRODUCT_NAME_EXCEPTION_MSG);
 
 
-        doThrow(new DuplicateProductNameException(duplicateProductNameExceptionMsg))
+        doThrow(new DuplicateProductNameException(DUPLICATE_PRODUCT_NAME_EXCEPTION_MSG))
                 .when(productService).updateProduct(eq(PRODUCT_ID), eq(addUpdateProductDto), eq(mainImage), any());
 
         ResultActions response = mockMvc
@@ -226,6 +230,74 @@ class AdminPanelControllerTest {
 
         response.andExpect(MockMvcResultMatchers.status().isNotFound())
                 .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    public void createProduct_ReturnsCreatedStatus() throws Exception {
+        doNothing().when(productService).createProduct(eq(addUpdateProductDto), eq(mainImage), any());
+
+        ResultActions response = mockMvc
+                .perform(multipart(HttpMethod.POST, "/api/v1/admin/products/add")
+                        .file(addUpdateProductDtoJsonFile)
+                        .file(mainImage));
+
+        response.andExpect(MockMvcResultMatchers.status().isCreated())
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    public void createProduct_ThrowDuplicateProductNameException_ReturnsBadRequestStatusAndResponseStatusExceptionDto() throws Exception {
+        var responseStatusExceptionDto = getResponseStatusExceptionDto(HttpStatus.BAD_REQUEST,
+                DUPLICATE_PRODUCT_NAME_EXCEPTION_MSG);
+
+
+        doThrow(new DuplicateProductNameException(DUPLICATE_PRODUCT_NAME_EXCEPTION_MSG))
+                .when(productService).createProduct(eq(addUpdateProductDto), eq(mainImage), any());
+
+        ResultActions response = mockMvc
+                .perform(multipart(HttpMethod.POST, "/api/v1/admin/products/add")
+                        .file(addUpdateProductDtoJsonFile)
+                        .file(mainImage));
+
+        response.andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    public void createProduct_ThrowCategoryNotFoundException_ReturnsNotFoundStatusAndResponseStatusExceptionDto() throws Exception {
+        String categoryNotFoundExceptionMsg = String.format("The category with id: %d is not found", 1);
+        var responseStatusExceptionDto = getResponseStatusExceptionDto(HttpStatus.NOT_FOUND,
+                categoryNotFoundExceptionMsg);
+
+
+        doThrow(new CategoryNotFoundException(categoryNotFoundExceptionMsg))
+                .when(productService).createProduct(eq(addUpdateProductDto), eq(mainImage), any());
+
+        ResultActions response = mockMvc
+                .perform(multipart(HttpMethod.POST, "/api/v1/admin/products/add")
+                        .file(addUpdateProductDtoJsonFile)
+                        .file(mainImage));
+
+        response.andExpect(MockMvcResultMatchers.status().isNotFound())
+                .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    public void getProductCategories_ReturnsOkStatusAndAdminCategoryDtoSet() throws Exception {
+        CategoryType categoryType = CategoryType.BRANDS;
+        AdminCategoryDto adminCategoryDto = new AdminCategoryDto(1, "name");
+        Set<AdminCategoryDto> adminCategoryDtoSet = Set.of(adminCategoryDto);
+
+        when(categoryService.getAdminCategories(categoryType)).thenReturn(adminCategoryDtoSet);
+
+        ResultActions response = mockMvc.perform(get("/api/v1/admin/categories/{categoryType}", "brands")
+                .contentType(MediaType.APPLICATION_JSON));
+
+        response.andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(content().json(objectMapper.writeValueAsString(adminCategoryDtoSet)))
                 .andDo(MockMvcResultHandlers.print());
     }
 
