@@ -9,6 +9,7 @@ import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductsPageDto;
 import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
+import com.kopchak.worldoftoys.exception.exception.category.CategoryContainsProductsException;
 import com.kopchak.worldoftoys.exception.exception.category.CategoryNotFoundException;
 import com.kopchak.worldoftoys.exception.exception.image.ext.ImageDecompressionException;
 import com.kopchak.worldoftoys.exception.exception.product.DuplicateProductNameException;
@@ -43,8 +44,7 @@ import java.util.Set;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 
 @WebMvcTest(controllers = AdminPanelController.class)
@@ -69,7 +69,9 @@ class AdminPanelControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
     private final static Integer PRODUCT_ID = 1;
+    private final static Integer CATEGORY_ID = 1;
     private final static String PRODUCT_NAME = "лялька";
+    private final static CategoryType CATEGORY_TYPE = CategoryType.BRANDS;
     private final static String DUPLICATE_PRODUCT_NAME_EXCEPTION_MSG =
             String.format("The product with name: %s is already exist", PRODUCT_NAME);
     private AdminProductDto adminProductDto;
@@ -287,19 +289,54 @@ class AdminPanelControllerTest {
 
     @Test
     public void getProductCategories_ReturnsOkStatusAndAdminCategoryDtoSet() throws Exception {
-        CategoryType categoryType = CategoryType.BRANDS;
-        AdminCategoryDto adminCategoryDto = new AdminCategoryDto(1, "name");
+        AdminCategoryDto adminCategoryDto = new AdminCategoryDto(CATEGORY_ID, "name");
         Set<AdminCategoryDto> adminCategoryDtoSet = Set.of(adminCategoryDto);
 
-        when(categoryService.getAdminCategories(categoryType)).thenReturn(adminCategoryDtoSet);
+        when(categoryService.getAdminCategories(eq(CATEGORY_TYPE))).thenReturn(adminCategoryDtoSet);
 
-        ResultActions response = mockMvc.perform(get("/api/v1/admin/categories/{categoryType}", "brands")
-                .contentType(MediaType.APPLICATION_JSON));
+        ResultActions response = mockMvc
+                .perform(get("/api/v1/admin/categories/{categoryType}", "brands")
+                        .contentType(MediaType.APPLICATION_JSON));
 
         response.andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(content().json(objectMapper.writeValueAsString(adminCategoryDtoSet)))
                 .andDo(MockMvcResultHandlers.print());
     }
+
+    @Test
+    public void deleteCategory_ReturnsNoContentStatusAndAdminCategoryDtoSet() throws Exception {
+        doNothing().when(categoryService).deleteCategory(eq(CATEGORY_TYPE), eq(CATEGORY_ID));
+
+        ResultActions response = mockMvc
+                .perform(delete("/api/v1/admin/categories/{categoryType}/{categoryId}",
+                        "brands", CATEGORY_ID)
+                        .contentType(MediaType.APPLICATION_JSON));
+
+        response.andExpect(MockMvcResultMatchers.status().isNoContent())
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    public void deleteCategory_ThrowCategoryContainsProductsException_ReturnsBadRequestStatusAndResponseStatusExceptionDto() throws Exception {
+        String categoryContainsProductsExceptionMsg = String.format("It is not possible to delete a category " +
+                "with id: %d because there are products in this category.", CATEGORY_ID);
+        var responseStatusExceptionDto = getResponseStatusExceptionDto(HttpStatus.BAD_REQUEST,
+                categoryContainsProductsExceptionMsg);
+
+
+        doThrow(new CategoryContainsProductsException(categoryContainsProductsExceptionMsg))
+                .when(categoryService).deleteCategory(eq(CATEGORY_TYPE), eq(CATEGORY_ID));
+
+        ResultActions response = mockMvc
+                .perform(delete("/api/v1/admin/categories/{categoryType}/{categoryId}",
+                        "brands", CATEGORY_ID)
+                        .contentType(MediaType.APPLICATION_JSON));
+
+        response.andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
 
     private ResponseStatusExceptionDto getResponseStatusExceptionDto(HttpStatus httpStatus, String msg) {
         return ResponseStatusExceptionDto
