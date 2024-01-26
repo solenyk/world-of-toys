@@ -5,12 +5,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kopchak.worldoftoys.domain.product.category.type.CategoryType;
 import com.kopchak.worldoftoys.dto.admin.category.AdminCategoryDto;
 import com.kopchak.worldoftoys.dto.admin.category.CategoryIdDto;
+import com.kopchak.worldoftoys.dto.admin.category.CategoryNameDto;
 import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductsPageDto;
 import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
 import com.kopchak.worldoftoys.exception.exception.category.CategoryContainsProductsException;
 import com.kopchak.worldoftoys.exception.exception.category.CategoryNotFoundException;
+import com.kopchak.worldoftoys.exception.exception.category.DuplicateCategoryNameException;
 import com.kopchak.worldoftoys.exception.exception.image.ext.ImageDecompressionException;
 import com.kopchak.worldoftoys.exception.exception.product.DuplicateProductNameException;
 import com.kopchak.worldoftoys.exception.exception.product.ProductNotFoundException;
@@ -71,6 +73,7 @@ class AdminPanelControllerTest {
     private final static Integer PRODUCT_ID = 1;
     private final static Integer CATEGORY_ID = 1;
     private final static String PRODUCT_NAME = "лялька";
+    private final static String CATEGORY_NAME = "name";
     private final static CategoryType CATEGORY_TYPE = CategoryType.BRANDS;
     private final static String DUPLICATE_PRODUCT_NAME_EXCEPTION_MSG =
             String.format("The product with name: %s is already exist", PRODUCT_NAME);
@@ -80,6 +83,7 @@ class AdminPanelControllerTest {
     private String addUpdateProductDtoJson;
     private MockMultipartFile addUpdateProductDtoJsonFile;
     private MockMultipartFile mainImage;
+    private CategoryNameDto categoryNameDto;
 
     @BeforeEach
     void setUp() throws JsonProcessingException {
@@ -105,6 +109,7 @@ class AdminPanelControllerTest {
                 "application/json", addUpdateProductDtoJson.getBytes());
         mainImage = new MockMultipartFile("image", "filename",
                 "image/jpg", "image".getBytes());
+        categoryNameDto = new CategoryNameDto(CATEGORY_NAME);
     }
 
     @Test
@@ -304,7 +309,7 @@ class AdminPanelControllerTest {
     }
 
     @Test
-    public void deleteCategory_ReturnsNoContentStatusAndAdminCategoryDtoSet() throws Exception {
+    public void deleteCategory_ReturnsNoContentStatus() throws Exception {
         doNothing().when(categoryService).deleteCategory(eq(CATEGORY_TYPE), eq(CATEGORY_ID));
 
         ResultActions response = mockMvc
@@ -337,6 +342,40 @@ class AdminPanelControllerTest {
                 .andDo(MockMvcResultHandlers.print());
     }
 
+    @Test
+    public void updateCategory_ReturnsNoContentStatus() throws Exception {
+        doNothing().when(categoryService).updateCategory(eq(CATEGORY_TYPE), eq(CATEGORY_ID), eq(categoryNameDto));
+
+        ResultActions response = mockMvc
+                .perform(put("/api/v1/admin/categories/{categoryType}/{categoryId}",
+                        "brands", CATEGORY_ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(categoryNameDto)));
+
+        response.andExpect(MockMvcResultMatchers.status().isNoContent())
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    public void updateCategory_ThrowDuplicateCategoryNameException_ReturnsBadRequestStatusAndResponseStatusExceptionDto() throws Exception {
+        String duplicateCategoryNameExceptionMsg = String.format("Category with name: %s already exist", CATEGORY_NAME);
+        var responseStatusExceptionDto = getResponseStatusExceptionDto(HttpStatus.BAD_REQUEST,
+                duplicateCategoryNameExceptionMsg);
+
+
+        doThrow(new DuplicateCategoryNameException(duplicateCategoryNameExceptionMsg))
+                .when(categoryService).updateCategory(eq(CATEGORY_TYPE), eq(CATEGORY_ID), eq(categoryNameDto));
+
+        ResultActions response = mockMvc
+                .perform(put("/api/v1/admin/categories/{categoryType}/{categoryId}",
+                        "brands", CATEGORY_ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(categoryNameDto)));
+
+        response.andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)))
+                .andDo(MockMvcResultHandlers.print());
+    }
 
     private ResponseStatusExceptionDto getResponseStatusExceptionDto(HttpStatus httpStatus, String msg) {
         return ResponseStatusExceptionDto
