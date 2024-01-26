@@ -1,13 +1,12 @@
 package com.kopchak.worldoftoys.service.impl;
 
+import com.kopchak.worldoftoys.domain.image.Image;
+import com.kopchak.worldoftoys.domain.product.Product;
 import com.kopchak.worldoftoys.dto.product.image.ImageDto;
 import com.kopchak.worldoftoys.exception.exception.image.ext.ImageCompressionException;
 import com.kopchak.worldoftoys.exception.exception.image.ext.ImageDecompressionException;
 import com.kopchak.worldoftoys.exception.exception.image.ext.ImageExceedsMaxSizeException;
 import com.kopchak.worldoftoys.exception.exception.image.ext.InvalidImageFileFormatException;
-import com.kopchak.worldoftoys.domain.image.Image;
-import com.kopchak.worldoftoys.domain.product.Product;
-import com.kopchak.worldoftoys.repository.product.image.ImageRepository;
 import com.kopchak.worldoftoys.service.ImageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +24,6 @@ import java.util.zip.Inflater;
 @RequiredArgsConstructor
 @Slf4j
 public class ImageServiceImpl implements ImageService {
-    private final ImageRepository imageRepository;
     private final static int MAX_IMG_COMPRESSION_SIZE = 100_000;
     private final static String IMAGE_CONTENT_TYPE_PREFIX = "image/";
 
@@ -44,7 +42,14 @@ public class ImageServiceImpl implements ImageService {
             log.error(errMsg);
             throw new ImageExceedsMaxSizeException(errMsg);
         }
-        return buildProductImage(product, fileName, multipartFile, compressedImg);
+        String generatedName = generateImageName(multipartFile);
+        return Image
+                .builder()
+                .name(generatedName)
+                .type(multipartFile.getContentType())
+                .image(compressedImg)
+                .product(product)
+                .build();
     }
 
     @Override
@@ -116,26 +121,10 @@ public class ImageServiceImpl implements ImageService {
     }
 
     private String generateImageName(MultipartFile multipartFile) {
-        String originalFilename = multipartFile.getOriginalFilename();
+        String fileExtension = ".".concat(multipartFile.getContentType().replace(IMAGE_CONTENT_TYPE_PREFIX, ""));
         String randString = RandomStringUtils.randomAlphanumeric(4);
-        return originalFilename != null ? originalFilename.concat(randString) : randString;
-    }
-
-    private Image buildProductImage(Product product, String originalFileName,
-                                    MultipartFile multipartFile, byte[] compressedImg) {
-        String generatedName = generateImageName(multipartFile);
-        Image.ImageBuilder imageBuilder = Image.builder()
-                .name(generatedName)
-                .type(multipartFile.getContentType())
-                .product(product);
-        Image image;
-        if (product.getId() != null) {
-            image = imageRepository.findByNameAndProduct_Id(originalFileName, product.getId())
-                    .orElse(imageBuilder.build());
-        } else {
-            image = imageBuilder.build();
-        }
-        image.setImage(compressedImg);
-        return image;
+        String filename = multipartFile.getOriginalFilename();
+        return filename == null ? randString.concat(fileExtension) :
+                filename.replace(fileExtension, "").concat(randString).concat(fileExtension);
     }
 }

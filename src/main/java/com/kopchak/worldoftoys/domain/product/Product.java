@@ -12,6 +12,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 @Getter
@@ -63,7 +64,7 @@ public class Product {
     private Image mainImage;
 
     @OneToMany(mappedBy = "product", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
-    private Set<Image> images;
+    private Set<Image> images = new LinkedHashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "origin_id", referencedColumnName = "id", nullable = false)
@@ -82,7 +83,7 @@ public class Product {
     private Set<AgeCategory> ageCategories;
 
     @OneToMany(mappedBy = "product", cascade = {CascadeType.REFRESH, CascadeType.MERGE})
-    private Set<OrderDetails> orderDetails;
+    private Set<OrderDetails> orderDetails = new LinkedHashSet<>();
 
     @PrePersist
     @PreUpdate
