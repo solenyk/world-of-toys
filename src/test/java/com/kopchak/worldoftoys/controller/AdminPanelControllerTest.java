@@ -6,6 +6,8 @@ import com.kopchak.worldoftoys.domain.product.category.type.CategoryType;
 import com.kopchak.worldoftoys.dto.admin.category.AdminCategoryDto;
 import com.kopchak.worldoftoys.dto.admin.category.CategoryIdDto;
 import com.kopchak.worldoftoys.dto.admin.category.CategoryNameDto;
+import com.kopchak.worldoftoys.dto.admin.order.FilteringOrderOptionsDto;
+import com.kopchak.worldoftoys.dto.admin.order.StatusDto;
 import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductsPageDto;
@@ -77,6 +79,8 @@ class AdminPanelControllerTest {
     private final static CategoryType CATEGORY_TYPE = CategoryType.BRANDS;
     private final static String DUPLICATE_PRODUCT_NAME_EXCEPTION_MSG =
             String.format("The product with name: %s is already exist", PRODUCT_NAME);
+    private final static String DUPLICATE_CATEGORY_NAME_EXCEPTION_MSG =
+            String.format("Category with name: %s already exist", CATEGORY_NAME);
     private AdminProductDto adminProductDto;
     private CategoryIdDto categoryIdDto;
     private AddUpdateProductDto addUpdateProductDto;
@@ -358,12 +362,11 @@ class AdminPanelControllerTest {
 
     @Test
     public void updateCategory_ThrowDuplicateCategoryNameException_ReturnsBadRequestStatusAndResponseStatusExceptionDto() throws Exception {
-        String duplicateCategoryNameExceptionMsg = String.format("Category with name: %s already exist", CATEGORY_NAME);
         var responseStatusExceptionDto = getResponseStatusExceptionDto(HttpStatus.BAD_REQUEST,
-                duplicateCategoryNameExceptionMsg);
+                DUPLICATE_CATEGORY_NAME_EXCEPTION_MSG);
 
 
-        doThrow(new DuplicateCategoryNameException(duplicateCategoryNameExceptionMsg))
+        doThrow(new DuplicateCategoryNameException(DUPLICATE_CATEGORY_NAME_EXCEPTION_MSG))
                 .when(categoryService).updateCategory(eq(CATEGORY_TYPE), eq(CATEGORY_ID), eq(categoryNameDto));
 
         ResultActions response = mockMvc
@@ -374,6 +377,54 @@ class AdminPanelControllerTest {
 
         response.andExpect(MockMvcResultMatchers.status().isBadRequest())
                 .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    public void createCategory_ReturnsCreatedStatus() throws Exception {
+        doNothing().when(categoryService).createCategory(eq(CATEGORY_TYPE), eq(categoryNameDto));
+
+        ResultActions response = mockMvc
+                .perform(post("/api/v1/admin/categories/{categoryType}/add", "brands")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(categoryNameDto)));
+
+        response.andExpect(MockMvcResultMatchers.status().isCreated())
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    public void createCategory_ThrowDuplicateCategoryNameException_ReturnsBadRequestStatusAndResponseStatusExceptionDto() throws Exception {
+        var responseStatusExceptionDto = getResponseStatusExceptionDto(HttpStatus.BAD_REQUEST,
+                DUPLICATE_CATEGORY_NAME_EXCEPTION_MSG);
+
+
+        doThrow(new DuplicateCategoryNameException(DUPLICATE_CATEGORY_NAME_EXCEPTION_MSG))
+                .when(categoryService).createCategory(eq(CATEGORY_TYPE), eq(categoryNameDto));
+
+        ResultActions response = mockMvc
+                .perform(post("/api/v1/admin/categories/{categoryType}/add", "brands")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(categoryNameDto)));
+
+        response.andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    public void getOrderFilteringOptions_ReturnsOkStatus() throws Exception {
+        StatusDto statusDto = new StatusDto("name", "status");
+        var filteringOrderOptionsDto = new FilteringOrderOptionsDto(Set.of(statusDto), Set.of(statusDto));
+        when(orderService.getOrderFilteringOptions()).thenReturn(filteringOrderOptionsDto);
+
+        ResultActions response = mockMvc
+                .perform(get("/api/v1/admin/orders/filtering-options")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(categoryNameDto)));
+
+        response.andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(content().json(objectMapper.writeValueAsString(filteringOrderOptionsDto)))
                 .andDo(MockMvcResultHandlers.print());
     }
 
