@@ -112,7 +112,7 @@ class ProductServiceImplTest {
         ProductDto expectedProductDto = ProductDto.builder().build();
 
         when(productRepository.findBySlug(eq(PRODUCT_SLUG))).thenReturn(Optional.of(product));
-        when(imageService.generateDecompressedImageDto(any())).thenReturn(imageDto);
+        when(imageService.decompressImage(any())).thenReturn(imageDto);
         when(productMapper.toProductDto(eq(product), any(), any())).thenReturn(expectedProductDto);
 
         ProductDto actualProductDto = productService.getProductBySlug(PRODUCT_SLUG);
@@ -179,7 +179,7 @@ class ProductServiceImplTest {
                 .build();
 
         when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.of(product));
-        when(imageService.generateDecompressedImageDto(any())).thenReturn(imageDto);
+        when(imageService.decompressImage(any())).thenReturn(imageDto);
         when(productMapper.toAdminProductDto(eq(product), eq(imageDto), eq(imageDtoList)))
                 .thenReturn(expectedAdminProductDto);
 
