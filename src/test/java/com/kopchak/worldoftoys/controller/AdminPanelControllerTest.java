@@ -18,7 +18,9 @@ import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
 import com.kopchak.worldoftoys.exception.exception.category.CategoryContainsProductsException;
 import com.kopchak.worldoftoys.exception.exception.category.CategoryNotFoundException;
 import com.kopchak.worldoftoys.exception.exception.category.DuplicateCategoryNameException;
+import com.kopchak.worldoftoys.exception.exception.email.MessageSendingException;
 import com.kopchak.worldoftoys.exception.exception.image.ext.ImageDecompressionException;
+import com.kopchak.worldoftoys.exception.exception.order.InvalidOrderStatusException;
 import com.kopchak.worldoftoys.exception.exception.product.DuplicateProductNameException;
 import com.kopchak.worldoftoys.exception.exception.product.ProductNotFoundException;
 import com.kopchak.worldoftoys.service.CategoryService;
@@ -78,6 +80,7 @@ class AdminPanelControllerTest {
     private ObjectMapper objectMapper;
     private final static Integer PRODUCT_ID = 1;
     private final static Integer CATEGORY_ID = 1;
+    private final static String ORDER_ID = "order-id";
     private final static String PRODUCT_NAME = "лялька";
     private final static String CATEGORY_NAME = "name";
     private final static CategoryType CATEGORY_TYPE = CategoryType.BRANDS;
@@ -86,9 +89,7 @@ class AdminPanelControllerTest {
     private final static String DUPLICATE_CATEGORY_NAME_EXCEPTION_MSG =
             String.format("Category with name: %s already exist", CATEGORY_NAME);
     private AdminProductDto adminProductDto;
-    private CategoryIdDto categoryIdDto;
     private AddUpdateProductDto addUpdateProductDto;
-    private String addUpdateProductDtoJson;
     private MockMultipartFile addUpdateProductDtoJsonFile;
     private MockMultipartFile mainImage;
     private CategoryNameDto categoryNameDto;
@@ -101,19 +102,10 @@ class AdminPanelControllerTest {
                 .id(PRODUCT_ID)
                 .name(PRODUCT_NAME)
                 .build();
-        categoryIdDto = new CategoryIdDto(1);
-        addUpdateProductDto = AddUpdateProductDto
-                .builder()
-                .name(PRODUCT_NAME)
-                .description("description")
-                .price(BigDecimal.TEN)
-                .availableQuantity(BigInteger.ONE)
-                .isAvailable(true)
-                .brandCategory(categoryIdDto)
-                .originCategory(categoryIdDto)
-                .ageCategories(List.of(categoryIdDto))
-                .build();
-        addUpdateProductDtoJson = objectMapper.writeValueAsString(addUpdateProductDto);
+        CategoryIdDto categoryIdDto = new CategoryIdDto(1);
+        addUpdateProductDto = new AddUpdateProductDto(PRODUCT_NAME, "description", BigDecimal.TEN,
+                BigInteger.ONE, true, categoryIdDto, categoryIdDto, List.of(categoryIdDto));
+        String addUpdateProductDtoJson = objectMapper.writeValueAsString(addUpdateProductDto);
         addUpdateProductDtoJsonFile = new MockMultipartFile("product", null,
                 "application/json", addUpdateProductDtoJson.getBytes());
         mainImage = new MockMultipartFile("image", "filename",
@@ -139,7 +131,8 @@ class AdminPanelControllerTest {
         String imageName = "image.jpg";
         String imageDecompressionExceptionMsg =
                 String.format("The image with name: %s cannot be decompressed", imageName);
-        var responseStatusExceptionDto = getResponseStatusExceptionDto(HttpStatus.BAD_REQUEST, imageDecompressionExceptionMsg);
+        var responseStatusExceptionDto = getResponseStatusExceptionDto(HttpStatus.BAD_REQUEST,
+                imageDecompressionExceptionMsg);
 
         doThrow(new ImageDecompressionException(imageDecompressionExceptionMsg))
                 .when(productService).getProductById(eq(PRODUCT_ID));
@@ -466,6 +459,56 @@ class AdminPanelControllerTest {
 
         response.andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(content().json(objectMapper.writeValueAsString(statusDtoSet)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    public void updateOrderStatus_ReturnsNoContentStatus() throws Exception {
+        doNothing().when(orderService).updateOrderStatus(eq(ORDER_ID), eq(statusDto));
+
+        ResultActions response = mockMvc.perform(patch("/api/v1/admin/orders/{orderId}", ORDER_ID)
+                .content(objectMapper.writeValueAsString(statusDto))
+                .contentType(MediaType.APPLICATION_JSON));
+
+        response.andExpect(MockMvcResultMatchers.status().isNoContent())
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    public void updateOrderStatus_ThrowInvalidOrderStatusException_ReturnsBadRequestStatusAndResponseStatusExceptionDto() throws Exception {
+        String invalidOrderStatusExceptionMsg = String.format("The status: %s of the order with id: %s " +
+                "is the same as the current status", statusDto.status(), ORDER_ID);
+        var responseStatusExceptionDto = getResponseStatusExceptionDto(HttpStatus.BAD_REQUEST,
+                invalidOrderStatusExceptionMsg);
+
+        doThrow(new InvalidOrderStatusException(invalidOrderStatusExceptionMsg))
+                .when(orderService).updateOrderStatus(eq(ORDER_ID), eq(statusDto));
+
+        ResultActions response = mockMvc.perform(patch("/api/v1/admin/orders/{orderId}", ORDER_ID)
+                .content(objectMapper.writeValueAsString(statusDto))
+                .contentType(MediaType.APPLICATION_JSON));
+
+        response.andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    public void updateOrderStatus_ThrowMessageSendingException_ReturnsServiceUnavailableStatusAndResponseStatusExceptionDto() throws Exception {
+        String messageSendingExceptionMsg = String.format("The status: status of the order with id: %s " +
+                "is the same as the current status", ORDER_ID);
+        var responseStatusExceptionDto = getResponseStatusExceptionDto(HttpStatus.SERVICE_UNAVAILABLE,
+                messageSendingExceptionMsg);
+
+        doThrow(new MessageSendingException(messageSendingExceptionMsg))
+                .when(orderService).updateOrderStatus(eq(ORDER_ID), eq(statusDto));
+
+        ResultActions response = mockMvc.perform(patch("/api/v1/admin/orders/{orderId}", ORDER_ID)
+                .content(objectMapper.writeValueAsString(statusDto))
+                .contentType(MediaType.APPLICATION_JSON));
+
+        response.andExpect(MockMvcResultMatchers.status().isServiceUnavailable())
+                .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)))
                 .andDo(MockMvcResultHandlers.print());
     }
 
