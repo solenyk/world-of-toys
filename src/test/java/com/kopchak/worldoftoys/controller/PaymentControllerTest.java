@@ -72,7 +72,7 @@ class PaymentControllerTest {
 
     @Test
     @WithUserDetails(value = "user@example.com", userDetailsServiceBeanName = "userDetailsService")
-    public void stripeCheckout_AuthUser_ReturnsFoundStatusAndRedirectsToStripeCheckoutPage() throws Exception {
+    public void stripeCheckout_ReturnsFoundStatusAndRedirectsToStripeCheckoutPage() throws Exception {
         String expectedStripeCheckoutUserUrl = "stripe_checkout_url";
 
         when(paymentService.stripeCheckout(credentialsDto, ORDER_ID)).thenReturn(expectedStripeCheckoutUserUrl);

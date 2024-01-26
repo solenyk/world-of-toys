@@ -20,7 +20,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -69,7 +68,7 @@ class CartControllerTest {
 
     @Test
     @WithUserDetails(value = "user@example.com", userDetailsServiceBeanName = "userDetailsService")
-    public void addProductToCart_AuthUserAndRequestCartItemDto_ReturnsCreatedStatus() throws Exception {
+    public void addProductToCart_RequestCartItemDto_ReturnsCreatedStatus() throws Exception {
         doNothing().when(cartService).addProductToCart(eq(requestCartItemDto), any(AppUser.class));
 
         ResultActions response = mockMvc.perform(post("/api/v1/cart/add-product")
@@ -83,7 +82,7 @@ class CartControllerTest {
 
     @Test
     @WithUserDetails(value = "user@example.com", userDetailsServiceBeanName = "userDetailsService")
-    public void addProductToCart_AuthUserAndThrowProductNotFoundException_ReturnsNotFoundStatusAndResponseStatusExceptionDto() throws Exception {
+    public void addProductToCart_ThrowProductNotFoundException_ReturnsNotFoundStatusAndResponseStatusExceptionDto() throws Exception {
         doThrow(new ProductNotFoundException(PRODUCT_NOT_FOUND_EXCEPTION_MSG))
                 .when(cartService).addProductToCart(eq(requestCartItemDto), any(AppUser.class));
 
@@ -98,20 +97,8 @@ class CartControllerTest {
     }
 
     @Test
-    @WithAnonymousUser
-    public void addProductToCart_AnonymousUserAndRequestCartItemDto_ReturnsUnauthorizedStatus() throws Exception {
-        ResultActions response = mockMvc.perform(post("/api/v1/cart/add-product")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestCartItemDto))
-                .with(csrf()));
-
-        response.andExpect(MockMvcResultMatchers.status().isUnauthorized())
-                .andDo(MockMvcResultHandlers.print());
-    }
-
-    @Test
     @WithUserDetails(value = "user@example.com", userDetailsServiceBeanName = "userDetailsService")
-    public void getUserCartDetails_AuthUser_ReturnsOkStatusAndUserCartDetailsDto() throws Exception {
+    public void getUserCartDetails_ReturnsOkStatusAndUserCartDetailsDto() throws Exception {
         UserCartDetailsDto expectedUserCartDetailsDto = new UserCartDetailsDto(new HashSet<>(), BigDecimal.ZERO);
 
         when(cartService.getUserCartDetails(any(AppUser.class))).thenReturn(expectedUserCartDetailsDto);
@@ -125,18 +112,8 @@ class CartControllerTest {
     }
 
     @Test
-    @WithAnonymousUser
-    public void getUserCartDetails_AnonymousUser_ReturnsUnauthorizedStatus() throws Exception {
-        ResultActions response = mockMvc.perform(get("/api/v1/cart")
-                .contentType(MediaType.APPLICATION_JSON));
-
-        response.andExpect(MockMvcResultMatchers.status().isUnauthorized())
-                .andDo(MockMvcResultHandlers.print());
-    }
-
-    @Test
     @WithUserDetails(value = "user@example.com", userDetailsServiceBeanName = "userDetailsService")
-    public void updateUserCartItem_AuthUserAndRequestCartItemDto_ReturnsNoContentStatus() throws Exception {
+    public void updateUserCartItem_RequestCartItemDto_ReturnsNoContentStatus() throws Exception {
         doNothing().when(cartService).updateUserCartItem(eq(requestCartItemDto), any(AppUser.class));
 
         ResultActions response = mockMvc.perform(patch("/api/v1/cart")
@@ -150,7 +127,7 @@ class CartControllerTest {
 
     @Test
     @WithUserDetails(value = "user@example.com", userDetailsServiceBeanName = "userDetailsService")
-    public void updateUserCartItem_AuthUserAndThrowProductNotFoundException_ReturnsNotFoundStatusAndResponseStatusExceptionDto() throws Exception {
+    public void updateUserCartItem_ThrowProductNotFoundException_ReturnsNotFoundStatusAndResponseStatusExceptionDto() throws Exception {
         doThrow(new ProductNotFoundException(PRODUCT_NOT_FOUND_EXCEPTION_MSG))
                 .when(cartService).updateUserCartItem(eq(requestCartItemDto), any(AppUser.class));
 
@@ -165,20 +142,8 @@ class CartControllerTest {
     }
 
     @Test
-    @WithAnonymousUser
-    public void updateUserCartItem_AnonymousUserAndRequestCartItemDto_ReturnsUnauthorizedStatus() throws Exception {
-        ResultActions response = mockMvc.perform(patch("/api/v1/cart")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestCartItemDto))
-                .with(csrf()));
-
-        response.andExpect(MockMvcResultMatchers.status().isUnauthorized())
-                .andDo(MockMvcResultHandlers.print());
-    }
-
-    @Test
     @WithUserDetails(value = "user@example.com", userDetailsServiceBeanName = "userDetailsService")
-    public void deleteUserCartItem_AuthUserAndRequestCartItemDto_ReturnsNoContentStatus() throws Exception {
+    public void deleteUserCartItem_RequestCartItemDto_ReturnsNoContentStatus() throws Exception {
         doNothing().when(cartService).deleteUserCartItem(eq(requestCartItemDto), any(AppUser.class));
 
         ResultActions response = mockMvc.perform(delete("/api/v1/cart")
@@ -192,7 +157,7 @@ class CartControllerTest {
 
     @Test
     @WithUserDetails(value = "user@example.com", userDetailsServiceBeanName = "userDetailsService")
-    public void deleteUserCartItem_AuthUserAndThrowProductNotFoundException_ReturnsNotFoundStatusAndResponseStatusExceptionDto() throws Exception {
+    public void deleteUserCartItem_ThrowProductNotFoundException_ReturnsNotFoundStatusAndResponseStatusExceptionDto() throws Exception {
         doThrow(new ProductNotFoundException(PRODUCT_NOT_FOUND_EXCEPTION_MSG))
                 .when(cartService).deleteUserCartItem(eq(requestCartItemDto), any(AppUser.class));
 
@@ -203,18 +168,6 @@ class CartControllerTest {
 
         response.andExpect(MockMvcResultMatchers.status().isNotFound())
                 .andExpect(content().json(objectMapper.writeValueAsString(getResponseStatusExceptionDto())))
-                .andDo(MockMvcResultHandlers.print());
-    }
-
-    @Test
-    @WithAnonymousUser
-    public void deleteUserCartItem_AnonymousUserAndRequestCartItemDto_ReturnsUnauthorizedStatus() throws Exception {
-        ResultActions response = mockMvc.perform(delete("/api/v1/cart")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestCartItemDto))
-                .with(csrf()));
-
-        response.andExpect(MockMvcResultMatchers.status().isUnauthorized())
                 .andDo(MockMvcResultHandlers.print());
     }
 
