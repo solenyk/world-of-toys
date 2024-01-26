@@ -2,10 +2,13 @@ package com.kopchak.worldoftoys.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kopchak.worldoftoys.domain.order.OrderStatus;
+import com.kopchak.worldoftoys.domain.order.payment.PaymentStatus;
 import com.kopchak.worldoftoys.domain.product.category.type.CategoryType;
 import com.kopchak.worldoftoys.dto.admin.category.AdminCategoryDto;
 import com.kopchak.worldoftoys.dto.admin.category.CategoryIdDto;
 import com.kopchak.worldoftoys.dto.admin.category.CategoryNameDto;
+import com.kopchak.worldoftoys.dto.admin.order.FilteredOrdersPageDto;
 import com.kopchak.worldoftoys.dto.admin.order.FilteringOrderOptionsDto;
 import com.kopchak.worldoftoys.dto.admin.order.StatusDto;
 import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
@@ -42,6 +45,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -88,6 +92,7 @@ class AdminPanelControllerTest {
     private MockMultipartFile addUpdateProductDtoJsonFile;
     private MockMultipartFile mainImage;
     private CategoryNameDto categoryNameDto;
+    private StatusDto statusDto;
 
     @BeforeEach
     void setUp() throws JsonProcessingException {
@@ -114,6 +119,7 @@ class AdminPanelControllerTest {
         mainImage = new MockMultipartFile("image", "filename",
                 "image/jpg", "image".getBytes());
         categoryNameDto = new CategoryNameDto(CATEGORY_NAME);
+        statusDto = new StatusDto("name", "status");
     }
 
     @Test
@@ -398,7 +404,6 @@ class AdminPanelControllerTest {
         var responseStatusExceptionDto = getResponseStatusExceptionDto(HttpStatus.BAD_REQUEST,
                 DUPLICATE_CATEGORY_NAME_EXCEPTION_MSG);
 
-
         doThrow(new DuplicateCategoryNameException(DUPLICATE_CATEGORY_NAME_EXCEPTION_MSG))
                 .when(categoryService).createCategory(eq(CATEGORY_TYPE), eq(categoryNameDto));
 
@@ -414,17 +419,53 @@ class AdminPanelControllerTest {
 
     @Test
     public void getOrderFilteringOptions_ReturnsOkStatus() throws Exception {
-        StatusDto statusDto = new StatusDto("name", "status");
         var filteringOrderOptionsDto = new FilteringOrderOptionsDto(Set.of(statusDto), Set.of(statusDto));
+
         when(orderService.getOrderFilteringOptions()).thenReturn(filteringOrderOptionsDto);
 
-        ResultActions response = mockMvc
-                .perform(get("/api/v1/admin/orders/filtering-options")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(categoryNameDto)));
+        ResultActions response = mockMvc.perform(get("/api/v1/admin/orders/filtering-options")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(categoryNameDto)));
 
         response.andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(content().json(objectMapper.writeValueAsString(filteringOrderOptionsDto)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    public void filterOrdersByStatusesAndDate_ReturnsOkStatus() throws Exception {
+        List<OrderStatus> orderStatuses = List.of(OrderStatus.CANCELED, OrderStatus.SHIPPED);
+        List<PaymentStatus> paymentStatuses = List.of(PaymentStatus.FAILED);
+        String dateSortOrder = "asc";
+        var filteredOrdersPageDto = new FilteredOrdersPageDto(new HashSet<>(), 0L, 0L);
+
+        when(orderService.filterOrdersByStatusesAndDate(eq(0), eq(1), eq(orderStatuses), eq(paymentStatuses),
+                eq(dateSortOrder))).thenReturn(filteredOrdersPageDto);
+
+        ResultActions response = mockMvc.perform(get("/api/v1/admin/orders")
+                .param("page", "0")
+                .param("size", "1")
+                .param("order-status", OrderStatus.CANCELED.name(), OrderStatus.SHIPPED.name())
+                .param("payment-status", PaymentStatus.FAILED.name())
+                .param("date-sort", dateSortOrder)
+                .contentType(MediaType.APPLICATION_JSON));
+
+        response.andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(content().json(objectMapper.writeValueAsString(filteredOrdersPageDto)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    public void getAllOrderStatuses_ReturnsOkStatus() throws Exception {
+        Set<StatusDto> statusDtoSet = Set.of(statusDto);
+
+        when(orderService.getAllOrderStatuses()).thenReturn(statusDtoSet);
+
+        ResultActions response = mockMvc.perform(get("/api/v1/admin/orders/statuses")
+                .contentType(MediaType.APPLICATION_JSON));
+
+        response.andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(content().json(objectMapper.writeValueAsString(statusDtoSet)))
                 .andDo(MockMvcResultHandlers.print());
     }
 
