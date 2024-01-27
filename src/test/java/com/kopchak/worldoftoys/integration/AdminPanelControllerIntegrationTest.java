@@ -748,6 +748,101 @@ public class AdminPanelControllerIntegrationTest {
                 .andDo(MockMvcResultHandlers.print());
     }
 
+    @Test
+    @WithUserDetails("jane.smith@example.com")
+    public void updateOrderStatus_ReturnsNoContentStatus() throws Exception {
+        String orderStatusSubject = "Order status";
+        OrderStatus orderStatus = OrderStatus.CANCELED;
+        statusDto = new StatusDto(orderStatus.name(), orderStatus.getStatus());
+
+        ResultActions response = mockMvc.perform(patch("/api/v1/admin/orders/{orderId}", ORDER_ID)
+                .content(objectMapper.writeValueAsString(statusDto))
+                .contentType(MediaType.APPLICATION_JSON));
+
+        response.andExpect(MockMvcResultMatchers.status().isNoContent())
+                .andDo(MockMvcResultHandlers.print());
+
+        MimeMessage[] receivedMessages = greenMail.getReceivedMessages();
+        assertThat(receivedMessages.length).isEqualTo(1);
+
+        MimeMessage receivedMessage = receivedMessages[0];
+        assertThat(receivedMessage.getSubject()).isEqualTo(orderStatusSubject);
+    }
+
+    @Test
+    @WithUserDetails("jane.smith@example.com")
+    public void updateOrderStatus_ThrowInvalidOrderStatusException_ReturnsBadRequestStatusAndResponseStatusExceptionDto() throws Exception {
+        String invalidOrderStatusExceptionMsg = String.format("The status: %s of the order with id: %s " +
+                "is the same as the current status", statusDto.status(), ORDER_ID);
+        var responseStatusExceptionDto = getResponseStatusExceptionDto(HttpStatus.BAD_REQUEST,
+                invalidOrderStatusExceptionMsg);
+
+        ResultActions response = mockMvc.perform(patch("/api/v1/admin/orders/{orderId}", ORDER_ID)
+                .content(objectMapper.writeValueAsString(statusDto))
+                .contentType(MediaType.APPLICATION_JSON));
+
+        response.andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)))
+                .andDo(MockMvcResultHandlers.print());
+
+        MimeMessage[] receivedMessages = greenMail.getReceivedMessages();
+        assertThat(receivedMessages.length).isEqualTo(0);
+    }
+
+    @Test
+    @WithUserDetails("jane.smith@example.com")
+    public void updateOrderStatus_ThrowMessageSendingException_ReturnsServiceUnavailableStatusAndResponseStatusExceptionDto() throws Exception {
+        OrderStatus orderStatus = OrderStatus.CANCELED;
+        statusDto = new StatusDto(orderStatus.name(), orderStatus.getStatus());
+        String messageSendingExceptionMsg =
+                """
+                        Failed to send the email: Mail server connection failed. Failed messages: com.sun.mail.util.MailConnectException: Couldn't connect to host, port: localhost, 3025; timeout 5000;
+                          nested exception is:
+                        \tjava.net.ConnectException: Connection refused: no further information""";
+        var responseStatusExceptionDto = getResponseStatusExceptionDto(HttpStatus.SERVICE_UNAVAILABLE,
+                messageSendingExceptionMsg);
+
+        greenMail.stop();
+
+        ResultActions response = mockMvc.perform(patch("/api/v1/admin/orders/{orderId}", ORDER_ID)
+                .content(objectMapper.writeValueAsString(statusDto))
+                .contentType(MediaType.APPLICATION_JSON));
+
+        response.andExpect(MockMvcResultMatchers.status().isServiceUnavailable())
+                .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    @WithAnonymousUser
+    public void updateOrderStatus_AnonymousUser_ReturnsForbiddenStatusAndResponseStatusExceptionDto() throws Exception {
+        OrderStatus orderStatus = OrderStatus.CANCELED;
+        statusDto = new StatusDto(orderStatus.name(), orderStatus.getStatus());
+
+        ResultActions response = mockMvc.perform(patch("/api/v1/admin/orders/{orderId}", ORDER_ID)
+                .content(objectMapper.writeValueAsString(statusDto))
+                .contentType(MediaType.APPLICATION_JSON));
+
+        response.andExpect(MockMvcResultMatchers.status().isUnauthorized())
+                .andExpect(content().json(objectMapper.writeValueAsString(unauthorizedErrorResponse)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    @WithUserDetails("john.doe@example.com")
+    public void updateOrderStatus_AuthUser_ReturnsForbiddenStatusAndResponseStatusExceptionDto() throws Exception {
+        OrderStatus orderStatus = OrderStatus.CANCELED;
+        statusDto = new StatusDto(orderStatus.name(), orderStatus.getStatus());
+
+        ResultActions response = mockMvc.perform(patch("/api/v1/admin/orders/{orderId}", ORDER_ID)
+                .content(objectMapper.writeValueAsString(statusDto))
+                .contentType(MediaType.APPLICATION_JSON));
+
+        response.andExpect(MockMvcResultMatchers.status().isForbidden())
+                .andExpect(content().json(objectMapper.writeValueAsString(accessDeniedErrorResponse)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
     private MockMultipartFile getAddUpdateProductDtoJsonFile(AddUpdateProductDto addUpdateProductDto) throws JsonProcessingException {
         String addUpdateProductDtoJson = objectMapper.writeValueAsString(addUpdateProductDto);
         return new MockMultipartFile("product", null,
