@@ -81,7 +81,7 @@ public class OrderMapperImpl implements OrderMapper {
     private <T extends Enum<T> & StatusProvider> Set<StatusDto> toStatusDtoSet(Set<T> statuses) {
         return statuses.stream()
                 .filter(Objects::nonNull)
-                .map(status -> new StatusDto(status.getStatus(), status.name()))
+                .map(status -> new StatusDto(status.name(), status.getStatus()))
                 .collect(Collectors.toSet());
     }
 

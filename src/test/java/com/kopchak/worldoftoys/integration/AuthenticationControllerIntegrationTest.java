@@ -141,6 +141,7 @@ class AuthenticationControllerIntegrationTest {
                 .email(NOT_REGISTERED_USERNAME)
                 .password(VALID_PASSWORD)
                 .build();
+
         greenMail.stop();
 
         ResultActions response = mockMvc.perform(post("/api/v1/auth/register")

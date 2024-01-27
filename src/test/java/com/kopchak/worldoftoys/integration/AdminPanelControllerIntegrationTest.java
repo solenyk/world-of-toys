@@ -8,7 +8,6 @@ import com.icegreen.greenmail.util.ServerSetupTest;
 import com.kopchak.worldoftoys.domain.order.OrderStatus;
 import com.kopchak.worldoftoys.domain.order.payment.PaymentStatus;
 import com.kopchak.worldoftoys.domain.product.category.BrandCategory;
-import com.kopchak.worldoftoys.domain.product.category.type.CategoryType;
 import com.kopchak.worldoftoys.dto.admin.category.AdminCategoryDto;
 import com.kopchak.worldoftoys.dto.admin.category.CategoryIdDto;
 import com.kopchak.worldoftoys.dto.admin.category.CategoryNameDto;
@@ -21,6 +20,7 @@ import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductsPageDto;
 import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
 import com.kopchak.worldoftoys.dto.product.category.CategoryDto;
+import jakarta.mail.internet.MimeMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -44,7 +44,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.*;
+import java.util.stream.Collectors;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 
@@ -68,12 +70,11 @@ public class AdminPanelControllerIntegrationTest {
     private final static Integer NON_EXISTENT_PRODUCT_ID = 5813;
     private final static Integer EXISTENT_CATEGORY_ID = 1001;
     private final static Integer NON_EXISTENT_CATEGORY_ID = 523;
-    private final static String ORDER_ID = "order-id";
+    private final static String ORDER_ID = "4c980930-16eb-41cd-b998-29d03118d67c";
     private final static String PRODUCT_NAME = "лялька";
     private final static String DUPLICATE_PRODUCT_NAME = "Пупсик Оксанка";
     private final static String CATEGORY_NAME = "category-name";
     private final static String DUPLICATE_CATEGORY_NAME = "Devilon";
-    private final static CategoryType CATEGORY_TYPE = CategoryType.BRANDS;
     private final static String DUPLICATE_PRODUCT_NAME_EXCEPTION_MSG =
             String.format("The product with name: %s is already exist", DUPLICATE_PRODUCT_NAME);
     private final static String DUPLICATE_CATEGORY_NAME_EXCEPTION_MSG =
@@ -121,7 +122,7 @@ public class AdminPanelControllerIntegrationTest {
                 "image/jpg", "image".getBytes());
         categoryNameDto = new CategoryNameDto(CATEGORY_NAME);
         OrderStatus orderStatus = OrderStatus.AWAITING_PAYMENT;
-        statusDto = new StatusDto(orderStatus.getStatus(), orderStatus.name());
+        statusDto = new StatusDto(orderStatus.name(), orderStatus.getStatus());
     }
 
     @Test
@@ -703,6 +704,43 @@ public class AdminPanelControllerIntegrationTest {
         ResultActions response = mockMvc.perform(get("/api/v1/admin/orders")
                 .param("page", "0")
                 .param("size", "1")
+                .contentType(MediaType.APPLICATION_JSON));
+
+        response.andExpect(MockMvcResultMatchers.status().isForbidden())
+                .andExpect(content().json(objectMapper.writeValueAsString(accessDeniedErrorResponse)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    @WithUserDetails("jane.smith@example.com")
+    public void getAllOrderStatuses_ReturnsOkStatus() throws Exception {
+        Set<StatusDto> statusDtoSet = Arrays.stream(OrderStatus.values())
+                .map(status -> new StatusDto(status.name(), status.getStatus()))
+                .collect(Collectors.toSet());
+
+        ResultActions response = mockMvc.perform(get("/api/v1/admin/orders/statuses")
+                .contentType(MediaType.APPLICATION_JSON));
+
+        response.andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(content().json(objectMapper.writeValueAsString(statusDtoSet)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    @WithAnonymousUser
+    public void getAllOrderStatuses_AnonymousUser_ReturnsForbiddenStatusAndResponseStatusExceptionDto() throws Exception {
+        ResultActions response = mockMvc.perform(get("/api/v1/admin/orders/statuses")
+                .contentType(MediaType.APPLICATION_JSON));
+
+        response.andExpect(MockMvcResultMatchers.status().isUnauthorized())
+                .andExpect(content().json(objectMapper.writeValueAsString(unauthorizedErrorResponse)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    @WithUserDetails("john.doe@example.com")
+    public void getAllOrderStatuses_AuthUser_ReturnsForbiddenStatusAndResponseStatusExceptionDto() throws Exception {
+        ResultActions response = mockMvc.perform(get("/api/v1/admin/orders/statuses")
                 .contentType(MediaType.APPLICATION_JSON));
 
         response.andExpect(MockMvcResultMatchers.status().isForbidden())
