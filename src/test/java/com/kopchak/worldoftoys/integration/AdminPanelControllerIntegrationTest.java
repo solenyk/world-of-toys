@@ -44,8 +44,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -457,6 +456,61 @@ public class AdminPanelControllerIntegrationTest {
                 .andDo(MockMvcResultHandlers.print());
     }
 
+    @Test
+    @WithUserDetails("jane.smith@example.com")
+    public void deleteCategory_ReturnsNoContentStatus() throws Exception {
+        ResultActions response = mockMvc
+                .perform(delete("/api/v1/admin/categories/{categoryType}/{categoryId}",
+                        "brands", 1004)
+                        .contentType(MediaType.APPLICATION_JSON));
+
+        response.andExpect(MockMvcResultMatchers.status().isNoContent())
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    @WithUserDetails("jane.smith@example.com")
+    public void deleteCategory_ThrowCategoryContainsProductsException_ReturnsBadRequestStatusAndResponseStatusExceptionDto() throws Exception {
+        String categoryContainsProductsExceptionMsg = String.format("It is not possible to delete a category " +
+                "with id: %d because there are products in this category.", EXISTENT_CATEGORY_ID);
+        var responseStatusExceptionDto = getResponseStatusExceptionDto(HttpStatus.BAD_REQUEST,
+                categoryContainsProductsExceptionMsg);
+
+        ResultActions response = mockMvc
+                .perform(delete("/api/v1/admin/categories/{categoryType}/{categoryId}",
+                        "brands", EXISTENT_CATEGORY_ID)
+                        .contentType(MediaType.APPLICATION_JSON));
+
+        response.andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    @WithAnonymousUser
+    public void deleteCategory_AnonymousUser_ReturnsForbiddenStatusAndResponseStatusExceptionDto() throws Exception {
+        ResultActions response = mockMvc
+                .perform(delete("/api/v1/admin/categories/{categoryType}/{categoryId}",
+                        "brands", 1004)
+                        .contentType(MediaType.APPLICATION_JSON));
+
+        response.andExpect(MockMvcResultMatchers.status().isUnauthorized())
+                .andExpect(content().json(objectMapper.writeValueAsString(unauthorizedErrorResponse)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    @WithUserDetails("john.doe@example.com")
+    public void deleteCategory_AuthUser_ReturnsForbiddenStatusAndResponseStatusExceptionDto() throws Exception {
+        ResultActions response = mockMvc
+                .perform(delete("/api/v1/admin/categories/{categoryType}/{categoryId}",
+                        "brands", 1004)
+                        .contentType(MediaType.APPLICATION_JSON));
+
+        response.andExpect(MockMvcResultMatchers.status().isForbidden())
+                .andExpect(content().json(objectMapper.writeValueAsString(accessDeniedErrorResponse)))
+                .andDo(MockMvcResultHandlers.print());
+    }
 
     private MockMultipartFile getAddUpdateProductDtoJsonFile(AddUpdateProductDto addUpdateProductDto) throws JsonProcessingException {
         String addUpdateProductDtoJson = objectMapper.writeValueAsString(addUpdateProductDto);
