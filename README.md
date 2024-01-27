@@ -1,12 +1,13 @@
 # world-of-toys
 
-This is a backend API for a toy store web application built using Spring Boot 3, Spring Security 6 and Java 17. This API is responsible for handling all requests made to the server and returning the appropriate data to the front-end.
+This is a backend API for a toy store web application built using Spring Boot 3, Spring Security 6, and Java 17. This API is responsible for handling all requests made to the server and returning the appropriate data to the front-end.
 
 ## Table of Contents
 
 - [Introduction](#introduction)
 - [Technologies](#technologies)
 - [Features](#features)
+- [Controllers and Endpoints](#controllers-and-endpoints)
 - [API Documentation](#api-documentation)
 - [Installation and Usage](#installation-and-usage)
 - [Contributing](#contributing)
@@ -14,7 +15,7 @@ This is a backend API for a toy store web application built using Spring Boot 3,
 
 ## Introduction
 
-This web application is designed to allow users to view and purchase toys from a toy store. Users can browse through the available toys, add them to their cart, and checkout to purchase them.
+This web application is designed to allow users to view and purchase toys from a toy store. Users can browse through shop goods, search them flexibly, add products to a cart, make purchases, and proceeding payment with their card credentials.
 
 ## Technologies
 
@@ -27,45 +28,64 @@ This application was built using the following technologies:
 
 ### Database:
 - Java ORM (JPA 3 + Hibernate 6)
-- MySQL 8: An database used for development purposes
+- MySQL 8: A database used for development purposes
 - H2: An embedded database used for testing purposes
 
 ### Mail Servers:
-- Maildev: A local mail server for development and testing environments
-- GreenMail: A mail server designed for integration testing
+- Maildev 2: A local mail server for development and testing environments
+- GreenMail 2: A mail server designed for integration testing
 
 ### Testing Frameworks:
 - JUnit 5: A Java framework for writing unit tests
-- Mockito: A Java framework for writing integration tests
+- Mockito 5: A Java framework for writing integration tests
 
 ### Documentation:
-- Swagger: A tool for writing API documentation
+- Swagger 3: A tool for writing API documentation
 
 ## Features
 
-The following features are currently available in the application:
-- User registration 
+### Features for Unauthenticated Users:
+- User registration
 - Account activation using email letter
 - Resend activation account email letter
 - Send change password email letter
-- Change password 
-- Login 
+- Change password
+- Login
 - Refresh access token
 - Logout
 - Fetch filtered products
 - Fetch filtering product categories
 - Fetch product by slug
+
+### Features for Authenticated Users:
 - Add the product to the cart
-- Retrieve the contents of the shopping cart for the user
+- Retrieve the contents of the cart for the user
 - Update cart item quantity
-- Delete product from the cart
+- Delete the product from the cart
 - Create order
-- Retrieve all user orders
-- Create payment for order
+- Retrieve all user's orders
+
+### Features for Admin Users:
+- Fetch filtered products
+- Fetch product by id
+- Create product
+- Update product
+- Get all categories
+- Create product category
+- Update product category
+- Delete product category
+- Get order filtering options
+- Fetch filtered orders
+- Get order statuses
+- Update order status
+
+### Features for Payment Integration:
+- Create a payment for the order
 - Fulfill orders after successful payment
 
-## Endpoints
-The following endpoints are currently available in the API:
+## Controllers and Endpoints
+
+### AuthenticationController:
 - POST /api/v1/auth/register - User registration
 - GET /api/v1/auth/confirm - User account activation using email
 - POST /api/v1/auth/resend-verification-email - Resend the account activation email letter 
@@ -74,17 +94,39 @@ The following endpoints are currently available in the API:
 - POST /api/v1/auth/login - Login
 - POST /api/v1/auth/refresh-token - Refresh access token
 - GET /api/v1/auth/logout - Logout
+
+### ShopController:
 - GET /api/v1/products - Fetch filtered products
 - GET /api/v1/products/categories - Fetch filtering product categories
 - GET /api/v1/products/{productSlug} - Fetch product by slug
+
+### CartController:
 - POST /api/v1/cart/add-product - Add the product to the cart
 - GET /api/v1/cart - Retrieve the contents of the shopping cart for the user
 - PATCH /api/v1/cart - Update cart item quantity
 - DELETE /api/v1/cart - Delete product from the cart
+
+### OrderController:
 - POST /api/v1/order - Create order
 - GET /api/v1/order - Retrieve all user orders
-- POST /api/v1/payment/{orderId} - Create payment for order
+
+### PaymentController:
+- POST /api/v1/payment/{orderId} - Create a payment for the order
 - POST /api/v1/payment/webhook - Fulfill orders after successful payment
+
+### AdminPanelController:
+- GET /api/v1/admin/products - Fetch filtered products
+- GET /api/v1/admin/products/{productId} - Fetch product by id
+- POST /api/v1/admin/products/add - Create product
+- PUT /api/v1/admin/products/{productId} - Update product
+- GET /api/v1/admin/categories/{categoryType} - Get all categories
+- POST /api/v1/admin/categories/{categoryType}/add - Create product category
+- PUT /api/v1/admin/categories/{categoryType}/{categoryId} - Update product category
+- DELETE /api/v1/admin/categories/{categoryType}/{categoryId} - Delete product category
+- GET /api/v1/admin/orders/filtering-options - Get order filtering options
+- GET /api/v1/admin/orders - Fetch filtered orders
+- GET /api/v1/admin/orders/statuses - Get order statuses
+- PATCH /api/v1/admin/orders/{orderId} - Update order status
 
 ## API Documentation
 
