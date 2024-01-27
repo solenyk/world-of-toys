@@ -10,7 +10,9 @@ import com.kopchak.worldoftoys.dto.admin.category.CategoryIdDto;
 import com.kopchak.worldoftoys.dto.admin.category.CategoryNameDto;
 import com.kopchak.worldoftoys.dto.admin.order.StatusDto;
 import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
+import com.kopchak.worldoftoys.dto.admin.product.AdminFilteredProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
+import com.kopchak.worldoftoys.dto.admin.product.AdminProductsPageDto;
 import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
 import com.kopchak.worldoftoys.dto.product.category.CategoryDto;
 import lombok.extern.slf4j.Slf4j;
@@ -179,29 +181,67 @@ public class AdminPanelControllerIntegrationTest {
                 .andExpect(content().json(objectMapper.writeValueAsString(accessDeniedErrorResponse)))
                 .andDo(MockMvcResultHandlers.print());
     }
-//    @Test
-//    public void registerUser_NotRegisteredUser_ReturnsCreatedStatus() throws Exception {
-//        UserRegistrationDto userRegistrationDto = UserRegistrationDto
-//                .builder()
-//                .firstname("Firstname")
-//                .lastname("Lastname")
-//                .email(NOT_REGISTERED_USERNAME)
-//                .password(VALID_PASSWORD)
-//                .build();
-//
-//        ResultActions response = mockMvc.perform(post("/api/v1/auth/register")
-//                .contentType(MediaType.APPLICATION_JSON)
-//                .content(objectMapper.writeValueAsString(userRegistrationDto)));
-//
-//        response.andExpect(MockMvcResultMatchers.status().isCreated())
-//                .andDo(MockMvcResultHandlers.print());
-//
-//        MimeMessage[] receivedMessages = greenMail.getReceivedMessages();
-//        assertThat(receivedMessages.length).isEqualTo(1);
-//
-//        MimeMessage receivedMessage = receivedMessages[0];
-//        assertThat(receivedMessage.getSubject()).isEqualTo(accountActivationSubject);
-//    }
+
+    @Test
+    @WithUserDetails("jane.smith@example.com")
+    public void getFilteredProductsPage_ReturnsOkStatus() throws Exception {
+        var adminFilteredProductDto = new AdminFilteredProductDto(1002, "Лялька Даринка",
+                BigDecimal.valueOf(900), BigInteger.valueOf(200), true, null);
+        var adminProductsPageDto = new AdminProductsPageDto(List.of(adminFilteredProductDto), 1L, 1L);
+
+        ResultActions response = mockMvc.perform(get("/api/v1/admin/products")
+                .param("page", "0")
+                .param("size", "1")
+                .param("name", PRODUCT_NAME)
+                .param("origin", "china", "ukraine")
+                .param("brand", "сurlimals")
+                .param("age", "do-1-roku", "vid-1-do-3-rokiv")
+                .param("price-sort", "asc")
+                .param("availability", "available")
+                .contentType(MediaType.APPLICATION_JSON));
+
+        response.andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(content().json(objectMapper.writeValueAsString(adminProductsPageDto)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    @WithAnonymousUser
+    public void getFilteredProductsPage_AnonymousUser_ReturnsForbiddenStatusAndResponseStatusExceptionDto() throws Exception {
+        ResultActions response = mockMvc.perform(get("/api/v1/admin/products")
+                .param("page", "0")
+                .param("size", "1")
+                .param("name", PRODUCT_NAME)
+                .param("origin", "china", "ukraine")
+                .param("brand", "сurlimals")
+                .param("age", "do-1-roku", "vid-1-do-3-rokiv")
+                .param("price-sort", "asc")
+                .param("availability", "available")
+                .contentType(MediaType.APPLICATION_JSON));
+
+        response.andExpect(MockMvcResultMatchers.status().isUnauthorized())
+                .andExpect(content().json(objectMapper.writeValueAsString(unauthorizedErrorResponse)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    @WithUserDetails("john.doe@example.com")
+    public void getFilteredProductsPage_AuthUser_ReturnsForbiddenStatusAndResponseStatusExceptionDto() throws Exception {
+        ResultActions response = mockMvc.perform(get("/api/v1/admin/products")
+                .param("page", "0")
+                .param("size", "1")
+                .param("name", PRODUCT_NAME)
+                .param("origin", "china", "ukraine")
+                .param("brand", "сurlimals")
+                .param("age", "do-1-roku", "vid-1-do-3-rokiv")
+                .param("price-sort", "asc")
+                .param("availability", "available")
+                .contentType(MediaType.APPLICATION_JSON));
+
+        response.andExpect(MockMvcResultMatchers.status().isForbidden())
+                .andExpect(content().json(objectMapper.writeValueAsString(accessDeniedErrorResponse)))
+                .andDo(MockMvcResultHandlers.print());
+    }
 
     private ResponseStatusExceptionDto getResponseStatusExceptionDto(HttpStatus httpStatus, String msg) {
         return ResponseStatusExceptionDto
