@@ -70,12 +70,13 @@ public class AdminPanelControllerIntegrationTest {
     private final static String ORDER_ID = "order-id";
     private final static String PRODUCT_NAME = "лялька";
     private final static String DUPLICATE_PRODUCT_NAME = "Пупсик Оксанка";
-    private final static String CATEGORY_NAME = "name";
+    private final static String CATEGORY_NAME = "category-name";
+    private final static String DUPLICATE_CATEGORY_NAME = "Devilon";
     private final static CategoryType CATEGORY_TYPE = CategoryType.BRANDS;
     private final static String DUPLICATE_PRODUCT_NAME_EXCEPTION_MSG =
             String.format("The product with name: %s is already exist", DUPLICATE_PRODUCT_NAME);
     private final static String DUPLICATE_CATEGORY_NAME_EXCEPTION_MSG =
-            String.format("Category with name: %s already exist", CATEGORY_NAME);
+            String.format("Category with name: %s already exist", DUPLICATE_CATEGORY_NAME);
     private AdminProductDto adminProductDto;
     private AddUpdateProductDto addUpdateProductDto;
     private MockMultipartFile mainImage;
@@ -506,6 +507,120 @@ public class AdminPanelControllerIntegrationTest {
                 .perform(delete("/api/v1/admin/categories/{categoryType}/{categoryId}",
                         "brands", 1004)
                         .contentType(MediaType.APPLICATION_JSON));
+
+        response.andExpect(MockMvcResultMatchers.status().isForbidden())
+                .andExpect(content().json(objectMapper.writeValueAsString(accessDeniedErrorResponse)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    @WithUserDetails("jane.smith@example.com")
+    public void updateCategory_ReturnsNoContentStatus() throws Exception {
+        ResultActions response = mockMvc
+                .perform(put("/api/v1/admin/categories/{categoryType}/{categoryId}",
+                        "brands", EXISTENT_CATEGORY_ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(categoryNameDto)));
+
+        response.andExpect(MockMvcResultMatchers.status().isNoContent())
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    @WithUserDetails("jane.smith@example.com")
+    public void updateCategory_ThrowDuplicateCategoryNameException_ReturnsBadRequestStatusAndResponseStatusExceptionDto() throws Exception {
+        categoryNameDto = new CategoryNameDto(DUPLICATE_CATEGORY_NAME);
+        var responseStatusExceptionDto = getResponseStatusExceptionDto(HttpStatus.BAD_REQUEST,
+                DUPLICATE_CATEGORY_NAME_EXCEPTION_MSG);
+
+        ResultActions response = mockMvc
+                .perform(put("/api/v1/admin/categories/{categoryType}/{categoryId}",
+                        "brands", EXISTENT_PRODUCT_ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(categoryNameDto)));
+
+        response.andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    @WithAnonymousUser
+    public void updateCategory_AnonymousUser_ReturnsForbiddenStatusAndResponseStatusExceptionDto() throws Exception {
+        ResultActions response = mockMvc
+                .perform(put("/api/v1/admin/categories/{categoryType}/{categoryId}",
+                        "brands", EXISTENT_PRODUCT_ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(categoryNameDto)));
+
+        response.andExpect(MockMvcResultMatchers.status().isUnauthorized())
+                .andExpect(content().json(objectMapper.writeValueAsString(unauthorizedErrorResponse)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    @WithUserDetails("john.doe@example.com")
+    public void updateCategory_AuthUser_ReturnsForbiddenStatusAndResponseStatusExceptionDto() throws Exception {
+        ResultActions response = mockMvc
+                .perform(put("/api/v1/admin/categories/{categoryType}/{categoryId}",
+                        "brands", EXISTENT_PRODUCT_ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(categoryNameDto)));
+
+        response.andExpect(MockMvcResultMatchers.status().isForbidden())
+                .andExpect(content().json(objectMapper.writeValueAsString(accessDeniedErrorResponse)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    @WithUserDetails("jane.smith@example.com")
+    public void createCategory_ReturnsCreatedStatus() throws Exception {
+        ResultActions response = mockMvc
+                .perform(post("/api/v1/admin/categories/{categoryType}/add", "brands")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(categoryNameDto)));
+
+        response.andExpect(MockMvcResultMatchers.status().isCreated())
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    @WithUserDetails("jane.smith@example.com")
+    public void createCategory_ThrowDuplicateCategoryNameException_ReturnsBadRequestStatusAndResponseStatusExceptionDto() throws Exception {
+        categoryNameDto = new CategoryNameDto(DUPLICATE_CATEGORY_NAME);
+        var responseStatusExceptionDto = getResponseStatusExceptionDto(HttpStatus.BAD_REQUEST,
+                DUPLICATE_CATEGORY_NAME_EXCEPTION_MSG);
+
+        ResultActions response = mockMvc
+                .perform(post("/api/v1/admin/categories/{categoryType}/add", "brands")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(categoryNameDto)));
+
+        response.andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    @WithAnonymousUser
+    public void createCategory_AnonymousUser_ReturnsForbiddenStatusAndResponseStatusExceptionDto() throws Exception {
+        ResultActions response = mockMvc
+                .perform(post("/api/v1/admin/categories/{categoryType}/add", "brands")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(categoryNameDto)));
+
+        response.andExpect(MockMvcResultMatchers.status().isUnauthorized())
+                .andExpect(content().json(objectMapper.writeValueAsString(unauthorizedErrorResponse)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    @WithUserDetails("john.doe@example.com")
+    public void createCategory_AuthUser_ReturnsForbiddenStatusAndResponseStatusExceptionDto() throws Exception {
+        ResultActions response = mockMvc
+                .perform(post("/api/v1/admin/categories/{categoryType}/add", "brands")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(categoryNameDto)));
 
         response.andExpect(MockMvcResultMatchers.status().isForbidden())
                 .andExpect(content().json(objectMapper.writeValueAsString(accessDeniedErrorResponse)))
