@@ -12,6 +12,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -65,10 +66,10 @@ public class AppUser implements UserDetails {
     private Boolean enabled = false;
 
     @OneToMany(mappedBy = "user", cascade = {CascadeType.MERGE, CascadeType.REMOVE})
-    private List<AuthenticationToken> authenticationTokens;
+    private List<AuthenticationToken> authenticationTokens = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = {CascadeType.MERGE, CascadeType.REMOVE})
-    private List<ConfirmationToken> confirmationTokens;
+    private List<ConfirmationToken> confirmationTokens = new ArrayList<>();
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

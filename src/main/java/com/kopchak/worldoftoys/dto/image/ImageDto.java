@@ -1,4 +1,4 @@
-package com.kopchak.worldoftoys.dto.product.image;
+package com.kopchak.worldoftoys.dto.image;
 
 import lombok.Builder;
 

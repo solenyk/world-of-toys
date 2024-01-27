@@ -2,7 +2,7 @@ package com.kopchak.worldoftoys.service.impl;
 
 import com.kopchak.worldoftoys.domain.image.Image;
 import com.kopchak.worldoftoys.domain.product.Product;
-import com.kopchak.worldoftoys.dto.product.image.ImageDto;
+import com.kopchak.worldoftoys.dto.image.ImageDto;
 import com.kopchak.worldoftoys.exception.exception.image.ext.ImageCompressionException;
 import com.kopchak.worldoftoys.exception.exception.image.ext.ImageDecompressionException;
 import com.kopchak.worldoftoys.exception.exception.image.ext.ImageExceedsMaxSizeException;

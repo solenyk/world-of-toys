@@ -8,6 +8,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 @Entity
@@ -49,5 +50,5 @@ public class Address {
     private Integer apartment;
 
     @OneToMany(mappedBy = "address")
-    private Set<OrderRecipient> orderRecipients;
+    private Set<OrderRecipient> orderRecipients = new LinkedHashSet<>();
 }

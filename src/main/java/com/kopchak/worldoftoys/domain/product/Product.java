@@ -80,7 +80,7 @@ public class Product {
             name = "product_age_category",
             joinColumns = @JoinColumn(name = "product_id"),
             inverseJoinColumns = @JoinColumn(name = "age_category_id"))
-    private Set<AgeCategory> ageCategories;
+    private Set<AgeCategory> ageCategories = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "product", cascade = {CascadeType.REFRESH, CascadeType.MERGE})
     private Set<OrderDetails> orderDetails = new LinkedHashSet<>();

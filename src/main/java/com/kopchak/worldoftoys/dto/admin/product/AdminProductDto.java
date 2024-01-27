@@ -1,6 +1,6 @@
 package com.kopchak.worldoftoys.dto.admin.product;
 
-import com.kopchak.worldoftoys.dto.product.image.ImageDto;
+import com.kopchak.worldoftoys.dto.image.ImageDto;
 import com.kopchak.worldoftoys.dto.product.category.CategoryDto;
 import lombok.Builder;
 

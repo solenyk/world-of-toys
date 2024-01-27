@@ -5,6 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToMany;
 import lombok.*;
 
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 @Getter
@@ -15,5 +16,5 @@ import java.util.Set;
 @Entity
 public class AgeCategory extends ProductCategory {
     @ManyToMany(mappedBy = "ageCategories")
-    private Set<Product> products;
+    private Set<Product> products = new LinkedHashSet<>();
 }

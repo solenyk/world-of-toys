@@ -93,8 +93,9 @@ public class AuthenticationController {
                             schema = @Schema(implementation = ResponseStatusExceptionDto.class)))
     })
     @GetMapping(path = "/confirm")
-    public ResponseEntity<Void> activateAccount(@Parameter(description = "User account activation token", required = true)
-                                                @RequestParam("token") String token) {
+    public ResponseEntity<Void> activateAccount(
+            @Parameter(description = "User account activation token", required = true)
+            @RequestParam("token") String token) {
         try {
             confirmTokenService.activateAccountUsingActivationToken(token);
         } catch (InvalidConfirmationTokenException e) {

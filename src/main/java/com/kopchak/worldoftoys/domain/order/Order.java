@@ -53,7 +53,7 @@ public class Order {
     private Set<Payment> payments = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
-    private Set<OrderDetails> orderDetails;
+    private Set<OrderDetails> orderDetails = new LinkedHashSet<>();
 
     @PrePersist
     private void setDateTime() {

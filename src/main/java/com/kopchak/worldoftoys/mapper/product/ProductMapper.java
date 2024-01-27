@@ -7,7 +7,7 @@ import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
-import com.kopchak.worldoftoys.dto.product.image.ImageDto;
+import com.kopchak.worldoftoys.dto.image.ImageDto;
 import com.kopchak.worldoftoys.domain.product.Product;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
