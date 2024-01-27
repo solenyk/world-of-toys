@@ -5,11 +5,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icegreen.greenmail.configuration.GreenMailConfiguration;
 import com.icegreen.greenmail.junit5.GreenMailExtension;
 import com.icegreen.greenmail.util.ServerSetupTest;
+import com.kopchak.worldoftoys.domain.order.OrderStatus;
+import com.kopchak.worldoftoys.domain.order.payment.PaymentStatus;
 import com.kopchak.worldoftoys.domain.product.category.BrandCategory;
 import com.kopchak.worldoftoys.domain.product.category.type.CategoryType;
 import com.kopchak.worldoftoys.dto.admin.category.AdminCategoryDto;
 import com.kopchak.worldoftoys.dto.admin.category.CategoryIdDto;
 import com.kopchak.worldoftoys.dto.admin.category.CategoryNameDto;
+import com.kopchak.worldoftoys.dto.admin.order.FilteredOrdersPageDto;
+import com.kopchak.worldoftoys.dto.admin.order.FilteringOrderOptionsDto;
 import com.kopchak.worldoftoys.dto.admin.order.StatusDto;
 import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminFilteredProductDto;
@@ -39,10 +43,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -119,7 +120,8 @@ public class AdminPanelControllerIntegrationTest {
         mainImage = new MockMultipartFile("image", "filename",
                 "image/jpg", "image".getBytes());
         categoryNameDto = new CategoryNameDto(CATEGORY_NAME);
-        statusDto = new StatusDto("name", "status");
+        OrderStatus orderStatus = OrderStatus.AWAITING_PAYMENT;
+        statusDto = new StatusDto(orderStatus.getStatus(), orderStatus.name());
     }
 
     @Test
@@ -621,6 +623,87 @@ public class AdminPanelControllerIntegrationTest {
                 .perform(post("/api/v1/admin/categories/{categoryType}/add", "brands")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(categoryNameDto)));
+
+        response.andExpect(MockMvcResultMatchers.status().isForbidden())
+                .andExpect(content().json(objectMapper.writeValueAsString(accessDeniedErrorResponse)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    @WithUserDetails("jane.smith@example.com")
+    public void getOrderFilteringOptions_ReturnsOkStatus() throws Exception {
+        var filteringOrderOptionsDto = new FilteringOrderOptionsDto(Set.of(statusDto), new HashSet<>());
+        System.out.println(objectMapper.writeValueAsString(filteringOrderOptionsDto));
+
+        ResultActions response = mockMvc.perform(get("/api/v1/admin/orders/filtering-options")
+                .contentType(MediaType.APPLICATION_JSON));
+
+        response.andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(content().json(objectMapper.writeValueAsString(filteringOrderOptionsDto)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    @WithAnonymousUser
+    public void getOrderFilteringOptions_AnonymousUser_ReturnsForbiddenStatusAndResponseStatusExceptionDto() throws Exception {
+        ResultActions response = mockMvc.perform(get("/api/v1/admin/orders/filtering-options")
+                .contentType(MediaType.APPLICATION_JSON));
+
+        response.andExpect(MockMvcResultMatchers.status().isUnauthorized())
+                .andExpect(content().json(objectMapper.writeValueAsString(unauthorizedErrorResponse)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    @WithUserDetails("john.doe@example.com")
+    public void getOrderFilteringOptions_AuthUser_ReturnsForbiddenStatusAndResponseStatusExceptionDto() throws Exception {
+        ResultActions response = mockMvc.perform(get("/api/v1/admin/orders/filtering-options")
+                .contentType(MediaType.APPLICATION_JSON));
+
+        response.andExpect(MockMvcResultMatchers.status().isForbidden())
+                .andExpect(content().json(objectMapper.writeValueAsString(accessDeniedErrorResponse)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    @WithUserDetails("jane.smith@example.com")
+    public void filterOrdersByStatusesAndDate_ReturnsOkStatus() throws Exception {
+        String dateSortOrder = "asc";
+        var filteredOrdersPageDto = new FilteredOrdersPageDto(new HashSet<>(), 0L, 0L);
+
+        ResultActions response = mockMvc.perform(get("/api/v1/admin/orders")
+                .param("page", "0")
+                .param("size", "1")
+                .param("order-status", OrderStatus.CANCELED.name(), OrderStatus.SHIPPED.name())
+                .param("payment-status", PaymentStatus.FAILED.name())
+                .param("date-sort", dateSortOrder)
+                .contentType(MediaType.APPLICATION_JSON));
+
+        response.andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(content().json(objectMapper.writeValueAsString(filteredOrdersPageDto)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    @WithAnonymousUser
+    public void filterOrdersByStatusesAndDate_AnonymousUser_ReturnsForbiddenStatusAndResponseStatusExceptionDto() throws Exception {
+        ResultActions response = mockMvc.perform(get("/api/v1/admin/orders")
+                .param("page", "0")
+                .param("size", "1")
+                .contentType(MediaType.APPLICATION_JSON));
+
+        response.andExpect(MockMvcResultMatchers.status().isUnauthorized())
+                .andExpect(content().json(objectMapper.writeValueAsString(unauthorizedErrorResponse)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    @WithUserDetails("john.doe@example.com")
+    public void filterOrdersByStatusesAndDate_AuthUser_ReturnsForbiddenStatusAndResponseStatusExceptionDto() throws Exception {
+        ResultActions response = mockMvc.perform(get("/api/v1/admin/orders")
+                .param("page", "0")
+                .param("size", "1")
+                .contentType(MediaType.APPLICATION_JSON));
 
         response.andExpect(MockMvcResultMatchers.status().isForbidden())
                 .andExpect(content().json(objectMapper.writeValueAsString(accessDeniedErrorResponse)))

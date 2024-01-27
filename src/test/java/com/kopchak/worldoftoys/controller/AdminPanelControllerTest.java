@@ -417,8 +417,7 @@ class AdminPanelControllerTest {
         when(orderService.getOrderFilteringOptions()).thenReturn(filteringOrderOptionsDto);
 
         ResultActions response = mockMvc.perform(get("/api/v1/admin/orders/filtering-options")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(categoryNameDto)));
+                .contentType(MediaType.APPLICATION_JSON));
 
         response.andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(content().json(objectMapper.writeValueAsString(filteringOrderOptionsDto)))
