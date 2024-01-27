@@ -14,9 +14,9 @@ import com.kopchak.worldoftoys.dto.admin.order.FilteringOrderOptionsDto;
 import com.kopchak.worldoftoys.dto.admin.order.StatusDto;
 import com.kopchak.worldoftoys.dto.order.OrderDto;
 import com.kopchak.worldoftoys.dto.order.OrderRecipientDto;
+import com.kopchak.worldoftoys.exception.exception.email.MessageSendingException;
 import com.kopchak.worldoftoys.exception.exception.order.InvalidOrderException;
 import com.kopchak.worldoftoys.exception.exception.order.InvalidOrderStatusException;
-import com.kopchak.worldoftoys.exception.exception.email.MessageSendingException;
 import com.kopchak.worldoftoys.exception.exception.order.OrderCreationException;
 import com.kopchak.worldoftoys.mapper.order.OrderMapper;
 import com.kopchak.worldoftoys.mapper.order.OrderRecipientMapper;
@@ -186,7 +186,7 @@ class OrderServiceImplTest {
 
     @Test
     public void updateOrderStatus_ExistentOrderId() throws InvalidOrderStatusException, MessageSendingException, InvalidOrderException {
-        when(orderRepository.findById(ORDER_ID)).thenReturn(Optional.of(order));
+        when(orderRepository.findById(eq(ORDER_ID))).thenReturn(Optional.of(order));
         when(orderMapper.toOrderStatus(eq(statusDto))).thenReturn(NEW_ORDER_STATUS);
         doNothing().when(emailSenderService)
                 .sendEmail(eq(USER_EMAIL), eq(USER_FIRSTNAME), eq(ORDER_ID), eq(NEW_ORDER_STATUS));
@@ -226,9 +226,8 @@ class OrderServiceImplTest {
         assertException(InvalidOrderStatusException.class, invalidOrderStatusExceptionMsg,
                 () -> orderService.updateOrderStatus(ORDER_ID, statusDto));
 
-        verify(orderRepository, never()).save(order);
-        verify(emailSenderService, never()).sendEmail(eq(USER_EMAIL), eq(USER_FIRSTNAME), eq(ORDER_ID),
-                eq(NEW_ORDER_STATUS));
+        verify(orderRepository, never()).save(any());
+        verify(emailSenderService, never()).sendEmail(any(), any(), any(), any());
     }
 
     @Test

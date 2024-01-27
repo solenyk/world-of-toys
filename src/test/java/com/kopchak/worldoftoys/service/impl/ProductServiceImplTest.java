@@ -178,7 +178,7 @@ class ProductServiceImplTest {
                 .mainImage(imageDto)
                 .build();
 
-        when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.of(product));
+        when(productRepository.findById(eq(PRODUCT_ID))).thenReturn(Optional.of(product));
         when(imageService.decompressImage(any())).thenReturn(imageDto);
         when(productMapper.toAdminProductDto(eq(product), eq(imageDto), eq(imageDtoList)))
                 .thenReturn(expectedAdminProductDto);
@@ -191,7 +191,7 @@ class ProductServiceImplTest {
 
     @Test
     public void getAdminProductDtoById_NonExistentProduct_ThrowProductNotFoundException() {
-        when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.empty());
+        when(productRepository.findById(eq(PRODUCT_ID))).thenReturn(Optional.empty());
 
         assertException(ProductNotFoundException.class, PRODUCT_ID_NOT_FOUND_EXCEPTION_MSG,
                 () -> productService.getProductById(PRODUCT_ID));
@@ -199,9 +199,9 @@ class ProductServiceImplTest {
 
     @Test
     public void updateProduct_ExistentProductIdAndNonExistentProductName() throws Exception {
-        when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.of(product));
-        when(productRepository.findByName(PRODUCT_NAME)).thenReturn(Optional.empty());
-        when(productMapper.toProduct(addUpdateProductDto)).thenReturn(product);
+        when(productRepository.findById(eq(PRODUCT_ID))).thenReturn(Optional.of(product));
+        when(productRepository.findByName(eq(PRODUCT_NAME))).thenReturn(Optional.empty());
+        when(productMapper.toProduct(eq(addUpdateProductDto))).thenReturn(product);
         when(categoryService.findCategoryByIdAndType(eq(categoryIdDto.id()), eq(BrandCategory.class)))
                 .thenReturn(brandCategory);
         when(categoryService.findCategoryByIdAndType(eq(categoryIdDto.id()), eq(OriginCategory.class)))
@@ -211,7 +211,7 @@ class ProductServiceImplTest {
 
         productService.updateProduct(PRODUCT_ID, addUpdateProductDto, null, null);
 
-        verify(productRepository).save(product);
+        verify(productRepository).save(eq(product));
 
         assertThat(product.getBrandCategory()).isEqualTo(brandCategory);
         assertThat(product.getOriginCategory()).isEqualTo(originCategory);
@@ -222,25 +222,25 @@ class ProductServiceImplTest {
 
     @Test
     public void updateProduct_NonExistentProductId_ThrowProductNotFoundException() {
-        when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.empty());
+        when(productRepository.findById(eq(PRODUCT_ID))).thenReturn(Optional.empty());
 
         assertException(ProductNotFoundException.class, PRODUCT_ID_NOT_FOUND_EXCEPTION_MSG,
                 () -> productService.updateProduct(PRODUCT_ID, addUpdateProductDto, null, null));
 
-        verify(productRepository, never()).save(product);
+        verify(productRepository, never()).save(any());
     }
 
     @Test
     public void updateProduct_DuplicateProductName_ThrowDuplicateProductNameException() {
         product.setId(2);
 
-        when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.of(product));
-        when(productRepository.findByName(PRODUCT_NAME)).thenReturn(Optional.of(product));
+        when(productRepository.findById(eq(PRODUCT_ID))).thenReturn(Optional.of(product));
+        when(productRepository.findByName(eq(PRODUCT_NAME))).thenReturn(Optional.of(product));
 
         assertException(DuplicateProductNameException.class, DUPLICATE_PRODUCT_NAME_EXCEPTION_MSG,
                 () -> productService.updateProduct(PRODUCT_ID, addUpdateProductDto, null, null));
 
-        verify(productRepository, never()).save(product);
+        verify(productRepository, never()).save(any());
     }
 
     @Test
@@ -248,8 +248,8 @@ class ProductServiceImplTest {
         MultipartFile image = mock(MultipartFile.class);
         List<MultipartFile> images = List.of(image);
 
-        when(productRepository.findByName(PRODUCT_NAME)).thenReturn(Optional.empty());
-        when(productMapper.toProduct(addUpdateProductDto)).thenReturn(product);
+        when(productRepository.findByName(eq(PRODUCT_NAME))).thenReturn(Optional.empty());
+        when(productMapper.toProduct(eq(addUpdateProductDto))).thenReturn(product);
         when(categoryService.findCategoryByIdAndType(eq(categoryIdDto.id()), eq(BrandCategory.class)))
                 .thenReturn(brandCategory);
         when(categoryService.findCategoryByIdAndType(eq(categoryIdDto.id()), eq(OriginCategory.class)))
@@ -259,7 +259,7 @@ class ProductServiceImplTest {
 
         productService.createProduct(addUpdateProductDto, image, images);
 
-        verify(productRepository).save(product);
+        verify(productRepository).save(eq(product));
 
         assertThat(product.getBrandCategory()).isEqualTo(brandCategory);
         assertThat(product.getOriginCategory()).isEqualTo(originCategory);
@@ -269,12 +269,12 @@ class ProductServiceImplTest {
 
     @Test
     public void createProduct_DuplicateProductName_ThrowDuplicateProductNameException() {
-        when(productRepository.findByName(PRODUCT_NAME)).thenReturn(Optional.of(product));
+        when(productRepository.findByName(eq(PRODUCT_NAME))).thenReturn(Optional.of(product));
 
         assertException(DuplicateProductNameException.class, DUPLICATE_PRODUCT_NAME_EXCEPTION_MSG,
                 () -> productService.createProduct(addUpdateProductDto, null, null));
 
-        verify(productRepository, never()).save(product);
+        verify(productRepository, never()).save(any());
     }
 
     private void assertException(Class<? extends Exception> expectedExceptionType,

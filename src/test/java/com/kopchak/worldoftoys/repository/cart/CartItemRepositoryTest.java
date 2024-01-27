@@ -34,7 +34,7 @@ class CartItemRepositoryTest {
     }
 
     @Test
-    public void calculateUserCartTotalPrice_UserEmail_ReturnsBigDecimal() {
+    public void calculateUserCartTotalPrice_ReturnsBigDecimal() {
         BigDecimal expectedTotalPrice = BigDecimal.valueOf(2900);
 
         BigDecimal actualTotalPrice = cartItemRepository.calculateUserCartTotalPrice(user);
@@ -44,7 +44,7 @@ class CartItemRepositoryTest {
     }
 
     @Test
-    public void deleteAllById_User_ReturnsCartItemSet() {
+    public void deleteAllById_ReturnsCartItemSet() {
         Set<CartItem> cartItems = cartItemRepository.deleteAllById_User(user);
         Set<CartItemDto> cartItemDtos = cartItemRepository.findAllUserCartItems(user);
 
@@ -56,7 +56,7 @@ class CartItemRepositoryTest {
     }
 
     @Test
-    public void findAllUserCartItems_UserEmail_ReturnsSetOfCartItemDto() {
+    public void findAllUserCartItems_ReturnsSetOfCartItemDto() {
         int expectedProductAmount = 2;
         List<CartItemDto> expectedCartItemDtos = new ArrayList<>() {{
             add(new CartItemDto("Лялька Даринка", "lyalka-darynka", BigDecimal.valueOf(900), BigInteger.ONE));

@@ -72,7 +72,7 @@ public class OrderControllerIntegrationTest {
 
     @Test
     @WithUserDetails("john.doe@example.com")
-    public void verifyCartBeforeOrderCreation_AuthUser_ReturnsOkStatus() throws Exception {
+    public void verifyCartBeforeOrderCreation_ReturnsOkStatus() throws Exception {
         ResultActions response = mockMvc.perform(get("/api/v1/order/verify-cart")
                 .contentType(MediaType.APPLICATION_JSON)
                 .with(csrf()));
@@ -83,7 +83,7 @@ public class OrderControllerIntegrationTest {
 
     @Test
     @WithUserDetails("mark.anderson@example.com")
-    public void verifyCartBeforeOrderCreation_AuthUserThrowCartValidationException_ReturnsBadRequestStatusAndResponseStatusExceptionDto() throws Exception {
+    public void verifyCartBeforeOrderCreation_ThrowCartValidationException_ReturnsBadRequestStatusAndResponseStatusExceptionDto() throws Exception {
         String cartValidationExceptionMsg = "Some products in the cart are not available in the selected quantity " +
                 "because one or more products are out of stock";
         HttpStatus httpStatus = HttpStatus.BAD_REQUEST;
@@ -125,7 +125,7 @@ public class OrderControllerIntegrationTest {
 
     @Test
     @WithUserDetails("john.doe@example.com")
-    public void createOrder_AuthUser_ReturnsCreatedStatus() throws Exception {
+    public void createOrder_ReturnsCreatedStatus() throws Exception {
         ResultActions response = mockMvc.perform(post("/api/v1/order")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(orderRecipientDto))
@@ -137,7 +137,7 @@ public class OrderControllerIntegrationTest {
 
     @Test
     @WithUserDetails("alice.johnson@example.com")
-    public void createOrder_AuthUserWithEmptyCart_ReturnsBadRequestStatusAndResponseStatusExceptionDto() throws Exception {
+    public void createOrder_ThrowOrderCreationException_ReturnsBadRequestStatusAndResponseStatusExceptionDto() throws Exception {
         HttpStatus httpStatus = HttpStatus.BAD_REQUEST;
         String orderCreationExceptionMsg =
                 "It is impossible to create an order for the user because there are no products in the user's cart.";
@@ -183,7 +183,7 @@ public class OrderControllerIntegrationTest {
 
     @Test
     @WithUserDetails("john.doe@example.com")
-    public void getAllUserOrders_AuthUser_ReturnsOkStatusAndSetOfOrderDto() throws Exception {
+    public void getAllUserOrders_ReturnsOkStatusAndSetOfOrderDto() throws Exception {
         Set<OrderDto> returnedOrderDtoSet = Set.of(OrderDto
                 .builder()
                 .id("4c980930-16eb-41cd-b998-29d03118d67c")

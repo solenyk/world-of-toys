@@ -67,7 +67,7 @@ public class CartControllerIntegrationTest {
 
     @Test
     @WithUserDetails("john.doe@example.com")
-    public void addProductToCart_AuthUserAndRequestCartItemDto_ReturnsCreatedStatus() throws Exception {
+    public void addProductToCart_RequestCartItemDto_ReturnsCreatedStatus() throws Exception {
         ResultActions response = mockMvc.perform(post("/api/v1/cart/add-product")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(validRequestCartItemDto)));
@@ -93,7 +93,7 @@ public class CartControllerIntegrationTest {
 
     @Test
     @WithAnonymousUser
-    public void addProductToCart_AnonymousUserAndRequestCartItemDto_ReturnsForbiddenStatus() throws Exception {
+    public void addProductToCart_AnonymousUser_ReturnsForbiddenStatus() throws Exception {
         ResultActions response = mockMvc.perform(post("/api/v1/cart/add-product")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(validRequestCartItemDto)));
@@ -105,7 +105,7 @@ public class CartControllerIntegrationTest {
 
     @Test
     @WithUserDetails("jane.smith@example.com")
-    public void addProductToCart_AuthAdminAndRequestCartItemDto_ReturnsForbiddenStatus() throws Exception {
+    public void addProductToCart_AuthAdmin_ReturnsForbiddenStatus() throws Exception {
         ResultActions response = mockMvc.perform(post("/api/v1/cart/add-product")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(validRequestCartItemDto)));
@@ -117,7 +117,7 @@ public class CartControllerIntegrationTest {
 
     @Test
     @WithUserDetails("john.doe@example.com")
-    public void getUserCartDetails_AuthUser_ReturnsOkStatusAndUserCartDetailsDto() throws Exception {
+    public void getUserCartDetails_ReturnsOkStatusAndUserCartDetailsDto() throws Exception {
         Set<CartItemDto> expectedContent = new LinkedHashSet<>() {{
             add(new CartItemDto("Лялька Даринка", "lyalka-darynka", BigDecimal.valueOf(900), BigInteger.ONE));
             add(new CartItemDto("Пупсик Оксанка", "pupsik_oksanka", BigDecimal.valueOf(2000),
@@ -158,7 +158,7 @@ public class CartControllerIntegrationTest {
 
     @Test
     @WithUserDetails("john.doe@example.com")
-    public void updateUserCartItem_AuthUserAndRequestCartItemDto_ReturnsNoContentStatus() throws Exception {
+    public void updateUserCartItem_RequestCartItemDto_ReturnsNoContentStatus() throws Exception {
         ResultActions response = mockMvc.perform(patch("/api/v1/cart")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(validRequestCartItemDto)));
@@ -207,7 +207,7 @@ public class CartControllerIntegrationTest {
 
     @Test
     @WithUserDetails("john.doe@example.com")
-    public void deleteUserCartItem_AuthUserAndRequestCartItemDto_ReturnsNoContentStatus() throws Exception {
+    public void deleteUserCartItem_RequestCartItemDto_ReturnsNoContentStatus() throws Exception {
         ResultActions response = mockMvc.perform(delete("/api/v1/cart")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(validRequestCartItemDto)));

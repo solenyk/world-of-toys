@@ -8,6 +8,7 @@ import com.kopchak.worldoftoys.dto.admin.category.AdminCategoryDto;
 import com.kopchak.worldoftoys.dto.admin.category.CategoryNameDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringCategoriesDto;
 import com.kopchak.worldoftoys.exception.exception.category.CategoryContainsProductsException;
+import com.kopchak.worldoftoys.exception.exception.category.CategoryCreationException;
 import com.kopchak.worldoftoys.exception.exception.category.CategoryNotFoundException;
 import com.kopchak.worldoftoys.exception.exception.category.DuplicateCategoryNameException;
 import com.kopchak.worldoftoys.mapper.product.CategoryMapper;
@@ -175,6 +176,16 @@ class CategoryServiceImplTest {
     }
 
     @Test
+    public void createCategory_ThrowsReflectiveOperationException() throws Exception {
+        String reflectiveOperationExceptionMsg = "Constructor without arguments does not exist";
+        doThrow(new ReflectiveOperationException(reflectiveOperationExceptionMsg))
+                .when(categoryRepository).create(eq(CATEGORY_NAME), eq(CATEGORY_TYPE.getCategory()));
+
+        assertException(CategoryCreationException.class, reflectiveOperationExceptionMsg,
+                () -> categoryService.createCategory(CATEGORY_TYPE, categoryNameDto));
+    }
+
+    @Test
     public void findCategoryByIdAndType_ExistentOriginCategory_ReturnsOriginCategory() throws CategoryNotFoundException {
         OriginCategory expectedOriginCategory = new OriginCategory();
 
@@ -189,7 +200,8 @@ class CategoryServiceImplTest {
 
     @Test
     public void findCategoryByIdAndType_NonExistentOriginCategory_ThrowsCategoryNotFoundException() {
-        String categoryNotFoundExceptionMsg = String.format("The category with id: %d is not found", CATEGORY_ID);
+        String categoryNotFoundExceptionMsg = String.format("The category type: %s with id: %d is not found",
+                OriginCategory.class.getSimpleName(), CATEGORY_ID);
         when(categoryRepository.findByIdAndType(eq(CATEGORY_ID), eq(OriginCategory.class)))
                 .thenReturn(Optional.empty());
 

@@ -128,8 +128,9 @@ public class AdminPanelControllerIntegrationTest {
     @Test
     @WithUserDetails("jane.smith@example.com")
     public void getProductById_ReturnsOkStatus() throws Exception {
-        ResultActions response = mockMvc.perform(get("/api/v1/admin/products/{productId}", EXISTENT_PRODUCT_ID)
-                .contentType(MediaType.APPLICATION_JSON));
+        ResultActions response = mockMvc
+                .perform(get("/api/v1/admin/products/{productId}", EXISTENT_PRODUCT_ID)
+                        .contentType(MediaType.APPLICATION_JSON));
 
         response.andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(content().json(objectMapper.writeValueAsString(adminProductDto)))

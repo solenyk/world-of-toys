@@ -27,6 +27,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -61,19 +62,19 @@ class CartServiceImplTest {
     public void addProductToCart_ExistentCartItem() throws ProductNotFoundException {
         BigInteger expectedCartItemQuantity = requestCartItemDto.quantity().add(cartItem.getQuantity());
 
-        when(productRepository.findBySlug(PRODUCT_SLUG)).thenReturn(Optional.of(product));
-        when(cartItemRepository.findById(cartItemId)).thenReturn(Optional.of(cartItem));
+        when(productRepository.findBySlug(eq(PRODUCT_SLUG))).thenReturn(Optional.of(product));
+        when(cartItemRepository.findById(eq(cartItemId))).thenReturn(Optional.of(cartItem));
 
         cartService.addProductToCart(requestCartItemDto, user);
 
         assertThat(cartItem.getQuantity()).isEqualTo(expectedCartItemQuantity);
-        verify(cartItemRepository).save(cartItem);
+        verify(cartItemRepository).save(eq(cartItem));
     }
 
     @Test
     public void addProductToCart_NonExistentCartItem() throws ProductNotFoundException {
-        when(productRepository.findBySlug(PRODUCT_SLUG)).thenReturn(Optional.of(product));
-        when(cartItemRepository.findById(cartItemId)).thenReturn(Optional.empty());
+        when(productRepository.findBySlug(eq(PRODUCT_SLUG))).thenReturn(Optional.of(product));
+        when(cartItemRepository.findById(eq(cartItemId))).thenReturn(Optional.empty());
 
         cartService.addProductToCart(requestCartItemDto, user);
 
@@ -84,7 +85,7 @@ class CartServiceImplTest {
     }
 
     @Test
-    public void addProductToCart_NonExistentProductSlug() {
+    public void addProductToCart_NonExistentProductSlug_ThrowsProductNotFoundException() {
         assertException(ProductNotFoundException.class, PRODUCT_NOT_FOUND_MSG,
                 () -> cartService.addProductToCart(requestCartItemDto, user));
     }
@@ -94,8 +95,8 @@ class CartServiceImplTest {
         String cartValidationExceptionMsg = "Some products in the cart are not available in the selected quantity " +
                 "because one or more products are out of stock";
 
-        when(cartItemRepository.deleteUnavailableItems(user)).thenReturn(1);
-        when(cartItemRepository.updateCartItems(user)).thenReturn(0);
+        when(cartItemRepository.deleteUnavailableItems(eq(user))).thenReturn(1);
+        when(cartItemRepository.updateCartItems(eq(user))).thenReturn(0);
 
         assertException(CartValidationException.class, cartValidationExceptionMsg,
                 () -> cartService.verifyCartBeforeOrderCreation(user));
@@ -103,21 +104,21 @@ class CartServiceImplTest {
 
     @Test
     public void verifyCartBeforeOrderCreation_ValidCartItems() throws CartValidationException {
-        when(cartItemRepository.deleteUnavailableItems(user)).thenReturn(0);
-        when(cartItemRepository.updateCartItems(user)).thenReturn(0);
+        when(cartItemRepository.deleteUnavailableItems(eq(user))).thenReturn(0);
+        when(cartItemRepository.updateCartItems(eq(user))).thenReturn(0);
 
         cartService.verifyCartBeforeOrderCreation(user);
 
-        verify(cartItemRepository).deleteUnavailableItems(user);
-        verify(cartItemRepository).updateCartItems(user);
+        verify(cartItemRepository).deleteUnavailableItems(eq(user));
+        verify(cartItemRepository).updateCartItems(eq(user));
     }
 
     @Test
     public void getUserCartDetails_ExistentUserEmail_ReturnsUserCartDetailsDto() {
         BigDecimal expectedTotalCost = BigDecimal.ZERO;
 
-        when(cartItemRepository.findAllUserCartItems(user)).thenReturn(new HashSet<>());
-        when(cartItemRepository.calculateUserCartTotalPrice(user)).thenReturn(expectedTotalCost);
+        when(cartItemRepository.findAllUserCartItems(eq(user))).thenReturn(new HashSet<>());
+        when(cartItemRepository.calculateUserCartTotalPrice(eq(user))).thenReturn(expectedTotalCost);
 
         UserCartDetailsDto userCartDetailsDto = cartService.getUserCartDetails(user);
 
@@ -128,7 +129,7 @@ class CartServiceImplTest {
 
     @Test
     public void updateUserCartItem_ExistentUserEmailAndProductSlug() throws ProductNotFoundException {
-        when(productRepository.findBySlug(PRODUCT_SLUG)).thenReturn(Optional.of(product));
+        when(productRepository.findBySlug(eq(PRODUCT_SLUG))).thenReturn(Optional.of(product));
 
         cartService.updateUserCartItem(requestCartItemDto, user);
 
@@ -139,15 +140,15 @@ class CartServiceImplTest {
     }
 
     @Test
-    public void updateUserCartItem_NonExistentProductSlug() {
+    public void updateUserCartItem_NonExistentProductSlug_ThrowsProductNotFoundException() {
         assertException(ProductNotFoundException.class, PRODUCT_NOT_FOUND_MSG,
                 () -> cartService.updateUserCartItem(requestCartItemDto, user));
     }
 
     @Test
     public void deleteUserCartItem_ExistentUserEmailAndProductSlug() throws ProductNotFoundException {
-        when(productRepository.findBySlug(PRODUCT_SLUG)).thenReturn(Optional.of(product));
-        when(cartItemRepository.findById(cartItemId)).thenReturn(Optional.of(cartItem));
+        when(productRepository.findBySlug(eq(PRODUCT_SLUG))).thenReturn(Optional.of(product));
+        when(cartItemRepository.findById(eq(cartItemId))).thenReturn(Optional.of(cartItem));
 
         cartService.deleteUserCartItem(requestCartItemDto, user);
 
@@ -159,7 +160,7 @@ class CartServiceImplTest {
     }
 
     @Test
-    public void deleteUserCartItem_NonExistentProductSlug() {
+    public void deleteUserCartItem_NonExistentProductSlug_ThrowsProductNotFoundException() {
         assertException(ProductNotFoundException.class, PRODUCT_NOT_FOUND_MSG,
                 () -> cartService.deleteUserCartItem(requestCartItemDto, user));
     }

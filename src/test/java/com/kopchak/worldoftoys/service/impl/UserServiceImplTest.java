@@ -76,7 +76,7 @@ class UserServiceImplTest {
     public void registerUser_UserIsPresent_ThrowsUsernameAlreadyExistException() {
         String usernameAlreadyExistExceptionMsg = String.format("The user with the username: %s already exist!", USER_EMAIL);
 
-        when(userRepository.findByEmail(USER_EMAIL)).thenReturn(Optional.of(user));
+        when(userRepository.findByEmail(eq(USER_EMAIL))).thenReturn(Optional.of(user));
 
         assertException(UsernameAlreadyExistException.class, usernameAlreadyExistExceptionMsg,
                 () -> userService.registerUser(userRegistrationDto));
@@ -86,10 +86,10 @@ class UserServiceImplTest {
     public void authenticateUser_UserIsPresentAndEnabledPasswordMatches() throws UserNotFoundException, AccountActivationException {
         var expectedAccessAndRefreshTokensDto = AccessAndRefreshTokensDto.builder().build();
 
-        when(userRepository.findByEmail(USER_EMAIL)).thenReturn(Optional.of(user));
+        when(userRepository.findByEmail(eq(USER_EMAIL))).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(eq(OLD_USER_PASSWORD), eq(OLD_USER_PASSWORD))).thenReturn(true);
         doNothing().when(jwtTokenService).revokeAllUserAuthTokens(eq(user));
-        when(jwtTokenService.generateAuthTokens(user)).thenReturn(expectedAccessAndRefreshTokensDto);
+        when(jwtTokenService.generateAuthTokens(eq(user))).thenReturn(expectedAccessAndRefreshTokensDto);
 
         var actualAccessAndRefreshTokensDto = userService.authenticateUser(userAuthDto);
 
@@ -105,38 +105,38 @@ class UserServiceImplTest {
         user.setEnabled(false);
         String accountActivationExceptionMsg = "The account is not activated!";
 
-        when(userRepository.findByEmail(USER_EMAIL)).thenReturn(Optional.of(user));
+        when(userRepository.findByEmail(eq(USER_EMAIL))).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(eq(OLD_USER_PASSWORD), eq(OLD_USER_PASSWORD))).thenReturn(true);
 
         assertException(AccountActivationException.class, accountActivationExceptionMsg,
                 () -> userService.authenticateUser(userAuthDto));
 
         verify(authenticationManager, never()).authenticate(any());
-        verify(jwtTokenService, never()).revokeAllUserAuthTokens(eq(user));
-        verify(jwtTokenService, never()).generateAuthTokens(eq(user));
+        verify(jwtTokenService, never()).revokeAllUserAuthTokens(any());
+        verify(jwtTokenService, never()).generateAuthTokens(any());
     }
 
     @Test
     public void authenticateUser_UserNotIsPresent_ThrowsUserNotFoundException() {
         String userNotFoundExceptionMsg = "Bad user credentials!";
 
-        when(userRepository.findByEmail(USER_EMAIL)).thenReturn(Optional.empty());
+        when(userRepository.findByEmail(eq(USER_EMAIL))).thenReturn(Optional.empty());
 
         assertException(UserNotFoundException.class, userNotFoundExceptionMsg,
                 () -> userService.authenticateUser(userAuthDto));
 
         verify(authenticationManager, never()).authenticate(any());
-        verify(jwtTokenService, never()).revokeAllUserAuthTokens(eq(user));
-        verify(jwtTokenService, never()).generateAuthTokens(eq(user));
+        verify(jwtTokenService, never()).revokeAllUserAuthTokens(any());
+        verify(jwtTokenService, never()).generateAuthTokens(any());
     }
 
     @Test
     public void changeUserPassword_NewPassword() throws InvalidPasswordException {
-        when(passwordEncoder.encode(NEW_USER_PASSWORD)).thenReturn(NEW_USER_PASSWORD);
+        when(passwordEncoder.encode(eq(NEW_USER_PASSWORD))).thenReturn(NEW_USER_PASSWORD);
 
         userService.changeUserPassword(user, NEW_USER_PASSWORD);
 
-        verify(userRepository).save(user);
+        verify(userRepository).save(eq(user));
         assertEquals(user.getPassword(), NEW_USER_PASSWORD);
     }
 
@@ -148,7 +148,7 @@ class UserServiceImplTest {
         assertException(InvalidPasswordException.class, invalidPasswordExceptionMsg,
                 () -> userService.changeUserPassword(user, OLD_USER_PASSWORD));
 
-        verify(userRepository, never()).save(user);
+        verify(userRepository, never()).save(any());
     }
 
     private void assertException(Class<? extends Exception> expectedExceptionType,

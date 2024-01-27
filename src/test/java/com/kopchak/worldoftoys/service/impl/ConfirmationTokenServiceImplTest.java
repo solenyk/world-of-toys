@@ -74,7 +74,7 @@ class ConfirmationTokenServiceImplTest {
     }
 
     @Test
-    public void createConfirmationToken_ExistingUserAndActivationTokenType_ReturnsConfirmTokenDto() throws UserNotFoundException, TokenAlreadyExistException, AccountActivationException {
+    public void createConfirmationToken_ExistingUserAndActivationTokenType_ReturnsConfirmTokenDto() throws Exception {
         when(userRepository.findByEmail(eq(username))).thenReturn(Optional.of(user));
         when(confirmTokenRepository.isNoActiveConfirmationToken(eq(username), eq(activationTokenType),
                 any(LocalDateTime.class))).thenReturn(true);
@@ -118,13 +118,13 @@ class ConfirmationTokenServiceImplTest {
 
     @Test
     public void activateAccountUsingActivationToken_ExistingToken() throws InvalidConfirmationTokenException {
-        when(confirmTokenRepository.findByToken(token)).thenReturn(Optional.of(confirmToken));
+        when(confirmTokenRepository.findByToken(eq(token))).thenReturn(Optional.of(confirmToken));
 
         confirmationTokenService.activateAccountUsingActivationToken(token);
 
         assertThat(confirmToken.getConfirmedAt()).isNotNull();
-        verify(userRepository).save(user);
-        verify(confirmTokenRepository).save(confirmToken);
+        verify(userRepository).save(eq(user));
+        verify(confirmTokenRepository).save(eq(confirmToken));
     }
 
     @Test
@@ -138,14 +138,14 @@ class ConfirmationTokenServiceImplTest {
     public void changePasswordUsingResetToken_ExistingToken() throws InvalidConfirmationTokenException, InvalidPasswordException {
         confirmToken.setTokenType(ConfirmationTokenType.RESET_PASSWORD);
 
-        when(confirmTokenRepository.findByToken(token)).thenReturn(Optional.of(confirmToken));
+        when(confirmTokenRepository.findByToken(eq(token))).thenReturn(Optional.of(confirmToken));
 
         confirmationTokenService.changePasswordUsingResetToken(token, newPassword);
 
         assertThat(confirmToken.getConfirmedAt()).isNotNull();
-        verify(userService).changeUserPassword(user, newPassword.password());
-        verify(confirmTokenRepository).save(confirmToken);
-        verify(jwtTokenService).revokeAllUserAuthTokens(user);
+        verify(userService).changeUserPassword(eq(user), eq(newPassword.password()));
+        verify(confirmTokenRepository).save(eq(confirmToken));
+        verify(jwtTokenService).revokeAllUserAuthTokens(eq(user));
     }
 
     @Test

@@ -1,7 +1,6 @@
 package com.kopchak.worldoftoys.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kopchak.worldoftoys.config.UserDetailsTestConfig;
 import com.kopchak.worldoftoys.domain.user.AppUser;
 import com.kopchak.worldoftoys.dto.cart.RequestCartItemDto;
 import com.kopchak.worldoftoys.dto.cart.UserCartDetailsDto;
@@ -17,10 +16,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
@@ -33,16 +30,13 @@ import java.util.HashSet;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 
 @WebMvcTest(controllers = CartController.class)
-@AutoConfigureMockMvc
+@AutoConfigureMockMvc(addFilters = false)
 @ExtendWith(MockitoExtension.class)
-@Import(UserDetailsTestConfig.class)
 class CartControllerTest {
-
     @Autowired
     private MockMvc mockMvc;
 
@@ -67,29 +61,25 @@ class CartControllerTest {
 
 
     @Test
-    @WithUserDetails(value = "user@example.com", userDetailsServiceBeanName = "userDetailsService")
     public void addProductToCart_RequestCartItemDto_ReturnsCreatedStatus() throws Exception {
         doNothing().when(cartService).addProductToCart(eq(requestCartItemDto), any(AppUser.class));
 
         ResultActions response = mockMvc.perform(post("/api/v1/cart/add-product")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestCartItemDto))
-                .with(csrf()));
+                .content(objectMapper.writeValueAsString(requestCartItemDto)));
 
         response.andExpect(MockMvcResultMatchers.status().isCreated())
                 .andDo(MockMvcResultHandlers.print());
     }
 
     @Test
-    @WithUserDetails(value = "user@example.com", userDetailsServiceBeanName = "userDetailsService")
     public void addProductToCart_ThrowProductNotFoundException_ReturnsNotFoundStatusAndResponseStatusExceptionDto() throws Exception {
         doThrow(new ProductNotFoundException(PRODUCT_NOT_FOUND_EXCEPTION_MSG))
-                .when(cartService).addProductToCart(eq(requestCartItemDto), any(AppUser.class));
+                .when(cartService).addProductToCart(eq(requestCartItemDto), any());
 
         ResultActions response = mockMvc.perform(post("/api/v1/cart/add-product")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestCartItemDto))
-                .with(csrf()));
+                .content(objectMapper.writeValueAsString(requestCartItemDto)));
 
         response.andExpect(MockMvcResultMatchers.status().isNotFound())
                 .andExpect(content().json(objectMapper.writeValueAsString(getResponseStatusExceptionDto())))
@@ -97,11 +87,10 @@ class CartControllerTest {
     }
 
     @Test
-    @WithUserDetails(value = "user@example.com", userDetailsServiceBeanName = "userDetailsService")
     public void getUserCartDetails_ReturnsOkStatusAndUserCartDetailsDto() throws Exception {
         UserCartDetailsDto expectedUserCartDetailsDto = new UserCartDetailsDto(new HashSet<>(), BigDecimal.ZERO);
 
-        when(cartService.getUserCartDetails(any(AppUser.class))).thenReturn(expectedUserCartDetailsDto);
+        when(cartService.getUserCartDetails(any())).thenReturn(expectedUserCartDetailsDto);
 
         ResultActions response = mockMvc.perform(get("/api/v1/cart")
                 .contentType(MediaType.APPLICATION_JSON));
@@ -112,29 +101,25 @@ class CartControllerTest {
     }
 
     @Test
-    @WithUserDetails(value = "user@example.com", userDetailsServiceBeanName = "userDetailsService")
     public void updateUserCartItem_RequestCartItemDto_ReturnsNoContentStatus() throws Exception {
         doNothing().when(cartService).updateUserCartItem(eq(requestCartItemDto), any(AppUser.class));
 
         ResultActions response = mockMvc.perform(patch("/api/v1/cart")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestCartItemDto))
-                .with(csrf()));
+                .content(objectMapper.writeValueAsString(requestCartItemDto)));
 
         response.andExpect(MockMvcResultMatchers.status().isNoContent())
                 .andDo(MockMvcResultHandlers.print());
     }
 
     @Test
-    @WithUserDetails(value = "user@example.com", userDetailsServiceBeanName = "userDetailsService")
     public void updateUserCartItem_ThrowProductNotFoundException_ReturnsNotFoundStatusAndResponseStatusExceptionDto() throws Exception {
         doThrow(new ProductNotFoundException(PRODUCT_NOT_FOUND_EXCEPTION_MSG))
-                .when(cartService).updateUserCartItem(eq(requestCartItemDto), any(AppUser.class));
+                .when(cartService).updateUserCartItem(eq(requestCartItemDto), any());
 
         ResultActions response = mockMvc.perform(patch("/api/v1/cart")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestCartItemDto))
-                .with(csrf()));
+                .content(objectMapper.writeValueAsString(requestCartItemDto)));
 
         response.andExpect(MockMvcResultMatchers.status().isNotFound())
                 .andExpect(content().json(objectMapper.writeValueAsString(getResponseStatusExceptionDto())))
@@ -142,29 +127,25 @@ class CartControllerTest {
     }
 
     @Test
-    @WithUserDetails(value = "user@example.com", userDetailsServiceBeanName = "userDetailsService")
     public void deleteUserCartItem_RequestCartItemDto_ReturnsNoContentStatus() throws Exception {
         doNothing().when(cartService).deleteUserCartItem(eq(requestCartItemDto), any(AppUser.class));
 
         ResultActions response = mockMvc.perform(delete("/api/v1/cart")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestCartItemDto))
-                .with(csrf()));
+                .content(objectMapper.writeValueAsString(requestCartItemDto)));
 
         response.andExpect(MockMvcResultMatchers.status().isNoContent())
                 .andDo(MockMvcResultHandlers.print());
     }
 
     @Test
-    @WithUserDetails(value = "user@example.com", userDetailsServiceBeanName = "userDetailsService")
     public void deleteUserCartItem_ThrowProductNotFoundException_ReturnsNotFoundStatusAndResponseStatusExceptionDto() throws Exception {
         doThrow(new ProductNotFoundException(PRODUCT_NOT_FOUND_EXCEPTION_MSG))
-                .when(cartService).deleteUserCartItem(eq(requestCartItemDto), any(AppUser.class));
+                .when(cartService).deleteUserCartItem(eq(requestCartItemDto), any());
 
         ResultActions response = mockMvc.perform(delete("/api/v1/cart")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestCartItemDto))
-                .with(csrf()));
+                .content(objectMapper.writeValueAsString(requestCartItemDto)));
 
         response.andExpect(MockMvcResultMatchers.status().isNotFound())
                 .andExpect(content().json(objectMapper.writeValueAsString(getResponseStatusExceptionDto())))

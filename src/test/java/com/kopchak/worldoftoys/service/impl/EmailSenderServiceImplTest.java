@@ -106,7 +106,7 @@ class EmailSenderServiceImplTest {
 
     @Test
     public void sendEmail_ActivationTokenType() throws UserNotFoundException, MessageSendingException {
-        when(userRepository.findByEmail(userEmail)).thenReturn(java.util.Optional.of(user));
+        when(userRepository.findByEmail(eq(userEmail))).thenReturn(java.util.Optional.of(user));
         mockEmailProcessing();
 
         emailSenderService.sendEmail(userEmail, confirmToken, ConfirmationTokenType.ACTIVATION);
@@ -117,7 +117,7 @@ class EmailSenderServiceImplTest {
 
     @Test
     public void sendEmail_ResetPasswordTokenType() throws UserNotFoundException, MessageSendingException {
-        when(userRepository.findByEmail(userEmail)).thenReturn(java.util.Optional.of(user));
+        when(userRepository.findByEmail(eq(userEmail))).thenReturn(java.util.Optional.of(user));
         mockEmailProcessing();
 
         emailSenderService.sendEmail(userEmail, confirmToken, ConfirmationTokenType.RESET_PASSWORD);

@@ -73,7 +73,6 @@ class ShopControllerTest {
         originCategories = List.of("china", "ukraine");
         brandCategories = List.of("сurlimals", "devilon");
         ageCategories = List.of("do-1-roku", "vid-1-do-3-rokiv");
-
         requestProductFilteringParams = new LinkedMultiValueMap<>() {{
             add("name", PRODUCT_NAME);
             add("min-price", minProductPrice.toString());

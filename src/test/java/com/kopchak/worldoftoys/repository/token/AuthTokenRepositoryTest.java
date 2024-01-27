@@ -33,7 +33,7 @@ class AuthTokenRepositoryTest {
 
         //Assert
         assertThat(returnedToken).isNotNull();
-        assertThat(returnedToken).isPresent();
+        assertThat(returnedToken).isNotEmpty();
         assertThat(returnedToken.get().getToken()).isEqualTo(jwtToken);
     }
 

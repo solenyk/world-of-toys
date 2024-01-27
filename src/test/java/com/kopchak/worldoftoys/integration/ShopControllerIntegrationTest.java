@@ -54,7 +54,7 @@ public class ShopControllerIntegrationTest {
     }
 
     @Test
-    public void getFilteredProducts_RequestFilteringParams_ReturnsOkStatusAndFilteredProductsPageDto() throws Exception {
+    public void getFilteredProducts_ReturnsOkStatusAndFilteredProductsPageDto() throws Exception {
         requestProductFilteringParams.add("page", "0");
         requestProductFilteringParams.add("size", "10");
         requestProductFilteringParams.add("price-sort", "asc");
@@ -142,7 +142,7 @@ public class ShopControllerIntegrationTest {
     public void getProductBySlug_ExistentProductSlug_ReturnsOkStatusAndProductDto() throws Exception {
         String existentProductSlug = "lyalka-darynka";
 
-        String expectedProductDescription = "Ця іграшка об'єднує інноваційний дизайн та розвиваючий функціонал, що " +
+        String expectedProductDescription = "Ця іграшка обєднує інноваційний дизайн та розвиваючий функціонал, що " +
                 "сприяє розвитку навичок у дітей. Вона створює захоплюючий світ уяви, розвиваючи логічне мислення та " +
                 "творчість. Іграшка безпечна, енергоефективна і сприяє розвитку спостережливості, уваги та " +
                 "винахідливості у дітей, забезпечуючи незабутні враження та навчальний досвід.";

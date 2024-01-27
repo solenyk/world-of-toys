@@ -121,9 +121,9 @@ class JwtTokenServiceImplTest {
         String jwtTokenExceptionMsg = "Failed to extract expiration date from token: " +
                 "JWT strings must contain exactly 2 period characters. Found: 0";
 
-        when(authTokenRepository.findByToken(invalidToken)).thenReturn(Optional.of(invalidAuthToken));
-        doReturn(username).when(jwtTokenService).extractUsername(invalidToken);
-        when(userRepository.findByEmail(username)).thenReturn(Optional.of(user));
+        when(authTokenRepository.findByToken(eq(invalidToken))).thenReturn(Optional.of(invalidAuthToken));
+        doReturn(username).when(jwtTokenService).extractUsername(eq(invalidToken));
+        when(userRepository.findByEmail(eq(username))).thenReturn(Optional.of(user));
 
         assertException(JwtTokenException.class, jwtTokenExceptionMsg,
                 () -> jwtTokenService.isAuthTokenValid(this.invalidToken, accessTokenType));
@@ -142,8 +142,8 @@ class JwtTokenServiceImplTest {
     public void refreshAccessToken_ValidAuthToken_ReturnsAuthTokenDto() throws JwtTokenException, TokenAlreadyExistException {
         AuthenticationToken authToken = AuthenticationToken.builder().tokenType(AuthTokenType.REFRESH).build();
 
-        when(authTokenRepository.findByToken(VALID_TOKEN)).thenReturn(Optional.of(authToken));
-        when(userRepository.findByEmail(username)).thenReturn(Optional.of(user));
+        when(authTokenRepository.findByToken(eq(VALID_TOKEN))).thenReturn(Optional.of(authToken));
+        when(userRepository.findByEmail(eq(username))).thenReturn(Optional.of(user));
 
         AuthTokenDto returnedAuthTokenDto = jwtTokenService.refreshAccessToken(validAuthTokenDto);
 
@@ -165,9 +165,9 @@ class JwtTokenServiceImplTest {
         AuthenticationToken authToken = AuthenticationToken.builder().tokenType(AuthTokenType.REFRESH).build();
         String tokenAlreadyExistExceptionMsg = "There is valid access token!";
 
-        when(authTokenRepository.findByToken(VALID_TOKEN)).thenReturn(Optional.of(authToken));
-        when(userRepository.findByEmail(username)).thenReturn(Optional.of(user));
-        when(authTokenRepository.isActiveAuthTokenExists(username, AuthTokenType.ACCESS)).thenReturn(true);
+        when(authTokenRepository.findByToken(eq(VALID_TOKEN))).thenReturn(Optional.of(authToken));
+        when(userRepository.findByEmail(eq(username))).thenReturn(Optional.of(user));
+        when(authTokenRepository.isActiveAuthTokenExists(eq(username), eq(AuthTokenType.ACCESS))).thenReturn(true);
 
         assertException(TokenAlreadyExistException.class, tokenAlreadyExistExceptionMsg,
                 () -> jwtTokenService.refreshAccessToken(validAuthTokenDto));
@@ -179,7 +179,7 @@ class JwtTokenServiceImplTest {
 
         jwtTokenService.revokeAllUserAuthTokens(user);
 
-        verify(authTokenRepository, times(1)).revokeActiveUserAuthTokens(user);
+        verify(authTokenRepository).revokeActiveUserAuthTokens(user);
     }
 
     private String getValidToken() {
