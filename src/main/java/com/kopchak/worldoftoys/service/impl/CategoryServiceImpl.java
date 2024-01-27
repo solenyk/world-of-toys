@@ -95,6 +95,7 @@ public class CategoryServiceImpl implements CategoryService {
         if (optionalCategory.isPresent()) {
             return optionalCategory.get();
         }
-        throw new CategoryNotFoundException(String.format("The category with id: %d is not found", id));
+        throw new CategoryNotFoundException(String.format("The category type: %s with id: %d is not found",
+                categoryType.getSimpleName(), id));
     }
 }

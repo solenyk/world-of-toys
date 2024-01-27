@@ -225,7 +225,7 @@ class AdminPanelControllerTest {
     @Test
     public void updateProduct_ThrowProductNotFoundException_ReturnsNotFoundStatusAndResponseStatusExceptionDto() throws Exception {
         String productNotFoundExceptionMsg =
-                String.format("The product with name: %s is already exist", PRODUCT_NAME);
+                String.format("The product with id: %d is not found.", PRODUCT_ID);
         var responseStatusExceptionDto = getResponseStatusExceptionDto(HttpStatus.NOT_FOUND,
                 productNotFoundExceptionMsg);
 

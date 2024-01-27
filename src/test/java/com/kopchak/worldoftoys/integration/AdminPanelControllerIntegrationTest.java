@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icegreen.greenmail.configuration.GreenMailConfiguration;
 import com.icegreen.greenmail.junit5.GreenMailExtension;
 import com.icegreen.greenmail.util.ServerSetupTest;
+import com.kopchak.worldoftoys.domain.product.category.BrandCategory;
 import com.kopchak.worldoftoys.domain.product.category.type.CategoryType;
 import com.kopchak.worldoftoys.dto.admin.category.CategoryIdDto;
 import com.kopchak.worldoftoys.dto.admin.category.CategoryNameDto;
@@ -62,7 +63,8 @@ public class AdminPanelControllerIntegrationTest {
     private ObjectMapper objectMapper;
     private final static Integer EXISTENT_PRODUCT_ID = 1002;
     private final static Integer NON_EXISTENT_PRODUCT_ID = 5813;
-    private final static Integer CATEGORY_ID = 1;
+    private final static Integer EXISTENT_CATEGORY_ID = 1001;
+    private final static Integer NON_EXISTENT_CATEGORY_ID = 523;
     private final static String ORDER_ID = "order-id";
     private final static String PRODUCT_NAME = "лялька";
     private final static String DUPLICATE_PRODUCT_NAME = "Пупсик Оксанка";
@@ -108,7 +110,7 @@ public class AdminPanelControllerIntegrationTest {
                 HttpStatus.FORBIDDEN.name(), "Access Denied");
         unauthorizedErrorResponse = new ResponseStatusExceptionDto(HttpStatus.UNAUTHORIZED.value(),
                 HttpStatus.UNAUTHORIZED.name(), "Full authentication is required to access this resource");
-        categoryIdDto = new CategoryIdDto(1001);
+        categoryIdDto = new CategoryIdDto(EXISTENT_CATEGORY_ID);
         addUpdateProductDto = new AddUpdateProductDto(PRODUCT_NAME, "description", BigDecimal.TEN,
                 BigInteger.ONE, true, categoryIdDto, categoryIdDto, List.of(categoryIdDto));
         mainImage = new MockMultipartFile("image", "filename",
@@ -264,7 +266,6 @@ public class AdminPanelControllerIntegrationTest {
         addUpdateProductDto = new AddUpdateProductDto(DUPLICATE_PRODUCT_NAME, "description", BigDecimal.TEN,
                 BigInteger.ONE, true, categoryIdDto, categoryIdDto, List.of(categoryIdDto));
         MockMultipartFile addUpdateProductDtoJsonFile = getAddUpdateProductDtoJsonFile(addUpdateProductDto);
-
         var responseStatusExceptionDto = getResponseStatusExceptionDto(HttpStatus.BAD_REQUEST,
                 DUPLICATE_PRODUCT_NAME_EXCEPTION_MSG);
 
@@ -327,6 +328,90 @@ public class AdminPanelControllerIntegrationTest {
                 .andDo(MockMvcResultHandlers.print());
     }
 
+    @Test
+    @WithUserDetails("jane.smith@example.com")
+    public void createProduct_ReturnsCreatedStatus() throws Exception {
+        MockMultipartFile addUpdateProductDtoJsonFile = getAddUpdateProductDtoJsonFile(addUpdateProductDto);
+
+        ResultActions response = mockMvc
+                .perform(multipart(HttpMethod.POST, "/api/v1/admin/products/add")
+                        .file(addUpdateProductDtoJsonFile)
+                        .file(mainImage));
+
+        response.andExpect(MockMvcResultMatchers.status().isCreated())
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    @WithUserDetails("jane.smith@example.com")
+    public void createProduct_ThrowDuplicateProductNameException_ReturnsBadRequestStatusAndResponseStatusExceptionDto() throws Exception {
+        addUpdateProductDto = new AddUpdateProductDto(DUPLICATE_PRODUCT_NAME, "description", BigDecimal.TEN,
+                BigInteger.ONE, true, categoryIdDto, categoryIdDto, List.of(categoryIdDto));
+        MockMultipartFile addUpdateProductDtoJsonFile = getAddUpdateProductDtoJsonFile(addUpdateProductDto);
+        var responseStatusExceptionDto = getResponseStatusExceptionDto(HttpStatus.BAD_REQUEST,
+                DUPLICATE_PRODUCT_NAME_EXCEPTION_MSG);
+
+        ResultActions response = mockMvc
+                .perform(multipart(HttpMethod.POST, "/api/v1/admin/products/add")
+                        .file(addUpdateProductDtoJsonFile)
+                        .file(mainImage));
+
+        response.andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    @WithUserDetails("jane.smith@example.com")
+    public void createProduct_ThrowCategoryNotFoundException_ReturnsNotFoundStatusAndResponseStatusExceptionDto() throws Exception {
+        categoryIdDto = new CategoryIdDto(NON_EXISTENT_CATEGORY_ID);
+        addUpdateProductDto = new AddUpdateProductDto(PRODUCT_NAME, "description", BigDecimal.TEN,
+                BigInteger.ONE, true, categoryIdDto, categoryIdDto, List.of(categoryIdDto));
+        MockMultipartFile addUpdateProductDtoJsonFile = getAddUpdateProductDtoJsonFile(addUpdateProductDto);
+        String categoryNotFoundExceptionMsg = String.format("The category type: %s with id: %d is not found",
+                BrandCategory.class.getSimpleName(), NON_EXISTENT_CATEGORY_ID);
+        var responseStatusExceptionDto = getResponseStatusExceptionDto(HttpStatus.NOT_FOUND,
+                categoryNotFoundExceptionMsg);
+
+        ResultActions response = mockMvc
+                .perform(multipart(HttpMethod.POST, "/api/v1/admin/products/add")
+                        .file(addUpdateProductDtoJsonFile)
+                        .file(mainImage));
+
+        response.andExpect(MockMvcResultMatchers.status().isNotFound())
+                .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    @WithAnonymousUser
+    public void createProduct_AnonymousUser_ReturnsForbiddenStatusAndResponseStatusExceptionDto() throws Exception {
+        MockMultipartFile addUpdateProductDtoJsonFile = getAddUpdateProductDtoJsonFile(addUpdateProductDto);
+
+        ResultActions response = mockMvc
+                .perform(multipart(HttpMethod.POST, "/api/v1/admin/products/add")
+                        .file(addUpdateProductDtoJsonFile)
+                        .file(mainImage));
+
+        response.andExpect(MockMvcResultMatchers.status().isUnauthorized())
+                .andExpect(content().json(objectMapper.writeValueAsString(unauthorizedErrorResponse)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    @WithUserDetails("john.doe@example.com")
+    public void createProduct_AuthUser_ReturnsForbiddenStatusAndResponseStatusExceptionDto() throws Exception {
+        MockMultipartFile addUpdateProductDtoJsonFile = getAddUpdateProductDtoJsonFile(addUpdateProductDto);
+
+        ResultActions response = mockMvc
+                .perform(multipart(HttpMethod.POST, "/api/v1/admin/products/add")
+                        .file(addUpdateProductDtoJsonFile)
+                        .file(mainImage));
+
+        response.andExpect(MockMvcResultMatchers.status().isForbidden())
+                .andExpect(content().json(objectMapper.writeValueAsString(accessDeniedErrorResponse)))
+                .andDo(MockMvcResultHandlers.print());
+    }
 
     private MockMultipartFile getAddUpdateProductDtoJsonFile(AddUpdateProductDto addUpdateProductDto) throws JsonProcessingException {
         String addUpdateProductDtoJson = objectMapper.writeValueAsString(addUpdateProductDto);
