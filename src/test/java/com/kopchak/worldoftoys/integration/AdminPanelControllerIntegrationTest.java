@@ -7,6 +7,7 @@ import com.icegreen.greenmail.junit5.GreenMailExtension;
 import com.icegreen.greenmail.util.ServerSetupTest;
 import com.kopchak.worldoftoys.domain.product.category.BrandCategory;
 import com.kopchak.worldoftoys.domain.product.category.type.CategoryType;
+import com.kopchak.worldoftoys.dto.admin.category.AdminCategoryDto;
 import com.kopchak.worldoftoys.dto.admin.category.CategoryIdDto;
 import com.kopchak.worldoftoys.dto.admin.category.CategoryNameDto;
 import com.kopchak.worldoftoys.dto.admin.order.StatusDto;
@@ -39,7 +40,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
@@ -412,6 +415,48 @@ public class AdminPanelControllerIntegrationTest {
                 .andExpect(content().json(objectMapper.writeValueAsString(accessDeniedErrorResponse)))
                 .andDo(MockMvcResultHandlers.print());
     }
+
+    @Test
+    @WithUserDetails("jane.smith@example.com")
+    public void getProductCategories_ReturnsOkStatusAndAdminCategoryDtoSet() throws Exception {
+        Set<AdminCategoryDto> adminCategoryDtoSet = new LinkedHashSet<>() {{
+            add(new AdminCategoryDto(1000, "Китай"));
+            add(new AdminCategoryDto(1001, "Україна"));
+        }};
+
+        ResultActions response = mockMvc
+                .perform(get("/api/v1/admin/categories/{categoryType}", "origins")
+                        .contentType(MediaType.APPLICATION_JSON));
+
+        response.andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(content().json(objectMapper.writeValueAsString(adminCategoryDtoSet)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    @WithAnonymousUser
+    public void getProductCategories_AnonymousUser_ReturnsForbiddenStatusAndResponseStatusExceptionDto() throws Exception {
+        ResultActions response = mockMvc
+                .perform(get("/api/v1/admin/categories/{categoryType}", "origins")
+                        .contentType(MediaType.APPLICATION_JSON));
+
+        response.andExpect(MockMvcResultMatchers.status().isUnauthorized())
+                .andExpect(content().json(objectMapper.writeValueAsString(unauthorizedErrorResponse)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    @WithUserDetails("john.doe@example.com")
+    public void getProductCategories_AuthUser_ReturnsForbiddenStatusAndResponseStatusExceptionDto() throws Exception {
+        ResultActions response = mockMvc
+                .perform(get("/api/v1/admin/categories/{categoryType}", "origins")
+                        .contentType(MediaType.APPLICATION_JSON));
+
+        response.andExpect(MockMvcResultMatchers.status().isForbidden())
+                .andExpect(content().json(objectMapper.writeValueAsString(accessDeniedErrorResponse)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
 
     private MockMultipartFile getAddUpdateProductDtoJsonFile(AddUpdateProductDto addUpdateProductDto) throws JsonProcessingException {
         String addUpdateProductDtoJson = objectMapper.writeValueAsString(addUpdateProductDto);
