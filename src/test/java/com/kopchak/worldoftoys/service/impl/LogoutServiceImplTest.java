@@ -1,7 +1,7 @@
 package com.kopchak.worldoftoys.service.impl;
 
-import com.kopchak.worldoftoys.model.token.AuthenticationToken;
-import com.kopchak.worldoftoys.model.user.AppUser;
+import com.kopchak.worldoftoys.domain.token.auth.AuthenticationToken;
+import com.kopchak.worldoftoys.domain.user.AppUser;
 import com.kopchak.worldoftoys.repository.token.AuthTokenRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -49,13 +49,13 @@ class LogoutServiceImplTest {
                 .user(user)
                 .build();
 
-        when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn(authHeaderPrefix + validJwtToken);
-        when(authTokenRepository.findByToken(validJwtToken)).thenReturn(Optional.of(authToken));
+        when(request.getHeader(eq(HttpHeaders.AUTHORIZATION))).thenReturn(authHeaderPrefix + validJwtToken);
+        when(authTokenRepository.findByToken(eq(validJwtToken))).thenReturn(Optional.of(authToken));
 
         logoutService.logout(request, response, authentication);
 
-        verify(authTokenRepository).findByToken(validJwtToken);
-        verify(authTokenRepository).save(authToken);
+        verify(authTokenRepository).findByToken(eq(validJwtToken));
+        verify(authTokenRepository).save(eq(authToken));
         assertTrue(authToken.isRevoked());
         assertTrue(authToken.isExpired());
     }

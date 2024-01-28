@@ -1,7 +1,7 @@
 package com.kopchak.worldoftoys.repository.token;
 
-import com.kopchak.worldoftoys.model.token.ConfirmationToken;
-import com.kopchak.worldoftoys.model.token.ConfirmationTokenType;
+import com.kopchak.worldoftoys.domain.token.confirm.ConfirmationToken;
+import com.kopchak.worldoftoys.domain.token.confirm.ConfirmationTokenType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

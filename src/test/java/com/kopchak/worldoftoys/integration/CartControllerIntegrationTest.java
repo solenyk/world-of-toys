@@ -24,6 +24,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -45,7 +46,9 @@ public class CartControllerIntegrationTest {
 
     @Autowired
     private WebApplicationContext context;
-    private RequestCartItemDto requestCartItemDto;
+    private final static String NON_EXISTENT_PRODUCT_SLUG = "non-existent-product-slug";
+    private RequestCartItemDto validRequestCartItemDto;
+    private RequestCartItemDto invalidRequestCartItemDto;
     private ResponseStatusExceptionDto accessDeniedErrorResponse;
     private ResponseStatusExceptionDto unauthorizedErrorResponse;
 
@@ -54,7 +57,8 @@ public class CartControllerIntegrationTest {
         mockMvc = MockMvcBuilders.webAppContextSetup(context)
                 .apply(springSecurity())
                 .build();
-        requestCartItemDto = new RequestCartItemDto("lyalka-klaymber", 2);
+        validRequestCartItemDto = new RequestCartItemDto("lyalka-klaymber", BigInteger.valueOf(2));
+        invalidRequestCartItemDto = new RequestCartItemDto(NON_EXISTENT_PRODUCT_SLUG, BigInteger.valueOf(2));
         accessDeniedErrorResponse = new ResponseStatusExceptionDto(HttpStatus.FORBIDDEN.value(),
                 HttpStatus.FORBIDDEN.name(), "Access Denied");
         unauthorizedErrorResponse = new ResponseStatusExceptionDto(HttpStatus.UNAUTHORIZED.value(),
@@ -63,21 +67,36 @@ public class CartControllerIntegrationTest {
 
     @Test
     @WithUserDetails("john.doe@example.com")
-    public void addProductToCart_AuthUserAndRequestCartItemDto_ReturnsCreatedStatus() throws Exception {
+    public void addProductToCart_RequestCartItemDto_ReturnsCreatedStatus() throws Exception {
         ResultActions response = mockMvc.perform(post("/api/v1/cart/add-product")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestCartItemDto)));
+                .content(objectMapper.writeValueAsString(validRequestCartItemDto)));
 
         response.andExpect(MockMvcResultMatchers.status().isCreated())
                 .andDo(MockMvcResultHandlers.print());
     }
 
     @Test
-    @WithAnonymousUser
-    public void addProductToCart_AnonymousUserAndRequestCartItemDto_ReturnsForbiddenStatus() throws Exception {
+    @WithUserDetails("john.doe@example.com")
+    public void addProductToCart_ThrowProductNotFoundException_ReturnsNotFoundStatusAndResponseStatusExceptionDto() throws Exception {
         ResultActions response = mockMvc.perform(post("/api/v1/cart/add-product")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestCartItemDto)));
+                .content(objectMapper.writeValueAsString(invalidRequestCartItemDto)));
+
+        var responseStatusExceptionDto = getProductNotFoundResponseStatusExDto();
+
+        response.andExpect(MockMvcResultMatchers.status().isNotFound())
+                .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+
+    @Test
+    @WithAnonymousUser
+    public void addProductToCart_AnonymousUser_ReturnsForbiddenStatus() throws Exception {
+        ResultActions response = mockMvc.perform(post("/api/v1/cart/add-product")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(validRequestCartItemDto)));
 
         response.andExpect(MockMvcResultMatchers.status().isUnauthorized())
                 .andExpect(content().json(objectMapper.writeValueAsString(unauthorizedErrorResponse)))
@@ -86,10 +105,10 @@ public class CartControllerIntegrationTest {
 
     @Test
     @WithUserDetails("jane.smith@example.com")
-    public void addProductToCart_AuthAdminAndRequestCartItemDto_ReturnsForbiddenStatus() throws Exception {
+    public void addProductToCart_AuthAdmin_ReturnsForbiddenStatus() throws Exception {
         ResultActions response = mockMvc.perform(post("/api/v1/cart/add-product")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestCartItemDto)));
+                .content(objectMapper.writeValueAsString(validRequestCartItemDto)));
 
         response.andExpect(MockMvcResultMatchers.status().isForbidden())
                 .andExpect(content().json(objectMapper.writeValueAsString(accessDeniedErrorResponse)))
@@ -98,10 +117,11 @@ public class CartControllerIntegrationTest {
 
     @Test
     @WithUserDetails("john.doe@example.com")
-    public void getUserCartDetails_AuthUser_ReturnsOkStatusAndUserCartDetailsDto() throws Exception {
+    public void getUserCartDetails_ReturnsOkStatusAndUserCartDetailsDto() throws Exception {
         Set<CartItemDto> expectedContent = new LinkedHashSet<>() {{
-            add(new CartItemDto("Лялька Даринка", "lyalka-darynka", BigDecimal.valueOf(900), 1));
-            add(new CartItemDto("Пупсик Оксанка", "pupsik_oksanka", BigDecimal.valueOf(2000), 4));
+            add(new CartItemDto("Лялька Даринка", "lyalka-darynka", BigDecimal.valueOf(900), BigInteger.ONE));
+            add(new CartItemDto("Пупсик Оксанка", "pupsik_oksanka", BigDecimal.valueOf(2000),
+                    BigInteger.valueOf(4)));
         }};
         BigDecimal expectedTotalCost = BigDecimal.valueOf(2900);
         UserCartDetailsDto expectedCartDetailsDto = new UserCartDetailsDto(expectedContent, expectedTotalCost);
@@ -138,12 +158,26 @@ public class CartControllerIntegrationTest {
 
     @Test
     @WithUserDetails("john.doe@example.com")
-    public void updateUserCartItem_AuthUserAndRequestCartItemDto_ReturnsNoContentStatus() throws Exception {
+    public void updateUserCartItem_RequestCartItemDto_ReturnsNoContentStatus() throws Exception {
         ResultActions response = mockMvc.perform(patch("/api/v1/cart")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestCartItemDto)));
+                .content(objectMapper.writeValueAsString(validRequestCartItemDto)));
 
         response.andExpect(MockMvcResultMatchers.status().isNoContent())
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    @WithUserDetails("john.doe@example.com")
+    public void updateUserCartItem_ThrowProductNotFoundException_ReturnsNotFoundStatusAndResponseStatusExceptionDto() throws Exception {
+        ResultActions response = mockMvc.perform(patch("/api/v1/cart")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(invalidRequestCartItemDto)));
+
+        var responseStatusExceptionDto = getProductNotFoundResponseStatusExDto();
+
+        response.andExpect(MockMvcResultMatchers.status().isNotFound())
+                .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)))
                 .andDo(MockMvcResultHandlers.print());
     }
 
@@ -152,7 +186,7 @@ public class CartControllerIntegrationTest {
     public void updateUserCartItem_AnonymousUser_ReturnsForbiddenStatus() throws Exception {
         ResultActions response = mockMvc.perform(patch("/api/v1/cart")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestCartItemDto)));
+                .content(objectMapper.writeValueAsString(validRequestCartItemDto)));
 
         response.andExpect(MockMvcResultMatchers.status().isUnauthorized())
                 .andExpect(content().json(objectMapper.writeValueAsString(unauthorizedErrorResponse)))
@@ -164,7 +198,7 @@ public class CartControllerIntegrationTest {
     public void updateUserCartItem_AuthAdmin_ReturnsForbiddenStatus() throws Exception {
         ResultActions response = mockMvc.perform(patch("/api/v1/cart")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestCartItemDto)));
+                .content(objectMapper.writeValueAsString(validRequestCartItemDto)));
 
         response.andExpect(MockMvcResultMatchers.status().isForbidden())
                 .andExpect(content().json(objectMapper.writeValueAsString(accessDeniedErrorResponse)))
@@ -173,12 +207,26 @@ public class CartControllerIntegrationTest {
 
     @Test
     @WithUserDetails("john.doe@example.com")
-    public void deleteUserCartItem_AuthUserAndRequestCartItemDto_ReturnsNoContentStatus() throws Exception {
+    public void deleteUserCartItem_RequestCartItemDto_ReturnsNoContentStatus() throws Exception {
         ResultActions response = mockMvc.perform(delete("/api/v1/cart")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestCartItemDto)));
+                .content(objectMapper.writeValueAsString(validRequestCartItemDto)));
 
         response.andExpect(MockMvcResultMatchers.status().isNoContent())
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    @WithUserDetails("john.doe@example.com")
+    public void deleteUserCartItem_ThrowProductNotFoundException_ReturnsNotFoundStatusAndResponseStatusExceptionDto() throws Exception {
+        ResultActions response = mockMvc.perform(delete("/api/v1/cart")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(invalidRequestCartItemDto)));
+
+        var responseStatusExceptionDto = getProductNotFoundResponseStatusExDto();
+
+        response.andExpect(MockMvcResultMatchers.status().isNotFound())
+                .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)))
                 .andDo(MockMvcResultHandlers.print());
     }
 
@@ -187,7 +235,7 @@ public class CartControllerIntegrationTest {
     public void deleteUserCartItem_AnonymousUser_ReturnsForbiddenStatus() throws Exception {
         ResultActions response = mockMvc.perform(delete("/api/v1/cart")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestCartItemDto)));
+                .content(objectMapper.writeValueAsString(validRequestCartItemDto)));
 
         response.andExpect(MockMvcResultMatchers.status().isUnauthorized())
                 .andExpect(content().json(objectMapper.writeValueAsString(unauthorizedErrorResponse)))
@@ -199,10 +247,21 @@ public class CartControllerIntegrationTest {
     public void deleteUserCartItem_AuthAdmin_ReturnsForbiddenStatus() throws Exception {
         ResultActions response = mockMvc.perform(delete("/api/v1/cart")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestCartItemDto)));
+                .content(objectMapper.writeValueAsString(validRequestCartItemDto)));
 
         response.andExpect(MockMvcResultMatchers.status().isForbidden())
                 .andExpect(content().json(objectMapper.writeValueAsString(accessDeniedErrorResponse)))
                 .andDo(MockMvcResultHandlers.print());
+    }
+
+    private ResponseStatusExceptionDto getProductNotFoundResponseStatusExDto() {
+        HttpStatus httpStatus = HttpStatus.NOT_FOUND;
+        String msg = String.format("Product with slug: %s doesn't exist.", NON_EXISTENT_PRODUCT_SLUG);
+        return ResponseStatusExceptionDto
+                .builder()
+                .error(httpStatus.name())
+                .status(httpStatus.value())
+                .message(msg)
+                .build();
     }
 }

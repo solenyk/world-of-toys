@@ -2,8 +2,8 @@ package com.kopchak.worldoftoys.controller;
 
 import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
 import com.kopchak.worldoftoys.dto.payment.StripeCredentialsDto;
-import com.kopchak.worldoftoys.exception.AppStripeException;
-import com.kopchak.worldoftoys.exception.InvalidOrderException;
+import com.kopchak.worldoftoys.exception.exception.order.InvalidOrderException;
+import com.kopchak.worldoftoys.exception.exception.email.MessageSendingException;
 import com.kopchak.worldoftoys.service.PaymentService;
 import com.stripe.exception.StripeException;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,11 +16,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.net.URI;
@@ -29,7 +29,6 @@ import java.net.URI;
 @RequestMapping("/api/v1/payment")
 @CrossOrigin
 @RequiredArgsConstructor
-@Slf4j
 @Tag(name = "payment-controller", description = "The payment controller is responsible for managing payment-related data. " +
         "It provides endpoints for stripe checkout and stripe payment webhook handling.")
 public class PaymentController {
@@ -40,7 +39,7 @@ public class PaymentController {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "302",
-                    description = "Stripe custom checkout link has been successfully created",
+                    description = "The stripe custom checkout link has been successfully created",
                     content = @Content(schema = @Schema(hidden = true))),
             @ApiResponse(
                     responseCode = "400",
@@ -52,16 +51,13 @@ public class PaymentController {
     @PostMapping("/{orderId}")
     public ResponseEntity<Void> stripeCheckout(@Valid @RequestBody StripeCredentialsDto credentialsDto,
                                                @PathVariable(name = "orderId") String orderId) {
-        if (paymentService.isNonExistentOrPaidOrder(orderId)) {
-            log.error("The order with id: {} does not exist or has already been paid!", orderId);
-            throw new InvalidOrderException(HttpStatus.BAD_REQUEST, "The order does not exist or has already been paid!");
-        }
         try {
             String stripeCheckoutUserUrl = paymentService.stripeCheckout(credentialsDto, orderId);
             return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(stripeCheckoutUserUrl)).build();
+        } catch (InvalidOrderException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         } catch (StripeException e) {
-            log.error(e.getMessage());
-            throw new AppStripeException(HttpStatus.valueOf(e.getStatusCode()), e.getMessage());
+            throw new ResponseStatusException(HttpStatus.valueOf(e.getStatusCode()), e.getMessage());
         }
     }
 
@@ -69,11 +65,16 @@ public class PaymentController {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "204",
-                    description = "Payment has been successfully handled",
+                    description = "The payment has been successfully handled",
                     content = @Content(schema = @Schema(hidden = true))),
             @ApiResponse(
                     responseCode = "400",
-                    description = "Unable to read the request body or a Stripe error occurred while handling the webhook",
+                    description = "Unable to read the request body",
+                    content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class
+                    ))),
+            @ApiResponse(
+                    responseCode = "503",
+                    description = "Service Unavailable",
                     content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class
                     )))
     })
@@ -84,9 +85,12 @@ public class PaymentController {
             String requestBody = IOUtils.toString(request.getReader());
             paymentService.handlePaymentWebhook(sigHeader, requestBody);
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch (IOException | StripeException e) {
-            log.error("Stripe error: {}", e.getMessage());
-            throw new AppStripeException(HttpStatus.BAD_REQUEST, e.getMessage());
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        } catch (StripeException e) {
+            throw new ResponseStatusException(HttpStatus.valueOf(e.getStatusCode()), e.getMessage());
+        } catch (MessageSendingException e) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, e.getMessage());
         }
     }
 }

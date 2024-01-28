@@ -1,7 +1,8 @@
 package com.kopchak.worldoftoys.repository.cart;
 
+import com.kopchak.worldoftoys.domain.cart.CartItem;
+import com.kopchak.worldoftoys.domain.user.AppUser;
 import com.kopchak.worldoftoys.dto.cart.CartItemDto;
-import com.kopchak.worldoftoys.model.user.AppUser;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,8 +12,10 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -31,7 +34,7 @@ class CartItemRepositoryTest {
     }
 
     @Test
-    public void calculateUserCartTotalPrice_UserEmail_ReturnsBigDecimal() {
+    public void calculateUserCartTotalPrice_ReturnsBigDecimal() {
         BigDecimal expectedTotalPrice = BigDecimal.valueOf(2900);
 
         BigDecimal actualTotalPrice = cartItemRepository.calculateUserCartTotalPrice(user);
@@ -41,11 +44,24 @@ class CartItemRepositoryTest {
     }
 
     @Test
-    public void findAllUserCartItems_UserEmail_ReturnsSetOfCartItemDto() {
+    public void deleteAllById_ReturnsCartItemSet() {
+        Set<CartItem> cartItems = cartItemRepository.deleteAllById_User(user);
+        Set<CartItemDto> cartItemDtos = cartItemRepository.findAllUserCartItems(user);
+
+        assertThat(cartItems).isNotNull();
+        assertThat(cartItems).isNotEmpty();
+        assertThat(cartItems.size()).isEqualTo(2);
+        assertThat(cartItemDtos).isNotNull();
+        assertThat(cartItemDtos).isEmpty();
+    }
+
+    @Test
+    public void findAllUserCartItems_ReturnsSetOfCartItemDto() {
         int expectedProductAmount = 2;
         List<CartItemDto> expectedCartItemDtos = new ArrayList<>() {{
-            add(new CartItemDto("Лялька Даринка", "lyalka-darynka", BigDecimal.valueOf(900), 1));
-            add(new CartItemDto("Пупсик Оксанка", "pupsik_oksanka", BigDecimal.valueOf(2000), 4));
+            add(new CartItemDto("Лялька Даринка", "lyalka-darynka", BigDecimal.valueOf(900), BigInteger.ONE));
+            add(new CartItemDto("Пупсик Оксанка", "pupsik_oksanka", BigDecimal.valueOf(2000),
+                    BigInteger.valueOf(4)));
         }};
 
         List<CartItemDto> actualCartItemDtos = cartItemRepository.findAllUserCartItems(user)
@@ -62,5 +78,18 @@ class CartItemRepositoryTest {
                     expectedCartItemDtos.get(i).totalProductPrice());
             assertThat(actualCartItemDtos.get(i).quantity()).isEqualTo(expectedCartItemDtos.get(i).quantity());
         }
+    }
+
+    @Test
+    public void updateCartItems_deleteUnavailableItems_ReturnsInt() {
+        user.setId(1003);
+        int expectedUpdatedCartItemsAmount = 1;
+        int expectedDeletedCartItemsAmount = 1;
+
+        int actualDeletedCartItemsAmount = cartItemRepository.deleteUnavailableItems(user);
+        int actualUpdatedCartItemsAmount = cartItemRepository.updateCartItems(user);
+
+        assertThat(actualDeletedCartItemsAmount).isEqualTo(expectedDeletedCartItemsAmount);
+        assertThat(actualUpdatedCartItemsAmount).isEqualTo(expectedUpdatedCartItemsAmount);
     }
 }

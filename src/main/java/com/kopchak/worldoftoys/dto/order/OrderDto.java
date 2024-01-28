@@ -1,7 +1,7 @@
 package com.kopchak.worldoftoys.dto.order;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.kopchak.worldoftoys.model.order.OrderStatus;
+import com.kopchak.worldoftoys.domain.order.OrderStatus;
 import lombok.Builder;
 
 import java.math.BigDecimal;

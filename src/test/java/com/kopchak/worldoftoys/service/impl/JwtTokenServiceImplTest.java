@@ -1,12 +1,12 @@
 package com.kopchak.worldoftoys.service.impl;
 
+import com.kopchak.worldoftoys.domain.token.auth.AuthTokenType;
+import com.kopchak.worldoftoys.domain.token.auth.AuthenticationToken;
+import com.kopchak.worldoftoys.domain.user.AppUser;
 import com.kopchak.worldoftoys.dto.token.AccessAndRefreshTokensDto;
 import com.kopchak.worldoftoys.dto.token.AuthTokenDto;
-import com.kopchak.worldoftoys.exception.InvalidRefreshTokenException;
-import com.kopchak.worldoftoys.exception.UserNotFoundException;
-import com.kopchak.worldoftoys.model.token.AuthTokenType;
-import com.kopchak.worldoftoys.model.token.AuthenticationToken;
-import com.kopchak.worldoftoys.model.user.AppUser;
+import com.kopchak.worldoftoys.exception.exception.token.JwtTokenException;
+import com.kopchak.worldoftoys.exception.exception.token.TokenAlreadyExistException;
 import com.kopchak.worldoftoys.repository.token.AuthTokenRepository;
 import com.kopchak.worldoftoys.repository.user.UserRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -18,9 +18,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -52,7 +50,6 @@ class JwtTokenServiceImplTest {
     private AuthTokenType accessTokenType;
     private AppUser user;
     private AuthTokenDto validAuthTokenDto;
-    private String userNotFoundExceptionMsg;
 
     @BeforeEach
     void setUp() {
@@ -62,28 +59,29 @@ class JwtTokenServiceImplTest {
         accessTokenType = AuthTokenType.ACCESS;
         user = AppUser.builder().email(username).build();
         validAuthTokenDto = AuthTokenDto.builder().token(VALID_TOKEN).build();
-        userNotFoundExceptionMsg = "User with this username does not exist!";
     }
 
     @Test
-    public void extractUsername_ValidToken_ReturnsOptionalString() {
+    public void extractUsername_ValidToken_ReturnsString() throws JwtTokenException {
         String validToken = getValidToken();
 
-        Optional<String> actualUsername = jwtTokenService.extractUsername(validToken);
+        String actualUsername = jwtTokenService.extractUsername(validToken);
 
-        assertThat(actualUsername).isPresent();
-        assertThat(actualUsername.get()).isEqualTo(username);
+        assertThat(actualUsername).isNotNull();
+        assertThat(actualUsername).isEqualTo(username);
     }
 
     @Test
-    public void extractUsername_InvalidToken_ReturnsEmptyOptional() {
-        Optional<String> actualUsername = jwtTokenService.extractUsername(invalidToken);
+    public void extractUsername_InvalidToken_ThrowsJwtTokenException() {
+        String jwtTokenExceptionMsg = "Failed to extract expiration date from token: " +
+                "JWT strings must contain exactly 2 period characters. Found: 0";
 
-        assertThat(actualUsername).isEmpty();
+        assertException(JwtTokenException.class, jwtTokenExceptionMsg,
+                () -> jwtTokenService.extractUsername(invalidToken));
     }
 
     @Test
-    public void isAuthTokenValid_ValidToken_ReturnsTrue() {
+    public void isAuthTokenValid_ValidToken_ReturnsTrue() throws JwtTokenException {
         String validToken = getValidToken();
         AuthenticationToken validAuthToken = AuthenticationToken
                 .builder()
@@ -95,7 +93,7 @@ class JwtTokenServiceImplTest {
                 .build();
 
         when(authTokenRepository.findByToken(validToken)).thenReturn(Optional.of(validAuthToken));
-        doReturn(Optional.of(username)).when(jwtTokenService).extractUsername(validToken);
+        doReturn(username).when(jwtTokenService).extractUsername(validToken);
         when(userRepository.findByEmail(username)).thenReturn(Optional.of(user));
 
         boolean isValid = jwtTokenService.isAuthTokenValid(validToken, accessTokenType);
@@ -104,37 +102,36 @@ class JwtTokenServiceImplTest {
     }
 
     @Test
-    public void isAuthTokenValid_TokenThatIsNotPresent_ReturnsFalse() {
+    public void isAuthTokenValid_TokenThatIsNotPresent_ReturnsFalse() throws JwtTokenException {
         boolean isValid = jwtTokenService.isAuthTokenValid(invalidToken, accessTokenType);
 
         assertFalse(isValid);
     }
 
     @Test
-    public void isAuthTokenValid_InvalidToken_ReturnsFalse() {
+    public void isAuthTokenValid_TokenExpiredException_ReturnsFalse() throws JwtTokenException {
         AuthenticationToken invalidAuthToken = AuthenticationToken
                 .builder()
                 .token(invalidToken)
                 .tokenType(accessTokenType)
                 .revoked(false)
-                .expired(false)
+                .expired(true)
                 .user(user)
                 .build();
+        String jwtTokenExceptionMsg = "Failed to extract expiration date from token: " +
+                "JWT strings must contain exactly 2 period characters. Found: 0";
 
-        when(authTokenRepository.findByToken(invalidToken)).thenReturn(Optional.of(invalidAuthToken));
-        doReturn(Optional.of(username)).when(jwtTokenService).extractUsername(invalidToken);
-        when(userRepository.findByEmail(username)).thenReturn(Optional.of(user));
+        when(authTokenRepository.findByToken(eq(invalidToken))).thenReturn(Optional.of(invalidAuthToken));
+        doReturn(username).when(jwtTokenService).extractUsername(eq(invalidToken));
+        when(userRepository.findByEmail(eq(username))).thenReturn(Optional.of(user));
 
-        boolean isValid = jwtTokenService.isAuthTokenValid(invalidToken, accessTokenType);
-
-        assertFalse(isValid);
+        assertException(JwtTokenException.class, jwtTokenExceptionMsg,
+                () -> jwtTokenService.isAuthTokenValid(this.invalidToken, accessTokenType));
     }
 
     @Test
-    public void generateAuthTokens_UsernameOfExistingUser_ReturnsAccessAndRefreshTokensDto() {
-        when(userRepository.findByEmail(username)).thenReturn(Optional.of(user));
-
-        AccessAndRefreshTokensDto accessAndRefreshTokensDto = jwtTokenService.generateAuthTokens(username);
+    public void generateAuthTokens_ExistingUser_ReturnsAccessAndRefreshTokensDto() {
+        AccessAndRefreshTokensDto accessAndRefreshTokensDto = jwtTokenService.generateAuthTokens(user);
 
         assertThat(accessAndRefreshTokensDto).isNotNull();
         assertThat(accessAndRefreshTokensDto.accessToken()).isNotNull();
@@ -142,23 +139,11 @@ class JwtTokenServiceImplTest {
     }
 
     @Test
-    public void generateAuthTokens_UsernameOfNonExistingUser_ThrowsUserNotFoundException() {
-        assertResponseStatusException(UserNotFoundException.class, userNotFoundExceptionMsg, HttpStatus.NOT_FOUND, () ->
-                jwtTokenService.generateAuthTokens(username));
-    }
+    public void refreshAccessToken_ValidAuthToken_ReturnsAuthTokenDto() throws JwtTokenException, TokenAlreadyExistException {
+        AuthenticationToken authToken = AuthenticationToken.builder().tokenType(AuthTokenType.REFRESH).build();
 
-    @Test
-    public void isActiveAuthTokenExists_ValidTokenAndAuthTokenType_ReturnsTrue() {
-        when(authTokenRepository.isActiveAuthTokenExists(username, accessTokenType)).thenReturn(true);
-
-        boolean isActiveAuthTokenExists = jwtTokenService.isActiveAuthTokenExists(VALID_TOKEN, accessTokenType);
-
-        assertTrue(isActiveAuthTokenExists);
-    }
-
-    @Test
-    public void refreshAccessToken_ValidAuthTokenDtoWithExistingUser_ReturnsAuthTokenDto() {
-        when(userRepository.findByEmail(username)).thenReturn(Optional.of(user));
+        when(authTokenRepository.findByToken(eq(VALID_TOKEN))).thenReturn(Optional.of(authToken));
+        when(userRepository.findByEmail(eq(username))).thenReturn(Optional.of(user));
 
         AuthTokenDto returnedAuthTokenDto = jwtTokenService.refreshAccessToken(validAuthTokenDto);
 
@@ -167,34 +152,34 @@ class JwtTokenServiceImplTest {
     }
 
     @Test
-    public void refreshAccessToken_ValidAuthTokenDtoWithNonExistingUser_ThrowsUserNotFoundException() {
-        assertResponseStatusException(UserNotFoundException.class, userNotFoundExceptionMsg, HttpStatus.NOT_FOUND,() ->
-                jwtTokenService.refreshAccessToken(validAuthTokenDto));
+    public void refreshAccessToken_InvalidAuthToken_ThrowsJwtTokenException() {
+        var ivalidAuthTokenDto = AuthTokenDto.builder().token(invalidToken).build();
+        String jwtTokenExceptionMsg = "The refresh token is invalid!";
+
+        assertException(JwtTokenException.class, jwtTokenExceptionMsg,
+                () -> jwtTokenService.refreshAccessToken(ivalidAuthTokenDto));
     }
 
     @Test
-    public void refreshAccessToken_InvalidAuthTokenDto_ThrowsInvalidRefreshTokenException() {
-        String invalidRefreshTokenExceptionMsg = "This refresh token is invalid!";
-        AuthTokenDto invalidAuthTokenDto = AuthTokenDto.builder().token(invalidToken).build();
+    public void refreshAccessToken_ActiveAuthTokenExists_ThrowsTokenAlreadyExistException() {
+        AuthenticationToken authToken = AuthenticationToken.builder().tokenType(AuthTokenType.REFRESH).build();
+        String tokenAlreadyExistExceptionMsg = "There is valid access token!";
 
-        assertResponseStatusException(InvalidRefreshTokenException.class, invalidRefreshTokenExceptionMsg,
-                HttpStatus.BAD_REQUEST, () -> jwtTokenService.refreshAccessToken(invalidAuthTokenDto));
+        when(authTokenRepository.findByToken(eq(VALID_TOKEN))).thenReturn(Optional.of(authToken));
+        when(userRepository.findByEmail(eq(username))).thenReturn(Optional.of(user));
+        when(authTokenRepository.isActiveAuthTokenExists(eq(username), eq(AuthTokenType.ACCESS))).thenReturn(true);
+
+        assertException(TokenAlreadyExistException.class, tokenAlreadyExistExceptionMsg,
+                () -> jwtTokenService.refreshAccessToken(validAuthTokenDto));
     }
 
     @Test
-    public void revokeAllUserAuthTokens_UsernameOfExistingUser() {
-        when(userRepository.findByEmail(username)).thenReturn(Optional.of(user));
+    public void revokeAllUserAuthTokens_ExistingUser() {
         doNothing().when(authTokenRepository).revokeActiveUserAuthTokens(isA(AppUser.class));
 
-        jwtTokenService.revokeAllUserAuthTokens(username);
+        jwtTokenService.revokeAllUserAuthTokens(user);
 
-        verify(authTokenRepository, times(1)).revokeActiveUserAuthTokens(user);
-    }
-
-    @Test
-    public void revokeAllUserAuthTokens_UsernameOfNonExistingUser_ThrowsUserNotFoundException() {
-        assertResponseStatusException(UserNotFoundException.class, userNotFoundExceptionMsg, HttpStatus.NOT_FOUND, () ->
-                jwtTokenService.revokeAllUserAuthTokens(username));
+        verify(authTokenRepository).revokeActiveUserAuthTokens(user);
     }
 
     private String getValidToken() {
@@ -204,16 +189,10 @@ class JwtTokenServiceImplTest {
         return VALID_TOKEN;
     }
 
-    private void assertResponseStatusException(Class<? extends ResponseStatusException> expectedExceptionType,
-                                               String expectedMessage, HttpStatus expectedHttpStatus,
-                                               Executable executable) {
-        ResponseStatusException exception = assertThrows(expectedExceptionType, executable);
-
-        String actualMessage = exception.getReason();
-        int expectedStatusCode = expectedHttpStatus.value();
-        int actualStatusCode = exception.getStatusCode().value();
-
+    private void assertException(Class<? extends Exception> expectedExceptionType,
+                                 String expectedMessage, Executable executable) {
+        Exception exception = assertThrows(expectedExceptionType, executable);
+        String actualMessage = exception.getMessage();
         assertEquals(expectedMessage, actualMessage);
-        assertEquals(expectedStatusCode, actualStatusCode);
     }
 }

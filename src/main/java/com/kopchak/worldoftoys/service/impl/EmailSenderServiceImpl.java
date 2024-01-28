@@ -1,17 +1,22 @@
 package com.kopchak.worldoftoys.service.impl;
 
-import com.kopchak.worldoftoys.exception.UserNotFoundException;
-import com.kopchak.worldoftoys.model.token.ConfirmationTokenType;
-import com.kopchak.worldoftoys.model.user.AppUser;
+import com.kopchak.worldoftoys.domain.email.EmailType;
+import com.kopchak.worldoftoys.domain.email.confirm.ConfirmEmail;
+import com.kopchak.worldoftoys.domain.email.confirm.factory.ConfirmEmailFactory;
+import com.kopchak.worldoftoys.domain.email.status.StatusEmail;
+import com.kopchak.worldoftoys.domain.email.status.factory.StatusEmailFactory;
+import com.kopchak.worldoftoys.domain.order.StatusProvider;
+import com.kopchak.worldoftoys.domain.token.confirm.ConfirmationTokenType;
+import com.kopchak.worldoftoys.domain.user.AppUser;
+import com.kopchak.worldoftoys.exception.exception.email.MessageSendingException;
+import com.kopchak.worldoftoys.exception.exception.user.UserNotFoundException;
 import com.kopchak.worldoftoys.repository.user.UserRepository;
 import com.kopchak.worldoftoys.service.EmailSenderService;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
+import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
@@ -24,26 +29,13 @@ import org.thymeleaf.context.Context;
 @Slf4j
 public class EmailSenderServiceImpl implements EmailSenderService {
     private final static String SENDER_EMAIL = "worldoftoys@gmail.com";
-    private final static String ACCOUNT_ACTIVATION_TITLE = "Account activation";
-    private final static String PASSWORD_RESET_TITLE = "Password reset";
-    private final static String ACCOUNT_ACTIVATION_SUBJECT = "Confirm your email";
-    private final static String PASSWORD_RESET_SUBJECT = "Reset your password";
-    private final static String ACCOUNT_ACTIVATION_LINK = "/api/v1/auth/confirm?token=";
-    private final static String PASSWORD_RESET_LINK = "/api/v1/auth/reset-password?token=";
-    private final static String ACCOUNT_ACTIVATION_LINK_NAME = "Activate Now";
-    private final static String PASSWORD_RESET_LINK_NAME = "Reset password";
-    private final static String ACCOUNT_ACTIVATION_MSG =
-            "Thank you for registering. Please click on the below link to activate your account:";
-    private final static String PASSWORD_RESET_MSG =
-            "Thank you for using our website. Please click on the below link to reset your password:";
     private final JavaMailSender mailSender;
     private final UserRepository userRepository;
     private ITemplateEngine templateEngine;
-    private final HttpServletRequest request;
 
     @Override
     @Async
-    public void send(String emailRecipient, String emailContent, String msgSubject) {
+    public void send(String emailRecipient, String emailContent, String msgSubject) throws MessageSendingException {
         try {
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "utf-8");
@@ -52,43 +44,44 @@ public class EmailSenderServiceImpl implements EmailSenderService {
             helper.setSubject(msgSubject);
             helper.setFrom(SENDER_EMAIL);
             mailSender.send(mimeMessage);
-            log.info("Email sent to: {}", emailRecipient);
-        } catch (MessagingException e) {
-            log.error("Failed to send email to: {} with subject: {}", emailRecipient, msgSubject, e);
-            throw new IllegalStateException("Failed to send email");
+            log.info("The email with subject: {} sent to the: {}", msgSubject, emailRecipient);
+        } catch (MessagingException | MailException e) {
+            log.error("Failed to send the email to the user with username: {}", emailRecipient);
+            throw new MessageSendingException(String.format("Failed to send the email: %s", e.getMessage()));
         }
     }
 
     @Override
-    public void sendEmail(String userEmail, String confirmToken, ConfirmationTokenType tokenType) {
-        String emailContent;
-        AppUser user = userRepository.findByEmail(userEmail).orElseThrow(() ->
-                new UserNotFoundException(HttpStatus.NOT_FOUND, "User with this username does not exist!"));
-        String fullName = user.getFirstname() + " " + user.getLastname();
-        if (tokenType == ConfirmationTokenType.ACTIVATION) {
-            emailContent = buildEmail(ACCOUNT_ACTIVATION_TITLE, fullName, ACCOUNT_ACTIVATION_MSG,
-                    getBaseUrl() + ACCOUNT_ACTIVATION_LINK + confirmToken, ACCOUNT_ACTIVATION_LINK_NAME);
-            send(userEmail, emailContent, ACCOUNT_ACTIVATION_SUBJECT);
-        } else {
-            emailContent = buildEmail(PASSWORD_RESET_TITLE, fullName, PASSWORD_RESET_MSG,
-                    getBaseUrl() + PASSWORD_RESET_LINK + confirmToken, PASSWORD_RESET_LINK_NAME);
-            send(userEmail, emailContent, PASSWORD_RESET_SUBJECT);
-        }
+    public void sendEmail(String userEmail, String confirmToken, ConfirmationTokenType tokenType)
+            throws UserNotFoundException, MessageSendingException {
+        AppUser user = userRepository.findByEmail(userEmail).orElseThrow(() -> {
+            String errMsg = String.format("The user with username: %s does not exist!", userEmail);
+            log.error(errMsg);
+            return new UserNotFoundException(errMsg);
+        });
+        String userFirstname = user.getFirstname();
+        ConfirmEmailFactory confirmEmailFactory = new ConfirmEmailFactory();
+        ConfirmEmail confirmEmail = confirmEmailFactory.createConfirmEmail(tokenType, confirmToken);
+        String emailContent = buildEmail(userFirstname, confirmEmail);
+        send(userEmail, emailContent, confirmEmail.getSubject());
     }
 
-    private String buildEmail(String title, String name, String message, String link, String linkName) {
+    @Override
+    public <T extends Enum<T> & StatusProvider> void sendEmail(String userEmail, String userFirstname, String orderId,
+                                                               T status) throws MessageSendingException {
+        StatusEmailFactory statusEmailFactory = new StatusEmailFactory();
+        StatusEmail statusEmail = statusEmailFactory.createStatusEmail(status, orderId);
+        String emailContent = buildEmail(userFirstname, statusEmail);
+        send(userEmail, emailContent, statusEmail.getSubject());
+    }
+
+    private String buildEmail(String name, EmailType emailType) {
         Context context = new Context();
-        context.setVariable("title", title);
+        context.setVariable("title", emailType.getTitle());
         context.setVariable("name", name);
-        context.setVariable("message", message);
-        context.setVariable("link", link);
-        context.setVariable("linkName", linkName);
-        return templateEngine.process("email-template", context);
-    }
-
-    private @NotNull String getBaseUrl() {
-        String requestUrl = request.getRequestURL().toString();
-        String servletPath = request.getServletPath();
-        return requestUrl.substring(0, requestUrl.length() - servletPath.length());
+        context.setVariable("message", emailType.getMsg());
+        context.setVariable("link", emailType.getLink());
+        context.setVariable("linkName", emailType.getLinkName());
+        return templateEngine.process("email", context);
     }
 }

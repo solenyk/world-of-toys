@@ -1,8 +1,8 @@
 package com.kopchak.worldoftoys.repository.token;
 
-import com.kopchak.worldoftoys.model.token.AuthTokenType;
-import com.kopchak.worldoftoys.model.token.AuthenticationToken;
-import com.kopchak.worldoftoys.model.user.AppUser;
+import com.kopchak.worldoftoys.domain.token.auth.AuthTokenType;
+import com.kopchak.worldoftoys.domain.token.auth.AuthenticationToken;
+import com.kopchak.worldoftoys.domain.user.AppUser;
 import com.kopchak.worldoftoys.repository.user.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +33,7 @@ class AuthTokenRepositoryTest {
 
         //Assert
         assertThat(returnedToken).isNotNull();
-        assertThat(returnedToken).isPresent();
+        assertThat(returnedToken).isNotEmpty();
         assertThat(returnedToken.get().getToken()).isEqualTo(jwtToken);
     }
 

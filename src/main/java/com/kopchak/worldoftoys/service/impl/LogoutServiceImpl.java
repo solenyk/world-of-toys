@@ -22,7 +22,7 @@ public class LogoutServiceImpl implements LogoutService {
     public void logout(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
         final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (authHeader == null || !authHeader.startsWith(BEARER)) {
-            log.info("Authorization header is null or doesn't start with BEARER");
+            log.info("The authorization header is null or doesn't start with 'BEARER'");
             return;
         }
         final String jwt = authHeader.substring(BEARER.length());
@@ -32,7 +32,7 @@ public class LogoutServiceImpl implements LogoutService {
             storedToken.setRevoked(true);
             authTokenRepository.save(storedToken);
             SecurityContextHolder.clearContext();
-            log.info("The user: {} has logged out", storedToken.getUser().getUsername());
+            log.info("The user with the username: {} has logged out", storedToken.getUser().getUsername());
         }
     }
 }

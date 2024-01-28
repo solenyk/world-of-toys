@@ -1,14 +1,17 @@
 package com.kopchak.worldoftoys.service.impl;
 
 import com.kopchak.worldoftoys.dto.payment.StripeCredentialsDto;
-import com.kopchak.worldoftoys.exception.InvalidOrderException;
-import com.kopchak.worldoftoys.model.order.Order;
-import com.kopchak.worldoftoys.model.order.OrderStatus;
-import com.kopchak.worldoftoys.model.order.details.OrderDetails;
-import com.kopchak.worldoftoys.model.order.payment.Currency;
-import com.kopchak.worldoftoys.model.order.payment.Payment;
-import com.kopchak.worldoftoys.model.order.payment.PaymentStatus;
+import com.kopchak.worldoftoys.exception.exception.order.InvalidOrderException;
+import com.kopchak.worldoftoys.exception.exception.email.MessageSendingException;
+import com.kopchak.worldoftoys.domain.order.Order;
+import com.kopchak.worldoftoys.domain.order.OrderStatus;
+import com.kopchak.worldoftoys.domain.order.details.OrderDetails;
+import com.kopchak.worldoftoys.domain.order.payment.Currency;
+import com.kopchak.worldoftoys.domain.order.payment.Payment;
+import com.kopchak.worldoftoys.domain.order.payment.PaymentStatus;
+import com.kopchak.worldoftoys.domain.user.AppUser;
 import com.kopchak.worldoftoys.repository.order.OrderRepository;
+import com.kopchak.worldoftoys.service.EmailSenderService;
 import com.kopchak.worldoftoys.service.PaymentService;
 import com.stripe.Stripe;
 import com.stripe.exception.EventDataObjectDeserializationException;
@@ -26,7 +29,6 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -49,6 +51,7 @@ public class PaymentServiceImpl implements PaymentService {
     private String WEBHOOK_SECRET_KEY;
 
     private final OrderRepository orderRepository;
+    private final EmailSenderService emailSenderService;
 
     @PostConstruct
     public void init() {
@@ -62,22 +65,24 @@ public class PaymentServiceImpl implements PaymentService {
     private static final String SESSION_ORDER_ID_METADATA_KEY = "order_id";
 
     @Override
-    public String stripeCheckout(StripeCredentialsDto credentialsDto, String orderId) throws StripeException {
-        Order order = orderRepository.findById(orderId).orElseThrow(() ->
-                new InvalidOrderException(HttpStatus.BAD_REQUEST, "The order does not exist or has already been paid!"));
+    public String stripeCheckout(StripeCredentialsDto credentialsDto, String orderId)
+            throws InvalidOrderException, StripeException {
+        Optional<Order> orderOptional = orderRepository.findById(orderId);
+        if (orderOptional.isEmpty() || !orderOptional.get().getOrderStatus().equals(OrderStatus.AWAITING_PAYMENT)) {
+            String errMsg = String.format("The order with id: %s does not exist or has already been paid!", orderId);
+            log.error(errMsg);
+            throw new InvalidOrderException(errMsg);
+        }
         Customer customer = findOrCreateStripeCustomer(credentialsDto.customerEmail(), credentialsDto.customerName());
-        Set<OrderDetails> orderDetails = order.getOrderDetails();
+        Set<OrderDetails> orderDetails = orderOptional.get().getOrderDetails();
         SessionCreateParams sessionCreateParams = createPaymentSessionParams(customer, orderId, orderDetails);
         Session session = Session.create(sessionCreateParams);
         return session.getUrl();
     }
 
-    public boolean isNonExistentOrPaidOrder(String orderId) {
-        Optional<Order> order = orderRepository.findById(orderId);
-        return order.isEmpty() || !order.get().getOrderStatus().equals(OrderStatus.AWAITING_PAYMENT);
-    }
-
-    public void handlePaymentWebhook(String sigHeader, String requestBody) throws StripeException {
+    @Override
+    public void handlePaymentWebhook(String sigHeader, String requestBody)
+            throws StripeException, MessageSendingException {
         Event event = Webhook.constructEvent(requestBody, sigHeader, WEBHOOK_SECRET_KEY);
 
         String eventType = event.getType();
@@ -143,8 +148,8 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     private void buildPayment(String orderId, String eventType, String paymentId, String sessionPaymentStatus,
-                              Long orderTotalAmount) {
-        Order paidOrder = orderRepository.findById(orderId).orElseThrow();
+                              Long orderTotalAmount) throws MessageSendingException {
+        Order order = orderRepository.findById(orderId).orElseThrow();
 
         PaymentStatus paymentStatus;
         OrderStatus orderStatus;
@@ -167,10 +172,12 @@ public class PaymentServiceImpl implements PaymentService {
                 .dateTime(LocalDateTime.now())
                 .status(paymentStatus)
                 .price(BigDecimal.valueOf(orderTotalAmount, 2))
-                .order(paidOrder)
+                .order(order)
                 .build();
-        paidOrder.getPayments().add(payment);
-        paidOrder.setOrderStatus(orderStatus);
-        orderRepository.save(paidOrder);
+        order.getPayments().add(payment);
+        order.setOrderStatus(orderStatus);
+        orderRepository.save(order);
+        AppUser user = order.getUser();
+        emailSenderService.sendEmail(user.getEmail(), user.getFirstname(), orderId, paymentStatus);
     }
 }

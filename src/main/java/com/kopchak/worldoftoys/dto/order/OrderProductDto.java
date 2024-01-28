@@ -1,6 +1,6 @@
 package com.kopchak.worldoftoys.dto.order;
 
-import java.math.BigDecimal;
+import java.math.BigInteger;
 
-public record OrderProductDto(String name, BigDecimal price, Integer quantity) {
+public record OrderProductDto(String name, String slug, BigInteger quantity) {
 }

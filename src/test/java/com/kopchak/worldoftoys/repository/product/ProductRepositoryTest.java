@@ -1,6 +1,6 @@
 package com.kopchak.worldoftoys.repository.product;
 
-import com.kopchak.worldoftoys.model.product.Product;
+import com.kopchak.worldoftoys.domain.product.Product;
 import com.kopchak.worldoftoys.repository.specifications.ProductSpecifications;
 import com.kopchak.worldoftoys.repository.specifications.impl.ProductSpecificationsImpl;
 import org.junit.jupiter.api.Test;
@@ -59,25 +59,24 @@ class ProductRepositoryTest {
         List<String> brandCategories = List.of("сurlimals", "devilon");
         List<String> ageCategories = List.of("vid-1-do-3-rokiv");
         String priceAscSortOrder = "asc";
+        String availability = "available";
 
         Specification<Product> productSpecification = productSpecifications.filterByAllCriteria(productName,
-                minPrice, maxPrice, originCategories, brandCategories, ageCategories, priceAscSortOrder);
+                minPrice, maxPrice, originCategories, brandCategories, ageCategories, priceAscSortOrder, availability);
         Pageable pageable = PageRequest.of(0, 5);
 
         Page<Product> returnedProductPage = productRepository.findAll(productSpecification, pageable);
 
         int expectedAmountOfPages = 1;
-        int expectedAmountOfElements = 2;
-        int expectedContentSize = 2;
-        String expectedFirstProductName = "Лялька Русалочка";
-        String expectedSecondProductName = "Лялька Даринка";
+        int expectedAmountOfElements = 1;
+        int expectedContentSize = 1;
+        String expectedProductName = "Лялька Даринка";
 
         assertThat(returnedProductPage).isNotNull();
         assertThat(returnedProductPage.getTotalElements()).isEqualTo(expectedAmountOfElements);
         assertThat(returnedProductPage.getTotalPages()).isEqualTo(expectedAmountOfPages);
         assertThat(returnedProductPage.getContent().size()).isEqualTo(expectedContentSize);
-        assertThat(returnedProductPage.getContent().get(0).getName()).isEqualTo(expectedFirstProductName);
-        assertThat(returnedProductPage.getContent().get(1).getName()).isEqualTo(expectedSecondProductName);
+        assertThat(returnedProductPage.getContent().get(0).getName()).isEqualTo(expectedProductName);
     }
 
     @Test
@@ -85,7 +84,8 @@ class ProductRepositoryTest {
         String priceDescSortOrder = "desc";
 
         Specification<Product> productSpecification = productSpecifications.filterByAllCriteria(null,
-                null, null, null, null, null, priceDescSortOrder);
+                null, null, null, null, null,
+                priceDescSortOrder, null);
         Pageable pageable = PageRequest.of(0, 3);
 
         Page<Product> returnedProductPage = productRepository.findAll(productSpecification, pageable);

@@ -19,7 +19,8 @@ import org.springframework.context.annotation.Configuration;
                         "to the server and returning the appropriate data to the front-end.",
                 contact = @Contact(
                         name = "Iryna Kopchak",
-                        email = "iryna.kopchak39@gmail.com"
+                        email = "iryna.kopchak39@gmail.com",
+                        url = "https://www.linkedin.com/in/iryna-kopchak/"
                 ),
                 license = @License(name = "Apache 2.0",
                         url = "https://www.apache.org/licenses/LICENSE-2.0.html"

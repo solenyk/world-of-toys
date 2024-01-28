@@ -1,8 +1,8 @@
 package com.kopchak.worldoftoys.repository.specifications.impl;
 
-import com.kopchak.worldoftoys.model.product.Product;
-import com.kopchak.worldoftoys.model.product.Product_;
-import com.kopchak.worldoftoys.model.product.category.*;
+import com.kopchak.worldoftoys.domain.product.Product;
+import com.kopchak.worldoftoys.domain.product.Product_;
+import com.kopchak.worldoftoys.domain.product.category.*;
 import com.kopchak.worldoftoys.repository.specifications.ProductSpecifications;
 import jakarta.persistence.criteria.*;
 import jakarta.persistence.metamodel.SingularAttribute;
@@ -10,6 +10,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.List;
 
 @Component
@@ -19,9 +20,11 @@ public class ProductSpecificationsImpl implements ProductSpecifications {
                                                                         BigDecimal maxPrice,
                                                                         List<String> originCategories,
                                                                         List<String> brandCategories,
-                                                                        List<String> ageCategories) {
+                                                                        List<String> ageCategories,
+                                                                        String availability) {
         return Specification
                 .where(hasProductName(productName))
+                .and(isAvailable(availability))
                 .and(hasPriceGreaterThanOrEqualTo(minPrice))
                 .and(hasPriceLessThanOrEqualTo(maxPrice))
                 .and(hasProductInOriginCategory(originCategories))
@@ -32,8 +35,10 @@ public class ProductSpecificationsImpl implements ProductSpecifications {
     @Override
     public Specification<Product> filterByAllCriteria(String productName, BigDecimal minPrice, BigDecimal maxPrice,
                                                       List<String> originCategories, List<String> brandCategories,
-                                                      List<String> ageCategories, String priceSortOrder) {
-        return filterByProductNamePriceAndCategories(productName, minPrice, maxPrice, originCategories, brandCategories, ageCategories)
+                                                      List<String> ageCategories, String priceSortOrder,
+                                                      String availability) {
+        return filterByProductNamePriceAndCategories(productName, minPrice, maxPrice, originCategories, brandCategories,
+                ageCategories, availability)
                 .and(sortByPrice(priceSortOrder));
     }
 
@@ -42,7 +47,8 @@ public class ProductSpecificationsImpl implements ProductSpecifications {
             if (productName == null) {
                 return criteriaBuilder.conjunction();
             }
-            return criteriaBuilder.like(root.get(Product_.name), "%" + productName + "%");
+            String pattern = String.format("%%%s%%", productName);
+            return criteriaBuilder.like(criteriaBuilder.lower(root.get(Product_.name)), pattern.toLowerCase());
         };
     }
 
@@ -61,6 +67,23 @@ public class ProductSpecificationsImpl implements ProductSpecifications {
                 return criteriaBuilder.conjunction();
             }
             return criteriaBuilder.greaterThanOrEqualTo(root.get(Product_.price), minPrice);
+        };
+    }
+
+    private Specification<Product> isAvailable(String availability) {
+        return (root, query, criteriaBuilder) -> {
+            if ("available".equalsIgnoreCase(availability)) {
+                Predicate isAvailablePredicate = criteriaBuilder.isTrue(root.get(Product_.isAvailable));
+                Predicate quantityGreaterThanZeroPredicate =
+                        criteriaBuilder.greaterThan(root.get(Product_.availableQuantity), BigInteger.ZERO);
+                return criteriaBuilder.and(isAvailablePredicate, quantityGreaterThanZeroPredicate);
+            } else if ("unavailable".equalsIgnoreCase(availability)) {
+                Predicate isUnavailablePredicate = criteriaBuilder.isFalse(root.get(Product_.isAvailable));
+                Predicate quantityEqualZeroPredicate =
+                        criteriaBuilder.equal(root.get(Product_.availableQuantity), BigInteger.ZERO);
+                return criteriaBuilder.or(isUnavailablePredicate, quantityEqualZeroPredicate);
+            }
+            return query.getRestriction();
         };
     }
 

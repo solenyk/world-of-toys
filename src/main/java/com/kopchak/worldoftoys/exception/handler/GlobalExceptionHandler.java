@@ -1,7 +1,8 @@
 package com.kopchak.worldoftoys.exception.handler;
 
-import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
 import com.kopchak.worldoftoys.dto.error.MethodArgumentNotValidExceptionDto;
+import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
+import org.springframework.core.convert.ConversionFailedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -17,25 +18,32 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     @ExceptionHandler(ResponseStatusException.class)
-    public ResponseEntity<ResponseStatusExceptionDto> handleResponseStatusException(ResponseStatusException ex) {
-        int statusCode = ex.getStatusCode().value();
+    public ResponseEntity<ResponseStatusExceptionDto> handleJwtTokenException(ResponseStatusException e) {
+        int statusCode = e.getStatusCode().value();
         HttpStatus httpStatus = HttpStatus.valueOf(statusCode);
-        ResponseStatusExceptionDto errorResponse = new ResponseStatusExceptionDto(statusCode, httpStatus.name(),
-                ex.getReason());
+        var errorResponse = new ResponseStatusExceptionDto(statusCode, httpStatus.name(), e.getReason());
         return ResponseEntity.status(statusCode).body(errorResponse);
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public MethodArgumentNotValidExceptionDto handleValidationExceptions(MethodArgumentNotValidException ex) {
+    public MethodArgumentNotValidExceptionDto handleValidationExceptions(MethodArgumentNotValidException e) {
         Map<String, String> fieldsErrorDetails = new LinkedHashMap<>();
-        ex.getBindingResult().getAllErrors().forEach((error) -> {
+        e.getBindingResult().getAllErrors().forEach((error) -> {
             String fieldName = ((FieldError) error).getField();
             String errorMessage = error.getDefaultMessage();
             fieldsErrorDetails.put(fieldName, errorMessage);
         });
-        return new MethodArgumentNotValidExceptionDto(HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.name(),
+        HttpStatus httpStatus = HttpStatus.BAD_REQUEST;
+        return new MethodArgumentNotValidExceptionDto(httpStatus.value(), httpStatus.name(),
                 fieldsErrorDetails);
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(ConversionFailedException.class)
+    public ResponseStatusExceptionDto handleConversionFailedException(ConversionFailedException e) {
+        HttpStatus httpStatus = HttpStatus.BAD_REQUEST;
+        return new ResponseStatusExceptionDto(httpStatus.value(), httpStatus.name(), e.getMessage());
     }
 }
 

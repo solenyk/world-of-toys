@@ -1,6 +1,6 @@
 package com.kopchak.worldoftoys.repository.product;
 
-import com.kopchak.worldoftoys.model.product.Product;
+import com.kopchak.worldoftoys.domain.product.Product;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,4 +21,11 @@ public interface ProductRepository extends JpaRepository<Product, Integer>, JpaS
     @EntityGraph(type = EntityGraph.EntityGraphType.FETCH, attributePaths = {"images", "originCategory",
             "brandCategory", "ageCategories"})
     Optional<Product> findBySlug(String slug);
+
+    Optional<Product> findByName(String name);
+
+    @NotNull
+    @EntityGraph(type = EntityGraph.EntityGraphType.FETCH, attributePaths = {"mainImage", "images", "originCategory",
+            "brandCategory", "ageCategories"})
+    Optional<Product> findById(@NotNull Integer id);
 }
