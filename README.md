@@ -10,6 +10,7 @@ This is a backend API for a toy store web application built using Spring Boot 3,
 - [Controllers and Endpoints](#controllers-and-endpoints)
 - [API Documentation](#api-documentation)
 - [Installation and Usage](#installation-and-usage)
+- [Deployment to a Hosting Platform](#deployment-to-a-hosting-platform)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -41,6 +42,9 @@ This application was built using the following technologies:
 
 ### Documentation:
 - Swagger 3: A tool for writing API documentation
+
+### Payment Integration:
+- Stripe: An online payment processing platform that provides a set of APIs and tools for businesses to accept and manage payments over the internet
 
 ## Features
 
@@ -132,7 +136,7 @@ This application was built using the following technologies:
 
 To view the API documentation, you can use Swagger. Swagger provides a user-friendly interface for exploring and testing the API endpoints.
 
-[Swagger API Documentation](http://localhost:8080/swagger-ui/index.html)
+[Swagger API Documentation](https://world-of-toys.onrender.com/swagger-ui/index.html#)
 
 ## Installation and Usage
 
@@ -147,6 +151,26 @@ To run this application, please follow the steps below:
 7. In order to locally test POST /api/v1/payment/webhook API endpoint you can use [Stripe CLI](https://stripe.com/docs/payments/checkout/fulfill-orders#install-stripe-cli).
 
 > **_NOTE:_** The application is independent of a specific relational database, so if you want to use a different database, you only need to remove the MySQL dependency in the pom.xml file and add the dependency for your database.
+
+## Deployment to a Hosting Platform
+
+### Render.com Deployment:
+
+I have successfully deployed the World of Toys application on [Render.com](https://render.com) at the following link: [World of Toys on Render](https://world-of-toys.onrender.com). The deployment on Render.com provides a convenient way to showcase and access the application online.
+
+#### Limitations and Considerations:
+
+1. **Mail Server Restrictions:**
+    - Due to hosting constraints, all application endpoints reliant on [mail server functionality are restricted](https://community.render.com/t/mail-server-on-render-com/10529). For example, features involving email functionalities (e.g., account activation, password reset) are not work fully.
+
+2. **Listen to Stripe events Configuration:**
+    - On the free client-ship plan on the Render.com, certain advanced features, like configuring the application to listen to Stripe events, are limited. This is because some functionalities, especially those involving continuous processing or external webhooks, might go beyond the capabilities of the free hosting plan.
+
+#### Accessing the Deployed App:
+
+The World of Toys application is accessible at [World of Toys on Render](https://world-of-toys.onrender.com). Feel free to explore the available features, keeping in mind the mentioned limitations.
+
+Please note that for a complete experience, especially concerning email functionalities and Stripe event handling, it is advisable to run application at your local machine.
 
 ## Contributing
 
