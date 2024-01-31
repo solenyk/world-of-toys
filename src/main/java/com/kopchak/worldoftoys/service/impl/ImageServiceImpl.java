@@ -28,28 +28,29 @@ public class ImageServiceImpl implements ImageService {
     private final static String IMAGE_CONTENT_TYPE_PREFIX = "image/";
 
     @Override
-    public Image convertMultipartFileToImage(MultipartFile multipartFile, Product product)
+    public Optional<Image> convertMultipartFileToImage(MultipartFile multipartFile, Product product)
             throws InvalidImageFileFormatException, ImageCompressionException, ImageExceedsMaxSizeException {
+        if (multipartFile == null) {
+            return Optional.empty();
+        }
         String fileName = multipartFile.getOriginalFilename();
         if (isNonImageFile(multipartFile)) {
-            String errMsg = String.format("The file with name: %s must have an image type", fileName);
-            log.error(errMsg);
-            throw new InvalidImageFileFormatException(errMsg);
+            throw new InvalidImageFileFormatException(
+                    String.format("The file with name: %s must have an image type", fileName));
         }
         byte[] compressedImg = compressImage(multipartFile, fileName);
         if (compressedImg.length > MAX_IMG_COMPRESSION_SIZE) {
-            String errMsg = String.format("The image with name: %s is too large", fileName);
-            log.error(errMsg);
-            throw new ImageExceedsMaxSizeException(errMsg);
+            throw new ImageExceedsMaxSizeException(String.format("The image with name: %s is too large", fileName));
         }
         String generatedName = generateImageName(multipartFile);
-        return Image
+        Image image = Image
                 .builder()
                 .name(generatedName)
                 .type(multipartFile.getContentType())
                 .image(compressedImg)
                 .product(product)
                 .build();
+        return Optional.of(image);
     }
 
     @Override

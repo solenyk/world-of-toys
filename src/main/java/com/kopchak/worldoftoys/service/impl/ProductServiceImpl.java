@@ -35,7 +35,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -54,28 +57,26 @@ public class ProductServiceImpl implements ProductService {
                                                            String priceSortOrder) {
         Page<Product> productPage = getFilteredProductPage(page, size, productName, minPrice, maxPrice,
                 originCategories, brandCategories, ageCategories, priceSortOrder, null);
-        List<FilteredProductDto> filteredProductDtoList = new ArrayList<>();
-        for (Product product : productPage.getContent()) {
-            Image mainImage = product.getMainImage();
-            ImageDto mainImageDto = imageService.decompressImage(mainImage).orElse(null);
-            filteredProductDtoList.add(productMapper.toFilteredProductDto(product, mainImageDto));
-        }
+        List<FilteredProductDto> filteredProductDtoList = productPage.getContent().stream()
+                .map(product -> {
+                    ImageDto mainImageDto = imageService.decompressImage(product.getMainImage()).orElse(null);
+                    return productMapper.toFilteredProductDto(product, mainImageDto);
+                })
+                .toList();
         return new FilteredProductsPageDto(filteredProductDtoList, productPage.getTotalElements(),
                 productPage.getTotalPages());
     }
 
     @Override
     public ProductDto getProductBySlug(String productSlug) throws ProductNotFoundException {
-        Optional<Product> productOptional = productRepository.findBySlug(productSlug);
-        if (productOptional.isEmpty()) {
-            String errMsg = String.format("The product with slug: %s is not found.", productSlug);
-            log.error(errMsg);
-            throw new ProductNotFoundException(errMsg);
-        }
-        Product product = productOptional.get();
+        Product product = productRepository.findBySlug(productSlug).orElseThrow(() ->
+                new ProductNotFoundException(String.format("The product with slug: %s is not found.", productSlug)));
         Image mainImage = product.getMainImage();
         ImageDto mainImageDto = imageService.decompressImage(mainImage).orElse(null);
-        List<ImageDto> imageDtoList = getDecompressedProductImageDtoList(product.getImages(), mainImage);
+        List<ImageDto> imageDtoList = product.getImages().stream()
+                .filter(image -> !image.equals(mainImage))
+                .map(image -> imageService.decompressImage(image).orElse(null))
+                .toList();
         log.info("Fetched product by slug: '{}'", productSlug);
         return productMapper.toProductDto(product, mainImageDto, imageDtoList);
     }
@@ -87,12 +88,12 @@ public class ProductServiceImpl implements ProductService {
                                                      String priceSortOrder, String availability) {
         Page<Product> productPage = getFilteredProductPage(page, size, productName, minPrice, maxPrice,
                 originCategories, brandCategories, ageCategories, priceSortOrder, availability);
-        List<AdminFilteredProductDto> adminProductsPageDtoList = new ArrayList<>();
-        for (Product product : productPage.getContent()) {
-            Image mainImage = product.getMainImage();
-            ImageDto mainImageDto = imageService.decompressImage(mainImage).orElse(null);
-            adminProductsPageDtoList.add(productMapper.toAdminFilteredProductDto(product, mainImageDto));
-        }
+        List<AdminFilteredProductDto> adminProductsPageDtoList = productPage.getContent().stream()
+                .map(product -> {
+                    ImageDto mainImageDto = imageService.decompressImage(product.getMainImage()).orElse(null);
+                    return productMapper.toAdminFilteredProductDto(product, mainImageDto);
+                })
+                .toList();
         return new AdminProductsPageDto(adminProductsPageDtoList, productPage.getTotalElements(),
                 productPage.getTotalPages());
     }
@@ -103,7 +104,10 @@ public class ProductServiceImpl implements ProductService {
                 () -> new ProductNotFoundException(String.format("The product with id: %d is not found.", productId)));
         Image mainImage = product.getMainImage();
         ImageDto mainImageDto = imageService.decompressImage(mainImage).orElse(null);
-        List<ImageDto> imageDtoList = getDecompressedProductImageDtoList(product.getImages(), mainImage);
+        List<ImageDto> imageDtoList = product.getImages().stream()
+                .filter(image -> !image.equals(mainImage))
+                .map(image -> imageService.decompressImage(image).orElse(null))
+                .toList();
         log.info("Fetched product by id: '{}'", productId);
         return productMapper.toAdminProductDto(product, mainImageDto, imageDtoList);
     }
@@ -119,8 +123,7 @@ public class ProductServiceImpl implements ProductService {
         String productName = addUpdateProductDto.name();
         Optional<Product> productOptional = productRepository.findByName(productName);
         if (productOptional.isPresent() && !productOptional.get().getId().equals(productId)) {
-            throw new DuplicateProductNameException(
-                    String.format("The product with name: %s is already exist", productName));
+            throw new DuplicateProductNameException(String.format("The product with name: %s is already exist", productName));
         }
         Product product = buildProductFromDtoAndImages(addUpdateProductDto, mainImageFile, imageFilesList);
         product.setId(productId);
@@ -134,7 +137,8 @@ public class ProductServiceImpl implements ProductService {
             throws DuplicateProductNameException, CategoryNotFoundException, ImageException {
         String productName = addUpdateProductDto.name();
         if (productRepository.findByName(productName).isPresent()) {
-            throw new DuplicateProductNameException(String.format("The product with name: %s is already exist", productName));
+            throw new DuplicateProductNameException(
+                    String.format("The product with name: %s is already exist", productName));
         }
         Product product = buildProductFromDtoAndImages(addUpdateProductDto, mainImageFile, imageFileList);
         productRepository.save(product);
@@ -177,25 +181,15 @@ public class ProductServiceImpl implements ProductService {
 
     private void setProductImages(Product product, MultipartFile mainImageFile, List<MultipartFile> imageFilesList)
             throws ImageException {
-        Image mainImage = mainImageFile == null ? null : imageService.convertMultipartFileToImage(mainImageFile, product);
+        Image mainImage = imageService.convertMultipartFileToImage(mainImageFile, product).orElse(null);
         Set<Image> imagesSet = new LinkedHashSet<>();
         if (imageFilesList != null) {
-            for (MultipartFile image : imageFilesList) {
-                imagesSet.add(imageService.convertMultipartFileToImage(image, product));
+            for (MultipartFile imageFile : imageFilesList) {
+                Optional<Image> imageOptional = imageService.convertMultipartFileToImage(imageFile, product);
+                imageOptional.ifPresent(imagesSet::add);
             }
         }
         product.setMainImage(mainImage);
         product.setImages(imagesSet);
-    }
-
-    private List<ImageDto> getDecompressedProductImageDtoList(Set<Image> images, Image mainImage) {
-        List<ImageDto> imageDtoList = new ArrayList<>();
-        for (Image image : images) {
-            if (!image.equals(mainImage)) {
-                Optional<ImageDto> imageDtoOptional = imageService.decompressImage(image);
-                imageDtoList.add(imageDtoOptional.orElse(null));
-            }
-        }
-        return imageDtoList;
     }
 }

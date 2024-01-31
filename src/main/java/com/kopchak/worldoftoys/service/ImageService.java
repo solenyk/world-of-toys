@@ -11,7 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.Optional;
 
 public interface ImageService {
-    Image convertMultipartFileToImage(MultipartFile multipartFile, Product product)
+    Optional<Image> convertMultipartFileToImage(MultipartFile multipartFile, Product product)
             throws InvalidImageFileFormatException, ImageCompressionException, ImageExceedsMaxSizeException;
 
     Optional<ImageDto> decompressImage(Image image);
