@@ -16,7 +16,6 @@ import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.exception.exception.category.CategoryNotFoundException;
 import com.kopchak.worldoftoys.exception.exception.image.ImageException;
-import com.kopchak.worldoftoys.exception.exception.image.ext.ImageDecompressionException;
 import com.kopchak.worldoftoys.exception.exception.product.DuplicateProductNameException;
 import com.kopchak.worldoftoys.exception.exception.product.ProductNotFoundException;
 import com.kopchak.worldoftoys.mapper.product.ProductMapper;
@@ -52,13 +51,13 @@ public class ProductServiceImpl implements ProductService {
     public FilteredProductsPageDto getFilteredProductsPage(int page, int size, String productName, BigDecimal minPrice,
                                                            BigDecimal maxPrice, List<String> originCategories,
                                                            List<String> brandCategories, List<String> ageCategories,
-                                                           String priceSortOrder) throws ImageDecompressionException {
+                                                           String priceSortOrder) {
         Page<Product> productPage = getFilteredProductPage(page, size, productName, minPrice, maxPrice,
                 originCategories, brandCategories, ageCategories, priceSortOrder, null);
         List<FilteredProductDto> filteredProductDtoList = new ArrayList<>();
         for (Product product : productPage.getContent()) {
             Image mainImage = product.getMainImage();
-            ImageDto mainImageDto = mainImage == null ? null : imageService.decompressImage(mainImage);
+            ImageDto mainImageDto = imageService.decompressImage(mainImage).orElse(null);
             filteredProductDtoList.add(productMapper.toFilteredProductDto(product, mainImageDto));
         }
         return new FilteredProductsPageDto(filteredProductDtoList, productPage.getTotalElements(),
@@ -66,7 +65,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public ProductDto getProductBySlug(String productSlug) throws ProductNotFoundException, ImageDecompressionException {
+    public ProductDto getProductBySlug(String productSlug) throws ProductNotFoundException {
         Optional<Product> productOptional = productRepository.findBySlug(productSlug);
         if (productOptional.isEmpty()) {
             String errMsg = String.format("The product with slug: %s is not found.", productSlug);
@@ -75,10 +74,8 @@ public class ProductServiceImpl implements ProductService {
         }
         Product product = productOptional.get();
         Image mainImage = product.getMainImage();
-        Set<Image> images = product.getImages();
-        ImageDto mainImageDto = mainImage == null ? null : imageService.decompressImage(mainImage);
-        List<ImageDto> imageDtoList = (images == null || images.isEmpty()) ? new ArrayList<>() :
-                getDecompressedProductImageDtoList(product.getImages(), mainImage);
+        ImageDto mainImageDto = imageService.decompressImage(mainImage).orElse(null);
+        List<ImageDto> imageDtoList = getDecompressedProductImageDtoList(product.getImages(), mainImage);
         log.info("Fetched product by slug: '{}'", productSlug);
         return productMapper.toProductDto(product, mainImageDto, imageDtoList);
     }
@@ -87,13 +84,13 @@ public class ProductServiceImpl implements ProductService {
     public AdminProductsPageDto getAdminProductsPage(int page, int size, String productName, BigDecimal minPrice,
                                                      BigDecimal maxPrice, List<String> originCategories,
                                                      List<String> brandCategories, List<String> ageCategories,
-                                                     String priceSortOrder, String availability) throws ImageDecompressionException {
+                                                     String priceSortOrder, String availability) {
         Page<Product> productPage = getFilteredProductPage(page, size, productName, minPrice, maxPrice,
                 originCategories, brandCategories, ageCategories, priceSortOrder, availability);
         List<AdminFilteredProductDto> adminProductsPageDtoList = new ArrayList<>();
         for (Product product : productPage.getContent()) {
             Image mainImage = product.getMainImage();
-            ImageDto mainImageDto = mainImage == null ? null : imageService.decompressImage(mainImage);
+            ImageDto mainImageDto = imageService.decompressImage(mainImage).orElse(null);
             adminProductsPageDtoList.add(productMapper.toAdminFilteredProductDto(product, mainImageDto));
         }
         return new AdminProductsPageDto(adminProductsPageDtoList, productPage.getTotalElements(),
@@ -101,11 +98,11 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public AdminProductDto getProductById(Integer productId) throws ProductNotFoundException, ImageDecompressionException {
+    public AdminProductDto getProductById(Integer productId) throws ProductNotFoundException {
         Product product = productRepository.findById(productId).orElseThrow(
                 () -> new ProductNotFoundException(String.format("The product with id: %d is not found.", productId)));
         Image mainImage = product.getMainImage();
-        ImageDto mainImageDto = mainImage == null ? null : imageService.decompressImage(mainImage);
+        ImageDto mainImageDto = imageService.decompressImage(mainImage).orElse(null);
         List<ImageDto> imageDtoList = getDecompressedProductImageDtoList(product.getImages(), mainImage);
         log.info("Fetched product by id: '{}'", productId);
         return productMapper.toAdminProductDto(product, mainImageDto, imageDtoList);
@@ -191,12 +188,12 @@ public class ProductServiceImpl implements ProductService {
         product.setImages(imagesSet);
     }
 
-    private List<ImageDto> getDecompressedProductImageDtoList(Set<Image> images, Image mainImage)
-            throws ImageDecompressionException {
+    private List<ImageDto> getDecompressedProductImageDtoList(Set<Image> images, Image mainImage) {
         List<ImageDto> imageDtoList = new ArrayList<>();
         for (Image image : images) {
             if (!image.equals(mainImage)) {
-                imageDtoList.add(imageService.decompressImage(image));
+                Optional<ImageDto> imageDtoOptional = imageService.decompressImage(image);
+                imageDtoList.add(imageDtoOptional.orElse(null));
             }
         }
         return imageDtoList;

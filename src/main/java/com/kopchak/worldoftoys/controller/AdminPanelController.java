@@ -20,7 +20,6 @@ import com.kopchak.worldoftoys.exception.exception.category.CategoryNotFoundExce
 import com.kopchak.worldoftoys.exception.exception.category.DuplicateCategoryNameException;
 import com.kopchak.worldoftoys.exception.exception.email.MessageSendingException;
 import com.kopchak.worldoftoys.exception.exception.image.ImageException;
-import com.kopchak.worldoftoys.exception.exception.image.ext.ImageDecompressionException;
 import com.kopchak.worldoftoys.exception.exception.order.InvalidOrderException;
 import com.kopchak.worldoftoys.exception.exception.order.InvalidOrderStatusException;
 import com.kopchak.worldoftoys.exception.exception.product.DuplicateProductNameException;
@@ -78,7 +77,7 @@ public class AdminPanelController {
             @RequestParam(name = "price-sort", required = false) String priceSortOrder,
             @RequestParam(name = "availability", required = false) String availability
 
-    ) throws ImageDecompressionException {
+    ) {
         var productsPage = productService.getAdminProductsPage(page, size, productName, minPrice, maxPrice,
                 originCategories, brandCategories, ageCategories, priceSortOrder, availability);
         return new ResponseEntity<>(productsPage, HttpStatus.OK);
@@ -104,8 +103,6 @@ public class AdminPanelController {
         try {
             AdminProductDto product = productService.getProductById(productId);
             return new ResponseEntity<>(product, HttpStatus.OK);
-        } catch (ImageDecompressionException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         } catch (ProductNotFoundException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         }
