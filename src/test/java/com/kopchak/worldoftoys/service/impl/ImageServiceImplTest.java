@@ -4,7 +4,6 @@ import com.kopchak.worldoftoys.domain.image.Image;
 import com.kopchak.worldoftoys.domain.product.Product;
 import com.kopchak.worldoftoys.dto.image.ImageDto;
 import com.kopchak.worldoftoys.exception.exception.image.ext.ImageCompressionException;
-import com.kopchak.worldoftoys.exception.exception.image.ext.ImageDecompressionException;
 import com.kopchak.worldoftoys.exception.exception.image.ext.ImageExceedsMaxSizeException;
 import com.kopchak.worldoftoys.exception.exception.image.ext.InvalidImageFileFormatException;
 import jakarta.transaction.Transactional;
@@ -18,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.Base64;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -52,7 +52,7 @@ class ImageServiceImplTest {
     }
 
     @Test
-    public void convertMultipartFileToImage_ImageContentType_ReturnsImage() throws Exception {
+    public void convertMultipartFileToImage_ImageContentType_ReturnsOptionalOfImage() throws Exception {
         String imageExtension = ".jpg";
         String namePattern = FILENAME.concat("[a-zA-Z0-9]{4}").concat(imageExtension);
         Pattern pattern = Pattern.compile(namePattern, Pattern.CASE_INSENSITIVE);
@@ -61,14 +61,14 @@ class ImageServiceImplTest {
         when(MULTIPART_FILE.getContentType()).thenReturn(IMAGE_CONTENT_TYPE);
         when(MULTIPART_FILE.getBytes()).thenReturn(imageBytes);
 
-        Image returnedImage = imageService.convertMultipartFileToImage(MULTIPART_FILE, product);
+        Optional<Image> returnedImage = imageService.convertMultipartFileToImage(MULTIPART_FILE, product);
 
-        assertThat(returnedImage).isNotNull();
-        assertThat(returnedImage.getImage()).isNotNull();
-        assertThat(returnedImage.getImage()).isNotEmpty();
-        assertThat(returnedImage.getProduct()).isEqualTo(product);
-        assertThat(returnedImage.getType()).isEqualTo(IMAGE_CONTENT_TYPE);
-        assertThat(pattern.matcher(returnedImage.getName()).find()).isTrue();
+        assertThat(returnedImage).isPresent();
+        assertThat(returnedImage.get().getImage()).isNotNull();
+        assertThat(returnedImage.get().getImage()).isNotEmpty();
+        assertThat(returnedImage.get().getProduct()).isEqualTo(product);
+        assertThat(returnedImage.get().getType()).isEqualTo(IMAGE_CONTENT_TYPE);
+        assertThat(pattern.matcher(returnedImage.get().getName()).find()).isTrue();
     }
 
     @Test
@@ -111,7 +111,7 @@ class ImageServiceImplTest {
     }
 
     @Test
-    public void decompressImage_Image_ReturnsImageDto() throws ImageDecompressionException {
+    public void decompressImage_Image_ReturnsOptionalOfImageDto() {
         String base64CompressedImageData = "eNrrDPBz5+WS4mJgYOD19HAJAtKsIMzBAiTV097lASmFZI8gXwaGKjUGhoYWBoZfQKGGF" +
                 "wwMpQYMDK8SGBisZjAwiBfM2RVoA5RgSvJ2d2H4395/Zj+Qx1ngEVnMwMA3C4QZ26eLuwEF2Us8fV3Zn3PxCIsLR6z79wgoZOHp" +
                 "4hjCcZ314EbeBgUGhg1SncyFD/X1kr4wnhf8eexky9ECxm0qZzNbb3+wyunm3CXl06/RUbPp0ab/Fn+5e9evWXcHaIZqiWtESUp" +
@@ -120,21 +120,12 @@ class ImageServiceImplTest {
         byte[] compressedImageData = Base64.getDecoder().decode(base64CompressedImageData);
         image.setImage(compressedImageData);
 
-        ImageDto imageDto = imageService.decompressImage(image);
+        Optional<ImageDto> imageDto = imageService.decompressImage(image);
 
-        assertThat(imageDto).isNotNull();
-        assertThat(imageDto.name()).isEqualTo(FILENAME);
-        assertThat(imageDto.type()).isEqualTo(IMAGE_CONTENT_TYPE);
-        assertThat(imageDto.image()).isNotEmpty();
-    }
-
-    @Test
-    public void decompressImage_ThrowDataFormatException_ThrowsImageDecompressionException() {
-        String imageDecompressionExceptionMsg =
-                String.format("The image with name: %s cannot be decompressed", FILENAME);
-
-        assertException(ImageDecompressionException.class, imageDecompressionExceptionMsg,
-                () -> imageService.decompressImage(image));
+        assertThat(imageDto).isPresent();
+        assertThat(imageDto.get().name()).isEqualTo(FILENAME);
+        assertThat(imageDto.get().type()).isEqualTo(IMAGE_CONTENT_TYPE);
+        assertThat(imageDto.get().image()).isNotEmpty();
     }
 
     private void assertException(Class<? extends Exception> expectedExceptionType, String expectedMessage,

@@ -7,8 +7,10 @@ import com.kopchak.worldoftoys.domain.product.category.BrandCategory;
 import com.kopchak.worldoftoys.domain.product.category.OriginCategory;
 import com.kopchak.worldoftoys.dto.admin.category.CategoryIdDto;
 import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
+import com.kopchak.worldoftoys.dto.admin.product.AdminFilteredProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductsPageDto;
+import com.kopchak.worldoftoys.dto.product.FilteredProductDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.dto.image.ImageDto;
@@ -27,6 +29,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -112,7 +115,7 @@ class ProductServiceImplTest {
         ProductDto expectedProductDto = ProductDto.builder().build();
 
         when(productRepository.findBySlug(eq(PRODUCT_SLUG))).thenReturn(Optional.of(product));
-        when(imageService.decompressImage(any())).thenReturn(imageDto);
+        when(imageService.decompressImage(any())).thenReturn(Optional.of(imageDto));
         when(productMapper.toProductDto(eq(product), any(), any())).thenReturn(expectedProductDto);
 
         ProductDto actualProductDto = productService.getProductBySlug(PRODUCT_SLUG);
@@ -133,16 +136,20 @@ class ProductServiceImplTest {
 
     @Test
     public void getFilteredProducts_ReturnsFilteredProductsPageDto() {
-        var expectedFilteredProductsPageDto = new FilteredProductsPageDto(new ArrayList<>(), 3L, 2L);
+        Page<Product> productPage = new PageImpl<>(List.of(product), PageRequest.of(0, 5), 5);
+        FilteredProductDto filteredProductDto = FilteredProductDto.builder().build();
+        var expectedFilteredProductsPageDto =
+                new FilteredProductsPageDto(List.of(filteredProductDto), 5L, 1L);
 
         when(productSpecifications.filterByAllCriteria(eq(PRODUCT_NAME), eq(minProductPrice), eq(maxProductPrice),
                 eq(originCategories), eq(brandCategories), eq(ageCategories), eq(PRICE_SORT_ORDER), any()))
                 .thenReturn(spec);
-        when(productRepository.findAll(eq(spec), eq(pageable))).thenReturn(Page.empty());
-        when(productMapper.toFilteredProductsPageDto(any())).thenReturn(expectedFilteredProductsPageDto);
+        when(productRepository.findAll(eq(spec), eq(pageable))).thenReturn(productPage);
+        when(imageService.decompressImage(eq(product.getMainImage()))).thenReturn(Optional.empty());
+        when(productMapper.toFilteredProductDto(eq(product), any())).thenReturn(filteredProductDto);
 
-        var actualFilteredProductsPageDto = productService.getFilteredProductsPage(PAGE, SIZE, PRODUCT_NAME, minProductPrice,
-                maxProductPrice, originCategories, brandCategories, ageCategories, PRICE_SORT_ORDER);
+        var actualFilteredProductsPageDto = productService.getFilteredProductsPage(PAGE, SIZE, PRODUCT_NAME,
+                minProductPrice, maxProductPrice, originCategories, brandCategories, ageCategories, PRICE_SORT_ORDER);
 
         assertThat(actualFilteredProductsPageDto).isNotNull();
         assertThat(actualFilteredProductsPageDto).isEqualTo(expectedFilteredProductsPageDto);
@@ -150,13 +157,17 @@ class ProductServiceImplTest {
 
     @Test
     public void getAdminFilteredProducts_ReturnsAdminProductsPageDto() {
-        var expectedAdminProductsPageDto = AdminProductsPageDto.builder().build();
+        Page<Product> productPage = new PageImpl<>(List.of(product), PageRequest.of(0, 5), 5);
+        AdminFilteredProductDto adminFilteredProductDto = AdminFilteredProductDto.builder().build();
+        var expectedAdminProductsPageDto =
+                new AdminProductsPageDto(List.of(adminFilteredProductDto), 5L, 1L);
 
         when(productSpecifications.filterByAllCriteria(eq(PRODUCT_NAME), eq(minProductPrice), eq(maxProductPrice),
                 eq(originCategories), eq(brandCategories), eq(ageCategories), eq(PRICE_SORT_ORDER), any()))
                 .thenReturn(spec);
-        when(productRepository.findAll(eq(spec), eq(pageable))).thenReturn(Page.empty());
-        when(productMapper.toAdminFilteredProductsPageDto(any())).thenReturn(expectedAdminProductsPageDto);
+        when(productRepository.findAll(eq(spec), eq(pageable))).thenReturn(productPage);
+        when(imageService.decompressImage(eq(product.getMainImage()))).thenReturn(Optional.empty());
+        when(productMapper.toAdminFilteredProductDto(eq(product), any())).thenReturn(adminFilteredProductDto);
 
         var actualAdminProductsPageDto = productService.getAdminProductsPage(PAGE, SIZE, PRODUCT_NAME,
                 minProductPrice, maxProductPrice, originCategories, brandCategories, ageCategories,
@@ -179,7 +190,7 @@ class ProductServiceImplTest {
                 .build();
 
         when(productRepository.findById(eq(PRODUCT_ID))).thenReturn(Optional.of(product));
-        when(imageService.decompressImage(any())).thenReturn(imageDto);
+        when(imageService.decompressImage(any())).thenReturn(Optional.of(imageDto));
         when(productMapper.toAdminProductDto(eq(product), eq(imageDto), eq(imageDtoList)))
                 .thenReturn(expectedAdminProductDto);
 
