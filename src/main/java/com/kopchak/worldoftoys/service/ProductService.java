@@ -19,7 +19,7 @@ public interface ProductService {
     FilteredProductsPageDto getFilteredProductsPage(int page, int size, String productName, BigDecimal minPrice,
                                                     BigDecimal maxPrice, List<String> originCategories,
                                                     List<String> brandCategories, List<String> ageCategories,
-                                                    String priceSortOrder);
+                                                    String priceSortOrder) throws ImageDecompressionException;
 
     ProductDto getProductBySlug(String productSlug) throws ProductNotFoundException, ImageDecompressionException;
 

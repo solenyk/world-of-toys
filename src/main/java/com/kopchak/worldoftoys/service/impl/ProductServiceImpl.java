@@ -9,6 +9,7 @@ import com.kopchak.worldoftoys.dto.admin.category.CategoryIdDto;
 import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductsPageDto;
+import com.kopchak.worldoftoys.dto.product.FilteredProductDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.dto.image.ImageDto;
@@ -50,10 +51,17 @@ public class ProductServiceImpl implements ProductService {
     public FilteredProductsPageDto getFilteredProductsPage(int page, int size, String productName, BigDecimal minPrice,
                                                            BigDecimal maxPrice, List<String> originCategories,
                                                            List<String> brandCategories, List<String> ageCategories,
-                                                           String priceSortOrder) {
+                                                           String priceSortOrder) throws ImageDecompressionException {
         Page<Product> productPage = getFilteredProductPage(page, size, productName, minPrice, maxPrice,
                 originCategories, brandCategories, ageCategories, priceSortOrder, null);
-        return productMapper.toFilteredProductsPageDto(productPage);
+        List<FilteredProductDto> filteredProductDtoList = new ArrayList<>();
+        for (Product product : productPage.getContent()) {
+            Image mainImage = product.getMainImage();
+            ImageDto mainImageDto = mainImage == null ? null : imageService.decompressImage(mainImage);
+            filteredProductDtoList.add(productMapper.toFilteredProductDto(product, mainImageDto));
+        }
+        return new FilteredProductsPageDto(filteredProductDtoList, productPage.getTotalElements(),
+                productPage.getTotalPages());
     }
 
     @Override

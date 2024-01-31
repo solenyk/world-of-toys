@@ -51,7 +51,7 @@ public class ShopController {
             @RequestParam(name = "brand", required = false) List<String> brandCategories,
             @RequestParam(name = "age", required = false) List<String> ageCategories,
             @RequestParam(name = "price-sort", required = false) String priceSortOrder
-    ) {
+    ) throws ImageDecompressionException {
         var productsPage = productService.getFilteredProductsPage(page, size, productName, minPrice, maxPrice,
                 originCategories, brandCategories, ageCategories, priceSortOrder);
         return new ResponseEntity<>(productsPage, HttpStatus.OK);
