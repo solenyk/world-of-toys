@@ -6,7 +6,9 @@ import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.info.Contact;
 import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.annotations.info.License;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
+import io.swagger.v3.oas.annotations.servers.Server;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
@@ -26,9 +28,16 @@ import org.springframework.context.annotation.Configuration;
                         url = "https://www.apache.org/licenses/LICENSE-2.0.html"
                 )
         ),
+        servers = {
+                @Server(url = "https://world-of-toys.onrender.com", description = "Production server"),
+                @Server(url = "http://localhost:8080", description = "Local development server")
+        },
         externalDocs = @ExternalDocumentation(description = "Instructions for how to run and use this project",
-                url = "https://github.com/shmatochok-maselka/world-of-toys/blob/develop/README.md"
-        )
+                url = "https://github.com/solenyk/world-of-toys/blob/main/README.md"
+        ),
+        security = {
+                @SecurityRequirement(name = "Bearer Authentication")
+        }
 )
 @SecurityScheme(
         name = "Bearer Authentication",
