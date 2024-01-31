@@ -73,7 +73,6 @@ public class AdminPanelControllerIntegrationTest {
     private final static String ORDER_ID = "4c980930-16eb-41cd-b998-29d03118d67c";
     private final static String PRODUCT_NAME = "лялька";
     private final static String DUPLICATE_PRODUCT_NAME = "Пупсик Оксанка";
-    private final static String CATEGORY_NAME = "category-name";
     private final static String DUPLICATE_CATEGORY_NAME = "Devilon";
     private final static String DUPLICATE_PRODUCT_NAME_EXCEPTION_MSG =
             String.format("The product with name: %s is already exist", DUPLICATE_PRODUCT_NAME);
@@ -120,7 +119,7 @@ public class AdminPanelControllerIntegrationTest {
                 BigInteger.ONE, true, categoryIdDto, categoryIdDto, List.of(categoryIdDto));
         mainImage = new MockMultipartFile("image", "filename",
                 "image/jpg", "image".getBytes());
-        categoryNameDto = new CategoryNameDto(CATEGORY_NAME);
+        categoryNameDto = new CategoryNameDto("category-name");
         OrderStatus orderStatus = OrderStatus.AWAITING_PAYMENT;
         statusDto = new StatusDto(orderStatus.name(), orderStatus.getStatus());
     }
@@ -134,23 +133,6 @@ public class AdminPanelControllerIntegrationTest {
 
         response.andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(content().json(objectMapper.writeValueAsString(adminProductDto)))
-                .andDo(MockMvcResultHandlers.print());
-    }
-
-    @Test
-    @WithUserDetails("jane.smith@example.com")
-    public void getProductById_ThrowImageDecompressionException_ReturnsBadRequestStatusAndResponseStatusExceptionDto() throws Exception {
-        String imageName = "lyalka-klaymber1.png";
-        String imageDecompressionExceptionMsg =
-                String.format("The image with name: %s cannot be decompressed", imageName);
-        var responseStatusExceptionDto = getResponseStatusExceptionDto(HttpStatus.BAD_REQUEST,
-                imageDecompressionExceptionMsg);
-
-        ResultActions response = mockMvc.perform(get("/api/v1/admin/products/{productId}", 1001)
-                .contentType(MediaType.APPLICATION_JSON));
-
-        response.andExpect(MockMvcResultMatchers.status().isBadRequest())
-                .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)))
                 .andDo(MockMvcResultHandlers.print());
     }
 

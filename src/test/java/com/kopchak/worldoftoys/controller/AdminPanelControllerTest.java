@@ -19,7 +19,6 @@ import com.kopchak.worldoftoys.exception.exception.category.CategoryContainsProd
 import com.kopchak.worldoftoys.exception.exception.category.CategoryNotFoundException;
 import com.kopchak.worldoftoys.exception.exception.category.DuplicateCategoryNameException;
 import com.kopchak.worldoftoys.exception.exception.email.MessageSendingException;
-import com.kopchak.worldoftoys.exception.exception.image.ext.ImageDecompressionException;
 import com.kopchak.worldoftoys.exception.exception.order.InvalidOrderStatusException;
 import com.kopchak.worldoftoys.exception.exception.product.DuplicateProductNameException;
 import com.kopchak.worldoftoys.exception.exception.product.ProductNotFoundException;
@@ -120,25 +119,6 @@ class AdminPanelControllerTest {
 
         response.andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(content().json(objectMapper.writeValueAsString(adminProductDto)))
-                .andDo(MockMvcResultHandlers.print());
-    }
-
-    @Test
-    public void getProductById_ThrowImageDecompressionException_ReturnsBadRequestStatusAndResponseStatusExceptionDto() throws Exception {
-        String imageName = "image.jpg";
-        String imageDecompressionExceptionMsg =
-                String.format("The image with name: %s cannot be decompressed", imageName);
-        var responseStatusExceptionDto = getResponseStatusExceptionDto(HttpStatus.BAD_REQUEST,
-                imageDecompressionExceptionMsg);
-
-        doThrow(new ImageDecompressionException(imageDecompressionExceptionMsg))
-                .when(productService).getProductById(eq(PRODUCT_ID));
-
-        ResultActions response = mockMvc.perform(get("/api/v1/admin/products/{productId}", PRODUCT_ID)
-                .contentType(MediaType.APPLICATION_JSON));
-
-        response.andExpect(MockMvcResultMatchers.status().isBadRequest())
-                .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)))
                 .andDo(MockMvcResultHandlers.print());
     }
 

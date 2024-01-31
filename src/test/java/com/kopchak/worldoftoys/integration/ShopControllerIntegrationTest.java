@@ -172,23 +172,6 @@ public class ShopControllerIntegrationTest {
     }
 
     @Test
-    public void getProductBySlug_ThrowImageDecompressionException_ReturnsBadRequestStatusAndResponseStatusExceptionDto() throws Exception {
-        String existentProductSlug = "lyalka-klaymber";
-
-        HttpStatus httpStatus = HttpStatus.BAD_REQUEST;
-        var responseStatusExceptionDto = new ResponseStatusExceptionDto(httpStatus.value(), httpStatus.name(),
-                "The image with name: lyalka-klaymber1.png cannot be decompressed");
-
-
-        ResultActions response = mockMvc.perform(get("/api/v1/products/{productSlug}", existentProductSlug)
-                .contentType(MediaType.APPLICATION_JSON));
-
-        response.andExpect(MockMvcResultMatchers.status().isBadRequest())
-                .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)))
-                .andDo(MockMvcResultHandlers.print());
-    }
-
-    @Test
     public void getProductBySlug_NonExistentProductSlug_ReturnsNotFoundStatusAndResponseStatusExceptionDto() throws Exception {
         String nonExistentProductSlug = "non-existent-product-slug";
         HttpStatus httpStatus = HttpStatus.NOT_FOUND;

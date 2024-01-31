@@ -7,14 +7,15 @@ import com.kopchak.worldoftoys.domain.product.category.BrandCategory;
 import com.kopchak.worldoftoys.domain.product.category.OriginCategory;
 import com.kopchak.worldoftoys.dto.admin.category.CategoryIdDto;
 import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
+import com.kopchak.worldoftoys.dto.admin.product.AdminFilteredProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductsPageDto;
+import com.kopchak.worldoftoys.dto.image.ImageDto;
+import com.kopchak.worldoftoys.dto.product.FilteredProductDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
-import com.kopchak.worldoftoys.dto.image.ImageDto;
 import com.kopchak.worldoftoys.exception.exception.category.CategoryNotFoundException;
 import com.kopchak.worldoftoys.exception.exception.image.ImageException;
-import com.kopchak.worldoftoys.exception.exception.image.ext.ImageDecompressionException;
 import com.kopchak.worldoftoys.exception.exception.product.DuplicateProductNameException;
 import com.kopchak.worldoftoys.exception.exception.product.ProductNotFoundException;
 import com.kopchak.worldoftoys.mapper.product.ProductMapper;
@@ -34,7 +35,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -53,23 +57,26 @@ public class ProductServiceImpl implements ProductService {
                                                            String priceSortOrder) {
         Page<Product> productPage = getFilteredProductPage(page, size, productName, minPrice, maxPrice,
                 originCategories, brandCategories, ageCategories, priceSortOrder, null);
-        return productMapper.toFilteredProductsPageDto(productPage);
+        List<FilteredProductDto> filteredProductDtoList = productPage.getContent().stream()
+                .map(product -> {
+                    ImageDto mainImageDto = imageService.decompressImage(product.getMainImage()).orElse(null);
+                    return productMapper.toFilteredProductDto(product, mainImageDto);
+                })
+                .toList();
+        return new FilteredProductsPageDto(filteredProductDtoList, productPage.getTotalElements(),
+                productPage.getTotalPages());
     }
 
     @Override
-    public ProductDto getProductBySlug(String productSlug) throws ProductNotFoundException, ImageDecompressionException {
-        Optional<Product> productOptional = productRepository.findBySlug(productSlug);
-        if (productOptional.isEmpty()) {
-            String errMsg = String.format("The product with slug: %s is not found.", productSlug);
-            log.error(errMsg);
-            throw new ProductNotFoundException(errMsg);
-        }
-        Product product = productOptional.get();
+    public ProductDto getProductBySlug(String productSlug) throws ProductNotFoundException {
+        Product product = productRepository.findBySlug(productSlug).orElseThrow(() ->
+                new ProductNotFoundException(String.format("The product with slug: %s is not found.", productSlug)));
         Image mainImage = product.getMainImage();
-        Set<Image> images = product.getImages();
-        ImageDto mainImageDto = mainImage == null ? null : imageService.decompressImage(mainImage);
-        List<ImageDto> imageDtoList = (images == null || images.isEmpty()) ? new ArrayList<>() :
-                getDecompressedProductImageDtoList(product.getImages(), mainImage);
+        ImageDto mainImageDto = imageService.decompressImage(mainImage).orElse(null);
+        List<ImageDto> imageDtoList = product.getImages().stream()
+                .filter(image -> !image.equals(mainImage))
+                .map(image -> imageService.decompressImage(image).orElse(null))
+                .toList();
         log.info("Fetched product by slug: '{}'", productSlug);
         return productMapper.toProductDto(product, mainImageDto, imageDtoList);
     }
@@ -81,16 +88,26 @@ public class ProductServiceImpl implements ProductService {
                                                      String priceSortOrder, String availability) {
         Page<Product> productPage = getFilteredProductPage(page, size, productName, minPrice, maxPrice,
                 originCategories, brandCategories, ageCategories, priceSortOrder, availability);
-        return productMapper.toAdminFilteredProductsPageDto(productPage);
+        List<AdminFilteredProductDto> adminProductsPageDtoList = productPage.getContent().stream()
+                .map(product -> {
+                    ImageDto mainImageDto = imageService.decompressImage(product.getMainImage()).orElse(null);
+                    return productMapper.toAdminFilteredProductDto(product, mainImageDto);
+                })
+                .toList();
+        return new AdminProductsPageDto(adminProductsPageDtoList, productPage.getTotalElements(),
+                productPage.getTotalPages());
     }
 
     @Override
-    public AdminProductDto getProductById(Integer productId) throws ProductNotFoundException, ImageDecompressionException {
+    public AdminProductDto getProductById(Integer productId) throws ProductNotFoundException {
         Product product = productRepository.findById(productId).orElseThrow(
                 () -> new ProductNotFoundException(String.format("The product with id: %d is not found.", productId)));
         Image mainImage = product.getMainImage();
-        ImageDto mainImageDto = mainImage == null ? null : imageService.decompressImage(mainImage);
-        List<ImageDto> imageDtoList = getDecompressedProductImageDtoList(product.getImages(), mainImage);
+        ImageDto mainImageDto = imageService.decompressImage(mainImage).orElse(null);
+        List<ImageDto> imageDtoList = product.getImages().stream()
+                .filter(image -> !image.equals(mainImage))
+                .map(image -> imageService.decompressImage(image).orElse(null))
+                .toList();
         log.info("Fetched product by id: '{}'", productId);
         return productMapper.toAdminProductDto(product, mainImageDto, imageDtoList);
     }
@@ -106,8 +123,7 @@ public class ProductServiceImpl implements ProductService {
         String productName = addUpdateProductDto.name();
         Optional<Product> productOptional = productRepository.findByName(productName);
         if (productOptional.isPresent() && !productOptional.get().getId().equals(productId)) {
-            throw new DuplicateProductNameException(
-                    String.format("The product with name: %s is already exist", productName));
+            throw new DuplicateProductNameException(String.format("The product with name: %s is already exist", productName));
         }
         Product product = buildProductFromDtoAndImages(addUpdateProductDto, mainImageFile, imageFilesList);
         product.setId(productId);
@@ -121,7 +137,8 @@ public class ProductServiceImpl implements ProductService {
             throws DuplicateProductNameException, CategoryNotFoundException, ImageException {
         String productName = addUpdateProductDto.name();
         if (productRepository.findByName(productName).isPresent()) {
-            throw new DuplicateProductNameException(String.format("The product with name: %s is already exist", productName));
+            throw new DuplicateProductNameException(
+                    String.format("The product with name: %s is already exist", productName));
         }
         Product product = buildProductFromDtoAndImages(addUpdateProductDto, mainImageFile, imageFileList);
         productRepository.save(product);
@@ -164,25 +181,15 @@ public class ProductServiceImpl implements ProductService {
 
     private void setProductImages(Product product, MultipartFile mainImageFile, List<MultipartFile> imageFilesList)
             throws ImageException {
-        Image mainImage = mainImageFile == null ? null : imageService.convertMultipartFileToImage(mainImageFile, product);
+        Image mainImage = imageService.convertMultipartFileToImage(mainImageFile, product).orElse(null);
         Set<Image> imagesSet = new LinkedHashSet<>();
         if (imageFilesList != null) {
-            for (MultipartFile image : imageFilesList) {
-                imagesSet.add(imageService.convertMultipartFileToImage(image, product));
+            for (MultipartFile imageFile : imageFilesList) {
+                Optional<Image> imageOptional = imageService.convertMultipartFileToImage(imageFile, product);
+                imageOptional.ifPresent(imagesSet::add);
             }
         }
         product.setMainImage(mainImage);
         product.setImages(imagesSet);
-    }
-
-    private List<ImageDto> getDecompressedProductImageDtoList(Set<Image> images, Image mainImage)
-            throws ImageDecompressionException {
-        List<ImageDto> imageDtoList = new ArrayList<>();
-        for (Image image : images) {
-            if (!image.equals(mainImage)) {
-                imageDtoList.add(imageService.decompressImage(image));
-            }
-        }
-        return imageDtoList;
     }
 }

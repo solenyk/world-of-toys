@@ -7,7 +7,6 @@ import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.exception.exception.category.CategoryNotFoundException;
 import com.kopchak.worldoftoys.exception.exception.image.ImageException;
-import com.kopchak.worldoftoys.exception.exception.image.ext.ImageDecompressionException;
 import com.kopchak.worldoftoys.exception.exception.product.DuplicateProductNameException;
 import com.kopchak.worldoftoys.exception.exception.product.ProductNotFoundException;
 import org.springframework.web.multipart.MultipartFile;
@@ -21,14 +20,14 @@ public interface ProductService {
                                                     List<String> brandCategories, List<String> ageCategories,
                                                     String priceSortOrder);
 
-    ProductDto getProductBySlug(String productSlug) throws ProductNotFoundException, ImageDecompressionException;
+    ProductDto getProductBySlug(String productSlug) throws ProductNotFoundException;
 
     AdminProductsPageDto getAdminProductsPage(int page, int size, String productName, BigDecimal minPrice,
                                               BigDecimal maxPrice, List<String> originCategories,
                                               List<String> brandCategories, List<String> ageCategories,
                                               String priceSortOrder, String availability);
 
-    AdminProductDto getProductById(Integer productId) throws ProductNotFoundException, ImageDecompressionException;
+    AdminProductDto getProductById(Integer productId) throws ProductNotFoundException;
 
     void updateProduct(Integer productId, AddUpdateProductDto addUpdateProductDto, MultipartFile mainImageFile,
                        List<MultipartFile> imageFileList)

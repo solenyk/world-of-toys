@@ -4,7 +4,6 @@ import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringCategoriesDto;
-import com.kopchak.worldoftoys.exception.exception.image.ext.ImageDecompressionException;
 import com.kopchak.worldoftoys.exception.exception.product.ProductNotFoundException;
 import com.kopchak.worldoftoys.service.CategoryService;
 import com.kopchak.worldoftoys.service.ProductService;
@@ -96,8 +95,6 @@ public class ShopController {
         try {
             var productDto = productService.getProductBySlug(productSlug);
             return new ResponseEntity<>(productDto, HttpStatus.OK);
-        } catch (ImageDecompressionException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         } catch (ProductNotFoundException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         }

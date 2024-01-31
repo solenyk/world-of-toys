@@ -6,7 +6,6 @@ import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.dto.product.category.CategoryDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringCategoriesDto;
-import com.kopchak.worldoftoys.exception.exception.image.ext.ImageDecompressionException;
 import com.kopchak.worldoftoys.exception.exception.product.ProductNotFoundException;
 import com.kopchak.worldoftoys.service.CategoryService;
 import com.kopchak.worldoftoys.service.JwtTokenService;
@@ -151,23 +150,6 @@ class ShopControllerTest {
     }
 
     @Test
-    public void getProductBySlug_ThrowImageDecompressionException_ReturnsBadRequestStatusAndResponseStatusExceptionDto() throws Exception {
-        String imageDecompressionExceptionMsg = "The image with name: %s cannot be decompressed";
-        when(productService.getProductBySlug(eq(PRODUCT_SLUG)))
-                .thenThrow(new ImageDecompressionException(imageDecompressionExceptionMsg));
-
-        ResultActions response = mockMvc.perform(get("/api/v1/products/{productSlug}", PRODUCT_SLUG)
-                .contentType(MediaType.APPLICATION_JSON));
-
-        var responseStatusExceptionDto = getResponseStatusExceptionDto(HttpStatus.BAD_REQUEST,
-                imageDecompressionExceptionMsg);
-
-        response.andExpect(MockMvcResultMatchers.status().isBadRequest())
-                .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)))
-                .andDo(print());
-    }
-
-    @Test
     public void getProductBySlug_ThrowProductNotFoundException_ReturnsNotFoundStatusAndResponseStatusExceptionDto() throws Exception {
         String productNotFoundExceptionMsg = String.format("The product with slug: %s is not found.", PRODUCT_SLUG);
         when(productService.getProductBySlug(eq(PRODUCT_SLUG)))
@@ -176,18 +158,18 @@ class ShopControllerTest {
         ResultActions response = mockMvc.perform(get("/api/v1/products/{productSlug}", PRODUCT_SLUG)
                 .contentType(MediaType.APPLICATION_JSON));
 
-        var responseStatusExceptionDto = getResponseStatusExceptionDto(HttpStatus.NOT_FOUND, productNotFoundExceptionMsg);
+        var responseStatusExceptionDto = getResponseStatusExceptionDto(productNotFoundExceptionMsg);
 
         response.andExpect(MockMvcResultMatchers.status().isNotFound())
                 .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)))
                 .andDo(print());
     }
 
-    private ResponseStatusExceptionDto getResponseStatusExceptionDto(HttpStatus httpStatus, String msg) {
+    private ResponseStatusExceptionDto getResponseStatusExceptionDto(String msg) {
         return ResponseStatusExceptionDto
                 .builder()
-                .error(httpStatus.name())
-                .status(httpStatus.value())
+                .error(HttpStatus.NOT_FOUND.name())
+                .status(HttpStatus.NOT_FOUND.value())
                 .message(msg)
                 .build();
     }
