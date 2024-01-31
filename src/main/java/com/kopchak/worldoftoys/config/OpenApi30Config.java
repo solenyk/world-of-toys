@@ -18,7 +18,10 @@ import org.springframework.context.annotation.Configuration;
                 version = "1.0.0",
                 description = "This is a backend API for a toy store web application built using Spring Boot 3, " +
                         "Spring Security 6 and Java 17. This API is responsible for handling all of the requests made " +
-                        "to the server and returning the appropriate data to the front-end.",
+                        "to the server and returning the appropriate data to the front-end.\n" +
+                        "This web application is designed to allow users to view and purchase toys from a toy store. " +
+                        "Users can browse through shop goods, search them flexibly, add products to a cart, make " +
+                        "purchases, and proceeding payment with their card credentials.",
                 contact = @Contact(
                         name = "Iryna Kopchak",
                         email = "iryna.kopchak39@gmail.com",
