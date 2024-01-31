@@ -9,9 +9,11 @@ import com.kopchak.worldoftoys.domain.image.Image;
 import com.kopchak.worldoftoys.domain.product.Product;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Optional;
+
 public interface ImageService {
     Image convertMultipartFileToImage(MultipartFile multipartFile, Product product)
             throws InvalidImageFileFormatException, ImageCompressionException, ImageExceedsMaxSizeException;
 
-    ImageDto decompressImage(Image image) throws ImageDecompressionException;
+    Optional<ImageDto> decompressImage(Image image);
 }
