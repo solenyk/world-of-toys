@@ -4,13 +4,11 @@ import com.kopchak.worldoftoys.domain.product.Product;
 import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminFilteredProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
-import com.kopchak.worldoftoys.dto.admin.product.AdminProductsPageDto;
 import com.kopchak.worldoftoys.dto.image.ImageDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.springframework.data.domain.Page;
 
 import java.util.List;
 
@@ -35,11 +33,7 @@ public abstract class ProductMapper {
     @Mapping(target = "mainImage", source = "mainImage")
     public abstract FilteredProductDto toFilteredProductDto(Product product, ImageDto mainImage);
 
-    public AdminProductsPageDto toAdminFilteredProductsPageDto(Page<Product> productPage) {
-        return new AdminProductsPageDto(toAdminFilteredProductDtoList(productPage.getContent()),
-                productPage.getTotalElements(), productPage.getTotalPages());
-    }
-
-    protected abstract List<AdminFilteredProductDto> toAdminFilteredProductDtoList(List<Product> products);
-
+    @Mapping(target = "name", source = "product.name")
+    @Mapping(target = "mainImage", source = "mainImage")
+    public abstract AdminFilteredProductDto toAdminFilteredProductDto(Product product, ImageDto mainImage);
 }
