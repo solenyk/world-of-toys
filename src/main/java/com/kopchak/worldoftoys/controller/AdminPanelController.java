@@ -78,7 +78,7 @@ public class AdminPanelController {
             @RequestParam(name = "price-sort", required = false) String priceSortOrder,
             @RequestParam(name = "availability", required = false) String availability
 
-    ) {
+    ) throws ImageDecompressionException {
         var productsPage = productService.getAdminProductsPage(page, size, productName, minPrice, maxPrice,
                 originCategories, brandCategories, ageCategories, priceSortOrder, availability);
         return new ResponseEntity<>(productsPage, HttpStatus.OK);

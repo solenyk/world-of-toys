@@ -26,7 +26,7 @@ public interface ProductService {
     AdminProductsPageDto getAdminProductsPage(int page, int size, String productName, BigDecimal minPrice,
                                               BigDecimal maxPrice, List<String> originCategories,
                                               List<String> brandCategories, List<String> ageCategories,
-                                              String priceSortOrder, String availability);
+                                              String priceSortOrder, String availability) throws ImageDecompressionException;
 
     AdminProductDto getProductById(Integer productId) throws ProductNotFoundException, ImageDecompressionException;
 

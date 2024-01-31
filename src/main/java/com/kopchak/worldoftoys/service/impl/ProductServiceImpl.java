@@ -7,12 +7,13 @@ import com.kopchak.worldoftoys.domain.product.category.BrandCategory;
 import com.kopchak.worldoftoys.domain.product.category.OriginCategory;
 import com.kopchak.worldoftoys.dto.admin.category.CategoryIdDto;
 import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
+import com.kopchak.worldoftoys.dto.admin.product.AdminFilteredProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductsPageDto;
+import com.kopchak.worldoftoys.dto.image.ImageDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
-import com.kopchak.worldoftoys.dto.image.ImageDto;
 import com.kopchak.worldoftoys.exception.exception.category.CategoryNotFoundException;
 import com.kopchak.worldoftoys.exception.exception.image.ImageException;
 import com.kopchak.worldoftoys.exception.exception.image.ext.ImageDecompressionException;
@@ -86,10 +87,17 @@ public class ProductServiceImpl implements ProductService {
     public AdminProductsPageDto getAdminProductsPage(int page, int size, String productName, BigDecimal minPrice,
                                                      BigDecimal maxPrice, List<String> originCategories,
                                                      List<String> brandCategories, List<String> ageCategories,
-                                                     String priceSortOrder, String availability) {
+                                                     String priceSortOrder, String availability) throws ImageDecompressionException {
         Page<Product> productPage = getFilteredProductPage(page, size, productName, minPrice, maxPrice,
                 originCategories, brandCategories, ageCategories, priceSortOrder, availability);
-        return productMapper.toAdminFilteredProductsPageDto(productPage);
+        List<AdminFilteredProductDto> adminProductsPageDtoList = new ArrayList<>();
+        for (Product product : productPage.getContent()) {
+            Image mainImage = product.getMainImage();
+            ImageDto mainImageDto = mainImage == null ? null : imageService.decompressImage(mainImage);
+            adminProductsPageDtoList.add(productMapper.toAdminFilteredProductDto(product, mainImageDto));
+        }
+        return new AdminProductsPageDto(adminProductsPageDtoList, productPage.getTotalElements(),
+                productPage.getTotalPages());
     }
 
     @Override
