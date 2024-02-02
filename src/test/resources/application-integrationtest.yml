@@ -1,0 +1,33 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=MYSQL
+    driverClassName: org.h2.Driver
+  sql:
+    init:
+      mode: always
+      data-locations: classpath:data.sql
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+    defer-datasource-initialization: true
+    hibernate:
+      ddl-auto: create-drop
+  mail:
+    host: localhost
+    port: 3025
+    username: test
+    password: password
+    protocol: smtp
+    test-connection: false
+security:
+  jwt:
+    secret: testsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkey
+stripe:
+  api:
+    key: stripe_secret_key
+  success:
+    url: stripe_success_url
+  webhook:
+    secret:
+      key: webhook_secret_key
