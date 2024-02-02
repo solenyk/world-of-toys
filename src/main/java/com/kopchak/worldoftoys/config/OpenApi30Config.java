@@ -6,7 +6,6 @@ import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.info.Contact;
 import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.annotations.info.License;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import io.swagger.v3.oas.annotations.servers.Server;
 import org.springframework.context.annotation.Configuration;
@@ -37,10 +36,7 @@ import org.springframework.context.annotation.Configuration;
         },
         externalDocs = @ExternalDocumentation(description = "Instructions for how to run and use this project",
                 url = "https://github.com/solenyk/world-of-toys/blob/main/README.md"
-        ),
-        security = {
-                @SecurityRequirement(name = "Bearer Authentication")
-        }
+        )
 )
 @SecurityScheme(
         name = "Bearer Authentication",
