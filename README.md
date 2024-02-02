@@ -172,6 +172,21 @@ The World of Toys application is accessible at [World of Toys on Render](https:/
 
 Please note that for a complete experience, especially concerning email functionalities and Stripe event handling, it is advisable to run application at your local machine.
 
+To try out user functionalities, you can use the following credentials:
+```json
+{
+    "email": "john.doe@example.com",
+    "password": "P@ssword123"
+}
+```
+For admin functionalities, you can use:
+```json
+{
+   "email": "jane.smith@example.com",
+   "password": "P@ssword123"
+}
+```
+
 ## Contributing
 
 If you would like to contribute to this project, feel free to fork the repository and submit a pull request.
