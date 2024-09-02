@@ -1,6 +1,20 @@
 HELP.md
+.gradle
+gradle/
+gradlew
+gradlew.bat
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+.conf
+
+### Maven ###
+target/
+pom.xml
 
 ### STS ###
+*.launch
 .apt_generated
 .classpath
 .factorypath
@@ -8,12 +22,29 @@ HELP.md
 .settings
 .springBeans
 .sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+### Node Artifact Files ###
+node_modules/
+dist/
+volumes/
+.docker/volumes/
+
+### Logs and Temporary Files ###
+*.log
+*.tmp
+*.bak
 
 ### IntelliJ IDEA ###
-.idea
+.idea/
 *.iws
 *.iml
 *.ipr
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
 
 ### NetBeans ###
 /nbproject/private/
@@ -21,9 +52,15 @@ HELP.md
 /dist/
 /nbdist/
 /.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
 
-### VS Code ###
-.vscode/
+### Mac OS ###
+.DS_Store
+
+### Windows ###
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+### Local Configurations ###
+application-local.properties
+application-local.yml
