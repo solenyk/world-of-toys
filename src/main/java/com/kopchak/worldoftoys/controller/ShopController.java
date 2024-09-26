@@ -1,12 +1,11 @@
 package com.kopchak.worldoftoys.controller;
 
-import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
+import com.kopchak.worldoftoys.dto.error.ExceptionDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringCategoriesDto;
-import com.kopchak.worldoftoys.exception.exception.product.ProductNotFoundException;
-import com.kopchak.worldoftoys.service.CategoryService;
-import com.kopchak.worldoftoys.service.ProductService;
+import com.kopchak.worldoftoys.service.impl.CategoryService;
+import com.kopchak.worldoftoys.service.impl.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -18,7 +17,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -84,19 +82,15 @@ public class ShopController {
             @ApiResponse(
                     responseCode = "400",
                     description = "The product image cannot be decompressed",
-                    content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class))),
+                    content = @Content(schema = @Schema(implementation = ExceptionDto.class))),
             @ApiResponse(
                     responseCode = "404",
                     description = "The product with this slug is not found",
-                    content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class)))
+                    content = @Content(schema = @Schema(implementation = ExceptionDto.class)))
     })
     @GetMapping("/{productSlug}")
     public ResponseEntity<ProductDto> getProductBySlug(@PathVariable(name = "productSlug") String productSlug) {
-        try {
-            var productDto = productService.getProductBySlug(productSlug);
-            return new ResponseEntity<>(productDto, HttpStatus.OK);
-        } catch (ProductNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
-        }
+        var productDto = productService.getProductBySlug(productSlug);
+        return new ResponseEntity<>(productDto, HttpStatus.OK);
     }
 }

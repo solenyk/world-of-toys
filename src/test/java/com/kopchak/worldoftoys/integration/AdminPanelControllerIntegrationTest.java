@@ -18,7 +18,7 @@ import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminFilteredProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductsPageDto;
-import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
+import com.kopchak.worldoftoys.dto.error.ExceptionDto;
 import com.kopchak.worldoftoys.dto.product.category.CategoryDto;
 import jakarta.mail.internet.MimeMessage;
 import lombok.extern.slf4j.Slf4j;
@@ -84,8 +84,8 @@ public class AdminPanelControllerIntegrationTest {
     private CategoryIdDto categoryIdDto;
     private CategoryNameDto categoryNameDto;
     private StatusDto statusDto;
-    private ResponseStatusExceptionDto accessDeniedErrorResponse;
-    private ResponseStatusExceptionDto unauthorizedErrorResponse;
+    private ExceptionDto accessDeniedErrorResponse;
+    private ExceptionDto unauthorizedErrorResponse;
 
     @BeforeEach
     void setUp() {
@@ -110,9 +110,9 @@ public class AdminPanelControllerIntegrationTest {
                 .ageCategories(ageCategories)
                 .images(new ArrayList<>())
                 .build();
-        accessDeniedErrorResponse = new ResponseStatusExceptionDto(HttpStatus.FORBIDDEN.value(),
+        accessDeniedErrorResponse = new ExceptionDto(HttpStatus.FORBIDDEN.value(),
                 HttpStatus.FORBIDDEN.name(), "Access Denied");
-        unauthorizedErrorResponse = new ResponseStatusExceptionDto(HttpStatus.UNAUTHORIZED.value(),
+        unauthorizedErrorResponse = new ExceptionDto(HttpStatus.UNAUTHORIZED.value(),
                 HttpStatus.UNAUTHORIZED.name(), "Full authentication is required to access this resource");
         categoryIdDto = new CategoryIdDto(EXISTENT_CATEGORY_ID);
         addUpdateProductDto = new AddUpdateProductDto(PRODUCT_NAME, "description", BigDecimal.TEN,
@@ -832,8 +832,8 @@ public class AdminPanelControllerIntegrationTest {
                 "application/json", addUpdateProductDtoJson.getBytes());
     }
 
-    private ResponseStatusExceptionDto getResponseStatusExceptionDto(HttpStatus httpStatus, String msg) {
-        return ResponseStatusExceptionDto
+    private ExceptionDto getResponseStatusExceptionDto(HttpStatus httpStatus, String msg) {
+        return ExceptionDto
                 .builder()
                 .error(httpStatus.name())
                 .status(httpStatus.value())

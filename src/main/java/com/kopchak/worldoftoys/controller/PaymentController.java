@@ -1,10 +1,8 @@
 package com.kopchak.worldoftoys.controller;
 
-import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
+import com.kopchak.worldoftoys.dto.error.ExceptionDto;
 import com.kopchak.worldoftoys.dto.payment.StripeCredentialsDto;
-import com.kopchak.worldoftoys.exception.exception.order.InvalidOrderException;
-import com.kopchak.worldoftoys.exception.exception.email.MessageSendingException;
-import com.kopchak.worldoftoys.service.PaymentService;
+import com.kopchak.worldoftoys.service.impl.PaymentService;
 import com.stripe.exception.StripeException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -20,7 +18,6 @@ import org.apache.commons.io.IOUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.net.URI;
@@ -44,21 +41,15 @@ public class PaymentController {
             @ApiResponse(
                     responseCode = "400",
                     description = "The order does not exist or has already been paid",
-                    content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class
+                    content = @Content(schema = @Schema(implementation = ExceptionDto.class
                     )))
     })
     @SecurityRequirement(name = "Bearer Authentication")
     @PostMapping("/{orderId}")
     public ResponseEntity<Void> stripeCheckout(@Valid @RequestBody StripeCredentialsDto credentialsDto,
-                                               @PathVariable(name = "orderId") String orderId) {
-        try {
-            String stripeCheckoutUserUrl = paymentService.stripeCheckout(credentialsDto, orderId);
-            return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(stripeCheckoutUserUrl)).build();
-        } catch (InvalidOrderException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
-        } catch (StripeException e) {
-            throw new ResponseStatusException(HttpStatus.valueOf(e.getStatusCode()), e.getMessage());
-        }
+                                               @PathVariable(name = "orderId") String orderId) throws StripeException {
+        String stripeCheckoutUserUrl = paymentService.stripeCheckout(credentialsDto, orderId);
+        return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(stripeCheckoutUserUrl)).build();
     }
 
     @Operation(summary = "Handle payment webhook")
@@ -70,27 +61,19 @@ public class PaymentController {
             @ApiResponse(
                     responseCode = "400",
                     description = "Unable to read the request body",
-                    content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class
+                    content = @Content(schema = @Schema(implementation = ExceptionDto.class
                     ))),
             @ApiResponse(
                     responseCode = "503",
                     description = "Service Unavailable",
-                    content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class
+                    content = @Content(schema = @Schema(implementation = ExceptionDto.class
                     )))
     })
     @PostMapping("/webhook")
-    public ResponseEntity<Void> handlePaymentWebhook(HttpServletRequest request) {
-        try {
-            String sigHeader = request.getHeader(STRIPE_HEADER);
-            String requestBody = IOUtils.toString(request.getReader());
-            paymentService.handlePaymentWebhook(sigHeader, requestBody);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch (IOException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
-        } catch (StripeException e) {
-            throw new ResponseStatusException(HttpStatus.valueOf(e.getStatusCode()), e.getMessage());
-        } catch (MessageSendingException e) {
-            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, e.getMessage());
-        }
+    public ResponseEntity<Void> handlePaymentWebhook(HttpServletRequest request) throws IOException, StripeException {
+        String sigHeader = request.getHeader(STRIPE_HEADER);
+        String requestBody = IOUtils.toString(request.getReader());
+        paymentService.handlePaymentWebhook(sigHeader, requestBody);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

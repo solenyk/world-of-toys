@@ -14,7 +14,7 @@ import com.kopchak.worldoftoys.dto.admin.order.StatusDto;
 import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductsPageDto;
-import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
+import com.kopchak.worldoftoys.dto.error.ExceptionDto;
 import com.kopchak.worldoftoys.exception.exception.category.CategoryContainsProductsException;
 import com.kopchak.worldoftoys.exception.exception.category.CategoryNotFoundException;
 import com.kopchak.worldoftoys.exception.exception.category.DuplicateCategoryNameException;
@@ -22,10 +22,6 @@ import com.kopchak.worldoftoys.exception.exception.email.MessageSendingException
 import com.kopchak.worldoftoys.exception.exception.order.InvalidOrderStatusException;
 import com.kopchak.worldoftoys.exception.exception.product.DuplicateProductNameException;
 import com.kopchak.worldoftoys.exception.exception.product.ProductNotFoundException;
-import com.kopchak.worldoftoys.service.CategoryService;
-import com.kopchak.worldoftoys.service.JwtTokenService;
-import com.kopchak.worldoftoys.service.OrderService;
-import com.kopchak.worldoftoys.service.ProductService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -488,8 +484,8 @@ class AdminPanelControllerTest {
                 .andDo(MockMvcResultHandlers.print());
     }
 
-    private ResponseStatusExceptionDto getResponseStatusExceptionDto(HttpStatus httpStatus, String msg) {
-        return ResponseStatusExceptionDto
+    private ExceptionDto getResponseStatusExceptionDto(HttpStatus httpStatus, String msg) {
+        return ExceptionDto
                 .builder()
                 .error(httpStatus.name())
                 .status(httpStatus.value())
