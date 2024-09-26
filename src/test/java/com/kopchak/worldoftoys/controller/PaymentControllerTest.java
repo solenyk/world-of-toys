@@ -1,12 +1,10 @@
 package com.kopchak.worldoftoys.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
+import com.kopchak.worldoftoys.dto.error.ExceptionDto;
 import com.kopchak.worldoftoys.dto.payment.StripeCredentialsDto;
 import com.kopchak.worldoftoys.exception.exception.email.MessageSendingException;
-import com.kopchak.worldoftoys.exception.exception.order.InvalidOrderException;
-import com.kopchak.worldoftoys.service.JwtTokenService;
-import com.kopchak.worldoftoys.service.PaymentService;
+import com.kopchak.worldoftoys.exception.exception.order.OrderNotFoundException;
 import com.stripe.exception.AuthenticationException;
 import com.stripe.exception.StripeException;
 import org.junit.jupiter.api.BeforeEach;
@@ -102,7 +100,7 @@ class PaymentControllerTest {
     public void stripeCheckout_ThrowInvalidOrderException_ReturnsBadRequestAndResponseStatusExceptionDto() throws Exception {
         String invalidOrderExceptionMsg = String.format("The order with id: %s does not exist or has already been paid!",
                 ORDER_ID);
-        doThrow(new InvalidOrderException(invalidOrderExceptionMsg))
+        doThrow(new OrderNotFoundException(invalidOrderExceptionMsg))
                 .when(paymentService).stripeCheckout(credentialsDto, ORDER_ID);
 
         ResultActions response = mockMvc.perform(post("/api/v1/payment/{orderId}", ORDER_ID)
@@ -183,8 +181,8 @@ class PaymentControllerTest {
                 .andDo(print());
     }
 
-    private ResponseStatusExceptionDto getResponseStatusExceptionDto(HttpStatus httpStatus, String msg) {
-        return ResponseStatusExceptionDto
+    private ExceptionDto getResponseStatusExceptionDto(HttpStatus httpStatus, String msg) {
+        return ExceptionDto
                 .builder()
                 .error(httpStatus.name())
                 .status(httpStatus.value())

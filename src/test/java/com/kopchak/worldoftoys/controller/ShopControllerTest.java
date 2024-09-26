@@ -1,15 +1,12 @@
 package com.kopchak.worldoftoys.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
+import com.kopchak.worldoftoys.dto.error.ExceptionDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
 import com.kopchak.worldoftoys.dto.product.category.CategoryDto;
 import com.kopchak.worldoftoys.dto.product.category.FilteringCategoriesDto;
 import com.kopchak.worldoftoys.exception.exception.product.ProductNotFoundException;
-import com.kopchak.worldoftoys.service.CategoryService;
-import com.kopchak.worldoftoys.service.JwtTokenService;
-import com.kopchak.worldoftoys.service.ProductService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -165,8 +162,8 @@ class ShopControllerTest {
                 .andDo(print());
     }
 
-    private ResponseStatusExceptionDto getResponseStatusExceptionDto(String msg) {
-        return ResponseStatusExceptionDto
+    private ExceptionDto getResponseStatusExceptionDto(String msg) {
+        return ExceptionDto
                 .builder()
                 .error(HttpStatus.NOT_FOUND.name())
                 .status(HttpStatus.NOT_FOUND.value())

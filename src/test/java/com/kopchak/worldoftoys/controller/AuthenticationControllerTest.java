@@ -2,7 +2,7 @@ package com.kopchak.worldoftoys.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kopchak.worldoftoys.domain.token.confirm.ConfirmationTokenType;
-import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
+import com.kopchak.worldoftoys.dto.error.ExceptionDto;
 import com.kopchak.worldoftoys.dto.token.AccessAndRefreshTokensDto;
 import com.kopchak.worldoftoys.dto.token.AuthTokenDto;
 import com.kopchak.worldoftoys.dto.token.ConfirmTokenDto;
@@ -15,10 +15,6 @@ import com.kopchak.worldoftoys.exception.exception.token.InvalidConfirmationToke
 import com.kopchak.worldoftoys.exception.exception.token.TokenAlreadyExistException;
 import com.kopchak.worldoftoys.exception.exception.user.UserNotFoundException;
 import com.kopchak.worldoftoys.exception.exception.user.UsernameAlreadyExistException;
-import com.kopchak.worldoftoys.service.ConfirmationTokenService;
-import com.kopchak.worldoftoys.service.EmailSenderService;
-import com.kopchak.worldoftoys.service.JwtTokenService;
-import com.kopchak.worldoftoys.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -182,11 +178,11 @@ class AuthenticationControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .param(TOKEN_PARAM_NAME, confirmToken));
 
-        ResponseStatusExceptionDto responseStatusExceptionDto = getResponseStatusExceptionDto(HttpStatus.BAD_REQUEST,
+        ExceptionDto exceptionDto = getResponseStatusExceptionDto(HttpStatus.BAD_REQUEST,
                 invalidConfirmationTokenExceptionMsg);
 
         response.andExpect(MockMvcResultMatchers.status().isBadRequest())
-                .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)));
+                .andExpect(content().json(objectMapper.writeValueAsString(exceptionDto)));
     }
 
     @Test
@@ -431,8 +427,8 @@ class AuthenticationControllerTest {
                 .andDo(MockMvcResultHandlers.print());
     }
 
-    private ResponseStatusExceptionDto getResponseStatusExceptionDto(HttpStatus httpStatus, String msg) {
-        return ResponseStatusExceptionDto
+    private ExceptionDto getResponseStatusExceptionDto(HttpStatus httpStatus, String msg) {
+        return ExceptionDto
                 .builder()
                 .error(httpStatus.name())
                 .status(httpStatus.value())

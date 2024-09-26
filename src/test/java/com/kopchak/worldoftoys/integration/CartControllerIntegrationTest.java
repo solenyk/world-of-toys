@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kopchak.worldoftoys.dto.cart.CartItemDto;
 import com.kopchak.worldoftoys.dto.cart.RequestCartItemDto;
 import com.kopchak.worldoftoys.dto.cart.UserCartDetailsDto;
-import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
+import com.kopchak.worldoftoys.dto.error.ExceptionDto;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -49,8 +49,8 @@ public class CartControllerIntegrationTest {
     private final static String NON_EXISTENT_PRODUCT_SLUG = "non-existent-product-slug";
     private RequestCartItemDto validRequestCartItemDto;
     private RequestCartItemDto invalidRequestCartItemDto;
-    private ResponseStatusExceptionDto accessDeniedErrorResponse;
-    private ResponseStatusExceptionDto unauthorizedErrorResponse;
+    private ExceptionDto accessDeniedErrorResponse;
+    private ExceptionDto unauthorizedErrorResponse;
 
     @BeforeEach
     public void setUp() {
@@ -59,9 +59,9 @@ public class CartControllerIntegrationTest {
                 .build();
         validRequestCartItemDto = new RequestCartItemDto("lyalka-klaymber", BigInteger.valueOf(2));
         invalidRequestCartItemDto = new RequestCartItemDto(NON_EXISTENT_PRODUCT_SLUG, BigInteger.valueOf(2));
-        accessDeniedErrorResponse = new ResponseStatusExceptionDto(HttpStatus.FORBIDDEN.value(),
+        accessDeniedErrorResponse = new ExceptionDto(HttpStatus.FORBIDDEN.value(),
                 HttpStatus.FORBIDDEN.name(), "Access Denied");
-        unauthorizedErrorResponse = new ResponseStatusExceptionDto(HttpStatus.UNAUTHORIZED.value(),
+        unauthorizedErrorResponse = new ExceptionDto(HttpStatus.UNAUTHORIZED.value(),
                 HttpStatus.UNAUTHORIZED.name(), "Full authentication is required to access this resource");
     }
 
@@ -254,10 +254,10 @@ public class CartControllerIntegrationTest {
                 .andDo(MockMvcResultHandlers.print());
     }
 
-    private ResponseStatusExceptionDto getProductNotFoundResponseStatusExDto() {
+    private ExceptionDto getProductNotFoundResponseStatusExDto() {
         HttpStatus httpStatus = HttpStatus.NOT_FOUND;
         String msg = String.format("Product with slug: %s doesn't exist.", NON_EXISTENT_PRODUCT_SLUG);
-        return ResponseStatusExceptionDto
+        return ExceptionDto
                 .builder()
                 .error(httpStatus.name())
                 .status(httpStatus.value())

@@ -11,22 +11,12 @@ import com.kopchak.worldoftoys.dto.admin.order.StatusDto;
 import com.kopchak.worldoftoys.dto.admin.product.AddUpdateProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductDto;
 import com.kopchak.worldoftoys.dto.admin.product.AdminProductsPageDto;
-import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
+import com.kopchak.worldoftoys.dto.error.ExceptionDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
-import com.kopchak.worldoftoys.exception.exception.category.CategoryContainsProductsException;
-import com.kopchak.worldoftoys.exception.exception.category.CategoryCreationException;
-import com.kopchak.worldoftoys.exception.exception.category.CategoryNotFoundException;
-import com.kopchak.worldoftoys.exception.exception.category.DuplicateCategoryNameException;
-import com.kopchak.worldoftoys.exception.exception.email.MessageSendingException;
-import com.kopchak.worldoftoys.exception.exception.image.ImageException;
-import com.kopchak.worldoftoys.exception.exception.order.InvalidOrderException;
-import com.kopchak.worldoftoys.exception.exception.order.InvalidOrderStatusException;
-import com.kopchak.worldoftoys.exception.exception.product.DuplicateProductNameException;
-import com.kopchak.worldoftoys.exception.exception.product.ProductNotFoundException;
-import com.kopchak.worldoftoys.service.CategoryService;
-import com.kopchak.worldoftoys.service.OrderService;
-import com.kopchak.worldoftoys.service.ProductService;
+import com.kopchak.worldoftoys.service.impl.CategoryService;
+import com.kopchak.worldoftoys.service.impl.OrderService;
+import com.kopchak.worldoftoys.service.impl.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -41,7 +31,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -92,20 +81,16 @@ public class AdminPanelController {
             @ApiResponse(
                     responseCode = "400",
                     description = "The product image cannot be decompressed",
-                    content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class))),
+                    content = @Content(schema = @Schema(implementation = ExceptionDto.class))),
             @ApiResponse(
                     responseCode = "404",
                     description = "Product with this id is not found",
-                    content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class)))
+                    content = @Content(schema = @Schema(implementation = ExceptionDto.class)))
     })
     @GetMapping("/products/{productId}")
     public ResponseEntity<AdminProductDto> getProductById(@PathVariable(name = "productId") Integer productId) {
-        try {
-            AdminProductDto product = productService.getProductById(productId);
-            return new ResponseEntity<>(product, HttpStatus.OK);
-        } catch (ProductNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
-        }
+        AdminProductDto product = productService.getProductById(productId);
+        return new ResponseEntity<>(product, HttpStatus.OK);
     }
 
     @Operation(summary = "Update product")
@@ -117,11 +102,11 @@ public class AdminPanelController {
             @ApiResponse(
                     responseCode = "400",
                     description = "Invalid product update data",
-                    content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class))),
+                    content = @Content(schema = @Schema(implementation = ExceptionDto.class))),
             @ApiResponse(
                     responseCode = "404",
                     description = "Product or category is not found",
-                    content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class)))
+                    content = @Content(schema = @Schema(implementation = ExceptionDto.class)))
     })
     @PutMapping("/products/{productId}")
     public ResponseEntity<Void> updateProduct(
@@ -129,13 +114,7 @@ public class AdminPanelController {
             @Valid @RequestPart("product") AddUpdateProductDto addUpdateProductDto,
             @RequestPart(value = "image", required = false) MultipartFile mainImageFile,
             @RequestPart(value = "images", required = false) List<MultipartFile> imageFilesList) {
-        try {
-            productService.updateProduct(productId, addUpdateProductDto, mainImageFile, imageFilesList);
-        } catch (ImageException | DuplicateProductNameException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
-        } catch (ProductNotFoundException | CategoryNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
-        }
+        productService.updateProduct(productId, addUpdateProductDto, mainImageFile, imageFilesList);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
@@ -148,24 +127,18 @@ public class AdminPanelController {
             @ApiResponse(
                     responseCode = "400",
                     description = "Invalid product data",
-                    content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class))),
+                    content = @Content(schema = @Schema(implementation = ExceptionDto.class))),
             @ApiResponse(
                     responseCode = "404",
                     description = "Product category is not found",
-                    content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class)))
+                    content = @Content(schema = @Schema(implementation = ExceptionDto.class)))
     })
     @PostMapping("/products/add")
     public ResponseEntity<Void> createProduct(
             @Valid @RequestPart("product") AddUpdateProductDto addUpdateProductDto,
             @RequestPart(value = "image", required = false) MultipartFile mainImageFile,
             @RequestPart(value = "images", required = false) List<MultipartFile> imageFilesList) {
-        try {
-            productService.createProduct(addUpdateProductDto, mainImageFile, imageFilesList);
-        } catch (DuplicateProductNameException | ImageException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
-        } catch (CategoryNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
-        }
+        productService.createProduct(addUpdateProductDto, mainImageFile, imageFilesList);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
@@ -195,16 +168,12 @@ public class AdminPanelController {
             @ApiResponse(
                     responseCode = "400",
                     description = "Product category contains products",
-                    content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class)))
+                    content = @Content(schema = @Schema(implementation = ExceptionDto.class)))
     })
     @DeleteMapping("/categories/{categoryType}/{categoryId}")
     public ResponseEntity<Void> deleteCategory(@PathVariable("categoryType") CategoryType categoryType,
                                                @PathVariable(name = "categoryId") Integer categoryId) {
-        try {
-            categoryService.deleteCategory(categoryType, categoryId);
-        } catch (CategoryContainsProductsException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
-        }
+        categoryService.deleteCategory(categoryType, categoryId);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
@@ -217,17 +186,13 @@ public class AdminPanelController {
             @ApiResponse(
                     responseCode = "400",
                     description = "Product category name already exist",
-                    content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class)))
+                    content = @Content(schema = @Schema(implementation = ExceptionDto.class)))
     })
     @PutMapping("/categories/{categoryType}/{categoryId}")
     public ResponseEntity<Void> updateCategory(@PathVariable("categoryType") CategoryType categoryType,
                                                @PathVariable(name = "categoryId") Integer categoryId,
                                                @Valid @RequestBody CategoryNameDto categoryNameDto) {
-        try {
-            categoryService.updateCategory(categoryType, categoryId, categoryNameDto);
-        } catch (DuplicateCategoryNameException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
-        }
+        categoryService.updateCategory(categoryType, categoryId, categoryNameDto);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
@@ -240,16 +205,12 @@ public class AdminPanelController {
             @ApiResponse(
                     responseCode = "400",
                     description = "Product category type is incorrect",
-                    content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class)))
+                    content = @Content(schema = @Schema(implementation = ExceptionDto.class)))
     })
     @PostMapping("/categories/{categoryType}/add")
     public ResponseEntity<Void> createCategory(@PathVariable("categoryType") CategoryType categoryType,
                                                @Valid @RequestBody CategoryNameDto categoryNameDto) {
-        try {
-            categoryService.createCategory(categoryType, categoryNameDto);
-        } catch (DuplicateCategoryNameException | CategoryCreationException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
-        }
+        categoryService.createCategory(categoryType, categoryNameDto);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
@@ -306,22 +267,16 @@ public class AdminPanelController {
             @ApiResponse(
                     responseCode = "400",
                     description = "Invalid order id or status",
-                    content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class))),
+                    content = @Content(schema = @Schema(implementation = ExceptionDto.class))),
             @ApiResponse(
                     responseCode = "503",
                     description = "Service unavailable",
-                    content = @Content(schema = @Schema(implementation = ResponseStatusExceptionDto.class)))
+                    content = @Content(schema = @Schema(implementation = ExceptionDto.class)))
     })
     @PatchMapping("/orders/{orderId}")
     public ResponseEntity<Void> updateOrderStatus(@PathVariable(name = "orderId") String orderId,
                                                   @Valid @RequestBody StatusDto statusDto) {
-        try {
-            orderService.updateOrderStatus(orderId, statusDto);
-        } catch (InvalidOrderStatusException | InvalidOrderException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
-        } catch (MessageSendingException e) {
-            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, e.getMessage());
-        }
+        orderService.updateOrderStatus(orderId, statusDto);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

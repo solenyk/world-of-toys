@@ -2,11 +2,9 @@ package com.kopchak.worldoftoys.controller;
 
 import com.kopchak.worldoftoys.dto.order.OrderDto;
 import com.kopchak.worldoftoys.dto.order.OrderRecipientDto;
-import com.kopchak.worldoftoys.exception.exception.cart.CartValidationException;
-import com.kopchak.worldoftoys.exception.exception.order.OrderCreationException;
 import com.kopchak.worldoftoys.domain.user.AppUser;
-import com.kopchak.worldoftoys.service.CartService;
-import com.kopchak.worldoftoys.service.OrderService;
+import com.kopchak.worldoftoys.service.impl.CartService;
+import com.kopchak.worldoftoys.service.impl.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -39,11 +37,7 @@ public class OrderController {
 
     @GetMapping("/verify-cart")
     public ResponseEntity<Void> verifyCartBeforeOrderCreation(@AuthenticationPrincipal AppUser user) {
-        try {
-            cartService.verifyCartBeforeOrderCreation(user);
-        } catch (CartValidationException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
-        }
+        cartService.verifyCartBeforeOrderCreation(user);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
@@ -62,11 +56,7 @@ public class OrderController {
     @PostMapping
     public ResponseEntity<Void> createOrder(@Valid @RequestBody OrderRecipientDto orderRecipientDto,
                                             @AuthenticationPrincipal AppUser user) {
-        try {
-            orderService.createOrder(orderRecipientDto, user);
-        } catch (OrderCreationException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
-        }
+        orderService.createOrder(orderRecipientDto, user);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 

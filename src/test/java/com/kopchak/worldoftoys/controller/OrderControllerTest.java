@@ -2,16 +2,13 @@ package com.kopchak.worldoftoys.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kopchak.worldoftoys.domain.user.AppUser;
-import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
+import com.kopchak.worldoftoys.dto.error.ExceptionDto;
 import com.kopchak.worldoftoys.dto.order.AddressDto;
 import com.kopchak.worldoftoys.dto.order.OrderDto;
 import com.kopchak.worldoftoys.dto.order.OrderRecipientDto;
 import com.kopchak.worldoftoys.dto.order.PhoneNumberDto;
 import com.kopchak.worldoftoys.exception.exception.cart.CartValidationException;
 import com.kopchak.worldoftoys.exception.exception.order.OrderCreationException;
-import com.kopchak.worldoftoys.service.CartService;
-import com.kopchak.worldoftoys.service.JwtTokenService;
-import com.kopchak.worldoftoys.service.OrderService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -86,7 +83,7 @@ class OrderControllerTest {
                 "because one or more products are out of stock";
         HttpStatus httpStatus = HttpStatus.BAD_REQUEST;
         var responseStatusExceptionDto =
-                new ResponseStatusExceptionDto(httpStatus.value(), httpStatus.name(), cartValidationExceptionMsg);
+                new ExceptionDto(httpStatus.value(), httpStatus.name(), cartValidationExceptionMsg);
 
         doThrow(new CartValidationException(cartValidationExceptionMsg))
                 .when(cartService).verifyCartBeforeOrderCreation(any());
@@ -117,7 +114,7 @@ class OrderControllerTest {
                 "because there are no products in the user's cart.";
         HttpStatus httpStatus = HttpStatus.BAD_REQUEST;
         var responseStatusExceptionDto =
-                new ResponseStatusExceptionDto(httpStatus.value(), httpStatus.name(), orderCreationExceptionMsg);
+                new ExceptionDto(httpStatus.value(), httpStatus.name(), orderCreationExceptionMsg);
 
         doThrow(new OrderCreationException(orderCreationExceptionMsg))
                 .when(orderService).createOrder(eq(orderRecipientDto), any());

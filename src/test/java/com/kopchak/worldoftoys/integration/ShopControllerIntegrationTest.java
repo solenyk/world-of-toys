@@ -1,7 +1,7 @@
 package com.kopchak.worldoftoys.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
+import com.kopchak.worldoftoys.dto.error.ExceptionDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductDto;
 import com.kopchak.worldoftoys.dto.product.FilteredProductsPageDto;
 import com.kopchak.worldoftoys.dto.product.ProductDto;
@@ -176,7 +176,7 @@ public class ShopControllerIntegrationTest {
         String nonExistentProductSlug = "non-existent-product-slug";
         HttpStatus httpStatus = HttpStatus.NOT_FOUND;
         String productNotFoundExceptionMg = String.format("The product with slug: %s is not found.", nonExistentProductSlug);
-        var responseStatusExceptionDto = new ResponseStatusExceptionDto(httpStatus.value(), httpStatus.name(),
+        var responseStatusExceptionDto = new ExceptionDto(httpStatus.value(), httpStatus.name(),
                 productNotFoundExceptionMg);
 
 

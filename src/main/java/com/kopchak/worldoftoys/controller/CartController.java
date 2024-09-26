@@ -2,9 +2,8 @@ package com.kopchak.worldoftoys.controller;
 
 import com.kopchak.worldoftoys.dto.cart.RequestCartItemDto;
 import com.kopchak.worldoftoys.dto.cart.UserCartDetailsDto;
-import com.kopchak.worldoftoys.exception.exception.product.ProductNotFoundException;
 import com.kopchak.worldoftoys.domain.user.AppUser;
-import com.kopchak.worldoftoys.service.CartService;
+import com.kopchak.worldoftoys.service.impl.CartService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -47,11 +46,7 @@ public class CartController {
     @PostMapping(value = "/add-product")
     public ResponseEntity<Void> addProductToCart(@Valid @RequestBody RequestCartItemDto requestCartItemDto,
                                                  @AuthenticationPrincipal AppUser user) {
-        try {
-            cartService.addProductToCart(requestCartItemDto, user);
-        } catch (ProductNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
-        }
+        cartService.addProductToCart(requestCartItemDto, user);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
@@ -82,11 +77,7 @@ public class CartController {
     @PatchMapping
     public ResponseEntity<Void> updateUserCartItem(@Valid @RequestBody RequestCartItemDto requestCartItemDto,
                                                    @AuthenticationPrincipal AppUser user) {
-        try {
-            cartService.updateUserCartItem(requestCartItemDto, user);
-        } catch (ProductNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
-        }
+        cartService.updateUserCartItem(requestCartItemDto, user);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
@@ -106,11 +97,7 @@ public class CartController {
     @DeleteMapping
     public ResponseEntity<Void> deleteUserCartItem(@Valid @RequestBody RequestCartItemDto requestCartItemDto,
                                                    @AuthenticationPrincipal AppUser user) {
-        try {
-            cartService.deleteUserCartItem(requestCartItemDto, user);
-        } catch (ProductNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
-        }
+        cartService.deleteUserCartItem(requestCartItemDto, user);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

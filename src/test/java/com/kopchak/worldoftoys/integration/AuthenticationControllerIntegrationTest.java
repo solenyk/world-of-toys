@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icegreen.greenmail.configuration.GreenMailConfiguration;
 import com.icegreen.greenmail.junit5.GreenMailExtension;
 import com.icegreen.greenmail.util.ServerSetupTest;
-import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
+import com.kopchak.worldoftoys.dto.error.ExceptionDto;
 import com.kopchak.worldoftoys.dto.token.AuthTokenDto;
 import com.kopchak.worldoftoys.dto.user.ResetPasswordDto;
 import com.kopchak.worldoftoys.dto.user.UserAuthDto;
@@ -342,11 +342,11 @@ class AuthenticationControllerIntegrationTest {
                 .param("token", activationConfirmToken)
                 .content(objectMapper.writeValueAsString(validResetPasswordDto)));
 
-        ResponseStatusExceptionDto responseStatusExceptionDto = getResponseStatusExceptionDto(HttpStatus.BAD_REQUEST,
+        ExceptionDto exceptionDto = getResponseStatusExceptionDto(HttpStatus.BAD_REQUEST,
                 "The reset password token is invalid!");
 
         response.andExpect(MockMvcResultMatchers.status().isBadRequest())
-                .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)))
+                .andExpect(content().json(objectMapper.writeValueAsString(exceptionDto)))
                 .andDo(MockMvcResultHandlers.print());
     }
 
@@ -423,8 +423,8 @@ class AuthenticationControllerIntegrationTest {
                 .andExpect(content().json(objectMapper.writeValueAsString(responseStatusExceptionDto)));
     }
 
-    private ResponseStatusExceptionDto getResponseStatusExceptionDto(HttpStatus httpStatus, String msg) {
-        return ResponseStatusExceptionDto
+    private ExceptionDto getResponseStatusExceptionDto(HttpStatus httpStatus, String msg) {
+        return ExceptionDto
                 .builder()
                 .error(httpStatus.name())
                 .status(httpStatus.value())

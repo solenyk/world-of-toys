@@ -1,7 +1,7 @@
 package com.kopchak.worldoftoys.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kopchak.worldoftoys.dto.error.ResponseStatusExceptionDto;
+import com.kopchak.worldoftoys.dto.error.ExceptionDto;
 import com.kopchak.worldoftoys.dto.order.*;
 import com.kopchak.worldoftoys.domain.order.OrderStatus;
 import jakarta.transaction.Transactional;
@@ -48,8 +48,8 @@ public class OrderControllerIntegrationTest {
     private WebApplicationContext context;
 
     private OrderRecipientDto orderRecipientDto;
-    private ResponseStatusExceptionDto accessDeniedErrorResponse;
-    private ResponseStatusExceptionDto unauthorizedErrorResponse;
+    private ExceptionDto accessDeniedErrorResponse;
+    private ExceptionDto unauthorizedErrorResponse;
 
     @BeforeEach
     public void setUp() {
@@ -64,9 +64,9 @@ public class OrderControllerIntegrationTest {
                 .address(new AddressDto("region", "settlement", "street", 1, 1))
                 .phoneNumber(new PhoneNumberDto("95", "1234567"))
                 .build();
-        accessDeniedErrorResponse = new ResponseStatusExceptionDto(HttpStatus.FORBIDDEN.value(),
+        accessDeniedErrorResponse = new ExceptionDto(HttpStatus.FORBIDDEN.value(),
                 HttpStatus.FORBIDDEN.name(), "Access Denied");
-        unauthorizedErrorResponse = new ResponseStatusExceptionDto(HttpStatus.UNAUTHORIZED.value(),
+        unauthorizedErrorResponse = new ExceptionDto(HttpStatus.UNAUTHORIZED.value(),
                 HttpStatus.UNAUTHORIZED.name(), "Full authentication is required to access this resource");
     }
 
@@ -88,7 +88,7 @@ public class OrderControllerIntegrationTest {
                 "because one or more products are out of stock";
         HttpStatus httpStatus = HttpStatus.BAD_REQUEST;
         var responseStatusExceptionDto =
-                new ResponseStatusExceptionDto(httpStatus.value(), httpStatus.name(), cartValidationExceptionMsg);
+                new ExceptionDto(httpStatus.value(), httpStatus.name(), cartValidationExceptionMsg);
 
         ResultActions response = mockMvc.perform(get("/api/v1/order/verify-cart")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -147,7 +147,7 @@ public class OrderControllerIntegrationTest {
                 .content(objectMapper.writeValueAsString(orderRecipientDto))
                 .with(csrf()));
 
-        var responseStatusExceptionDto = new ResponseStatusExceptionDto(httpStatus.value(), httpStatus.name(),
+        var responseStatusExceptionDto = new ExceptionDto(httpStatus.value(), httpStatus.name(),
                 orderCreationExceptionMsg);
 
         response.andExpect(MockMvcResultMatchers.status().isBadRequest())
